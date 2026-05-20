@@ -9,7 +9,7 @@ import json
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox, filedialog
 import customtkinter as ctk
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import zipfile
 import tempfile
 import smtplib
@@ -38,6 +38,11 @@ class AbaContasPagarMixin:
     def _build_aba_contas_pagar(self, parent, bg, surface, border, accent, green, yellow, text, muted):
         db_init()
         self._cap_cert_passwords = {}  # Cache de senhas por arquivo {caminho: senha}
+        self._cap_editando_id    = None  # ID da nota em edição (None = nova nota)
+        self._cap_parc_data      = []    # Inicializa antes de qualquer uso
+        # Guarda cores para uso nos métodos
+        self._cap_colors = dict(bg="#020617", surface=surface, accent=accent,
+                                green=green, yellow=yellow, text=text, muted=muted)
 
         self.cap_tabs = ctk.CTkTabview(
             parent, 
@@ -45,27 +50,41 @@ class AbaContasPagarMixin:
             segmented_button_selected_color=accent,
             segmented_button_selected_hover_color=green,
             segmented_button_unselected_color=surface,
-            text_color="#FFFFFF" # Forçar branco para visibilidade nas abas
+            text_color="#FFFFFF"
         )
         self.cap_tabs.pack(fill="both", expand=True, padx=10, pady=10)
 
         sub_lista   = self.cap_tabs.add("  📋 LISTA DE NOTAS  ")
-        sub_nota    = self.cap_tabs.add("  ➕ LANÇAR NOTA  ")
+        sub_nota    = self.cap_tabs.add("  LANÇAR NOTA  ")
         sub_alertas = self.cap_tabs.add("  🔔 ALERTAS  ")
-        sub_adian   = self.cap_tabs.add("  💰 ADIANTAMENTOS  ")
-        sub_prest   = self.cap_tabs.add("  ✅ PRESTAÇÃO  ")
+        sub_prest   = self.cap_tabs.add("  PRESTAÇÃO  ")
         sub_imp     = self.cap_tabs.add("  🏛️ IMPOSTOS  ")
-        sub_forn    = self.cap_tabs.add("  🏢 FORNECEDORES  ")
         sub_cnab    = self.cap_tabs.add("  🏦 CNAB 240  ")
 
         self._cap_build_lista(sub_lista, bg, surface, accent, green, yellow, text, muted, self.cap_tabs)
         self._cap_build_nova_nota(sub_nota, bg, surface, accent, green, yellow, text, muted, self.cap_tabs)
         self._cap_build_alertas(sub_alertas, bg, surface, accent, green, yellow, text, muted)
-        self._cap_build_adiantamentos(sub_adian, bg, surface, accent, green, yellow, text, muted)
         self._cap_build_prestacao(sub_prest, bg, surface, accent, green, yellow, text, muted)
         self._cap_build_impostos(sub_imp, bg, surface, accent, green, yellow, text, muted)
-        self._cap_build_fornecedores(sub_forn, bg, surface, accent, green, yellow, text, muted)
         self._cap_build_cnab(sub_cnab, bg, surface, accent, green, yellow, text, muted)
+
+        # Atualiza badge de alertas após build
+        self._cap_atualizar_badge_alertas()
+
+    def _cap_select_tab(self, idx):
+        tabs = [
+            "  📋 LISTA DE NOTAS  ",
+            "  LANÇAR NOTA  ",
+            "  🔔 ALERTAS  ",
+            "  PRESTAÇÃO  ",
+            "  🏛️ IMPOSTOS  ",
+            "  🏦 CNAB 240  "
+        ]
+        if 0 <= idx < len(tabs):
+            try:
+                self.cap_tabs.set(tabs[idx])
+            except Exception as e:
+                print(f"Erro ao trocar aba: {e}")
 
 
     # ── SUB-ABA: LISTA DE NOTAS ───────────────────────────────────────────────
@@ -107,7 +126,7 @@ class AbaContasPagarMixin:
             uf_sigla = UF_NOMES.get(c_uf, c_uf)
 
             self._cap_lbl_xml.config(
-                text=f"✅ Chave válida — NF {num_nf} | {uf_sigla} | {mes}/{ano} | CNPJ {cnpj_fmt}",
+                text=f"Chave válida — NF {num_nf} | {uf_sigla} | {mes}/{ano} | CNPJ {cnpj_fmt}",
                 fg="#4ade80")
 
             # Preenche campos que já dá para saber pela chave
@@ -127,7 +146,7 @@ class AbaContasPagarMixin:
                     self._cap_preencher_banco(dict(f))
 
         except Exception as e:
-            self._cap_lbl_xml.config(text=f"❌ Erro ao ler chave: {e}", fg="#f87171")
+            self._cap_lbl_xml.config(text=f"Erro ao ler chave: {e}", fg="#dc2626")
             return
 
         # ── CAMADA 2: consulta SEFAZ com certificado A1 ─────────────────────
@@ -139,7 +158,7 @@ class AbaContasPagarMixin:
 
         if not pfx_paths:
             self._cap_lbl_xml.config(
-                text="✅ Dados da chave extraídos. "
+                text="Dados da chave extraídos. "
                      "Para consultar XML completo, exporte o certificado .pfx para a pasta FINANCEIRO.",
                 fg="#fbbf24")
             return
@@ -258,7 +277,7 @@ class AbaContasPagarMixin:
                                 
                                 self.root.after(0, lambda: (
                                     self._cap_importar_xml_path(tmp_path),
-                                    self._cap_lbl_xml.config(text=f"✅ XML baixado da SEFAZ com sucesso!", fg="#4ade80")
+                                    self._cap_lbl_xml.config(text=f"XML baixado da SEFAZ com sucesso!", fg="#4ade80")
                                 ))
                                 return
                     except Exception as e2:
@@ -429,6 +448,11 @@ class AbaContasPagarMixin:
             # Descrição com número da NF
             self._cap_desc.delete(0,"end")
             self._cap_desc.insert(0, f"NF {num_nf}" if num_nf else "")
+            # Campo Nº NF separado
+            try:
+                self._cap_numero_nf.delete(0,"end")
+                self._cap_numero_nf.insert(0, num_nf)
+            except Exception: pass
 
             # Data emissão
             if dt_emissao:
@@ -508,10 +532,10 @@ class AbaContasPagarMixin:
                 from tkinter import ttk as _ttk
                 bg_s = "#0a0f1e"
 
-                hdr = tk.Frame(self._cap_frm_parcelas, bg="#1e293b")
+                hdr = tk.Frame(self._cap_frm_parcelas, bg="#0a0f1e")
                 hdr.pack(fill="x", pady=(0,2))
                 for h, w in [("Parcela",60),("Vencimento",110),("Valor",100)]:
-                    tk.Label(hdr, text=h, fg="#94a3b8", bg="#1e293b",
+                    tk.Label(hdr, text=h, fg="#94a3b8", bg="#0a0f1e",
                              font=("Segoe UI",7,"bold"), width=w//7
                              ).pack(side="left", padx=4)
                 self._cap_parc_widgets.append(hdr)
@@ -563,107 +587,398 @@ class AbaContasPagarMixin:
                         "ativo": 1,
                     })
                     self._cap_lbl_xml.config(
-                        text=f"✅ NF {num_nf} importada — fornecedor cadastrado automaticamente")
+                        text=f"NF {num_nf} importada — fornecedor cadastrado automaticamente")
                 else:
                     self._cap_lbl_xml.config(
-                        text=f"✅ NF {num_nf} importada")
+                        text=f"NF {num_nf} importada")
 
         except Exception as e:
             self._cap_lbl_xml.config(
-                text=f"❌ Erro ao ler XML: {e}", fg="#f87171")
+                text=f"Erro ao ler XML: {e}", fg="#dc2626")
 
 
-    def _cap_build_lista(self, parent, bg, surface, accent, green, yellow, text, muted, nb_pai):
+    def _cap_atualizar_badge_alertas(self):
+        """Atualiza o texto da aba de Alertas com contagem de pendências urgentes."""
+        try:
+            hoje = date.today()
+            notas = listar_notas(status="PENDENTE") or []
+            urgentes = sum(1 for n in notas if n.get("dt_vencimento") and
+                          datetime.strptime(n["dt_vencimento"], "%d/%m/%Y").date() <= hoje)
+            label = f"  🔔 ALERTAS{f' ({urgentes})' if urgentes else ''}  "
+            # Tenta renomear a aba — CTkTabview não expõe rename, usamos workaround via _segmented_button
+            try:
+                sb = self.cap_tabs._segmented_button
+                for btn in sb._buttons_dict:
+                    if "ALERTA" in btn:
+                        sb._buttons_dict[btn].configure(text=label)
+                        break
+            except Exception:
+                pass
+        except Exception:
+            pass
 
-        # Toolbar
-        tb = tk.Frame(parent, bg=surface, pady=10, padx=16)
-        tb.pack(fill="x", padx=0, pady=0)
+    def _cap_build_lista(self, parent, bg, surface, accent, green, yellow, text, muted, nb_pai):        # ── DASHBOARD CARDS ──────────────────────────────────────────────────
+        frm_dash = tk.Frame(parent, bg="#020617", pady=8)
+        frm_dash.pack(fill="x", padx=16)
 
-        tk.Label(tb, text="🧾 Contas a Pagar", font=("Segoe UI",14,"bold"),
-                 fg=accent, bg=surface).pack(side="left", padx=(0,20))
+        def _card(parent, titulo, cor, filtro_fn):
+            f = tk.Frame(parent, bg="#0a0f1e", padx=18, pady=12,
+                         highlightbackground=cor, highlightthickness=2,
+                         cursor="hand2")
+            f.pack(side="left", padx=(0,12), fill="both", expand=True)
+            tk.Label(f, text=titulo, fg="#94a3b8", bg="#0a0f1e",
+                     font=("Segoe UI",8,"bold")).pack(anchor="w")
+            v = tk.Label(f, text="R$ 0,00", fg=cor, bg="#0a0f1e",
+                         font=("Segoe UI",14,"bold"))
+            v.pack(anchor="w", pady=(2,0))
+            n = tk.Label(f, text="0 notas", fg="#64748b", bg="#0a0f1e",
+                         font=("Segoe UI",8))
+            n.pack(anchor="w")
+            f.bind("<Button-1>", lambda e: filtro_fn())
+            for w in f.winfo_children():
+                w.bind("<Button-1>", lambda e: filtro_fn())
+            return v, n
 
-        tk.Label(tb, text="Status:", fg=text, bg=surface,
-                 font=("Segoe UI",11)).pack(side="left")
+        hoje = date.today()
+
+        def _filtrar_vencidas():
+            self._cap_filtro_status.set("PENDENTE")
+            self._cap_dt_de_var.set("")
+            self._cap_dt_ate_var.set(hoje.strftime("%d/%m/%Y"))
+            self._cap_carregar_lista()
+
+        def _filtrar_hoje():
+            self._cap_filtro_status.set("PENDENTE")
+            self._cap_dt_de_var.set(hoje.strftime("%d/%m/%Y"))
+            self._cap_dt_ate_var.set(hoje.strftime("%d/%m/%Y"))
+            self._cap_carregar_lista()
+
+        def _filtrar_semana():
+            self._cap_filtro_status.set("TODOS")
+            self._cap_dt_de_var.set(hoje.strftime("%d/%m/%Y"))
+            self._cap_dt_ate_var.set((hoje + timedelta(days=7)).strftime("%d/%m/%Y"))
+            self._cap_carregar_lista()
+
+        def _filtrar_pagas():
+            self._cap_filtro_status.set("PAGA")
+            self._cap_dt_de_var.set("")
+            self._cap_dt_ate_var.set("")
+            self._cap_carregar_lista()
+
+        (self._cap_dash_venc_val, self._cap_dash_venc_cnt) = _card(
+            frm_dash, "🔴  VENCIDAS", "#f87171", _filtrar_vencidas)
+        (self._cap_dash_hoje_val, self._cap_dash_hoje_cnt) = _card(
+            frm_dash, "⏰  VENCEM HOJE", "#fb923c", _filtrar_hoje)
+        (self._cap_dash_sem_val,  self._cap_dash_sem_cnt)  = _card(
+            frm_dash, "📅  PRÓX. 7 DIAS", "#fbbf24", _filtrar_semana)
+        (self._cap_dash_paga_val, self._cap_dash_paga_cnt) = _card(
+            frm_dash, " PAGAS (MÊS)", "#4ade80", _filtrar_pagas)
+
+        # ── TOOLBAR ──────────────────────────────────────────────────────────
+        tb = tk.Frame(parent, bg="#0a0f1e", pady=8, padx=16)
+        tb.pack(fill="x")
+
+        tk.Label(tb, text="Status:", fg="#f8fafc", bg="#0a0f1e",
+                 font=("Segoe UI",10)).pack(side="left")
         self._cap_filtro_status = ttk.Combobox(tb,
             values=["TODOS","PENDENTE","APROVADA","PAGA","VENCIDA","CANCELADA"],
-            state="readonly", width=12, font=("Segoe UI",11))
+            state="readonly", width=11, font=("Segoe UI",10))
         self._cap_filtro_status.set("TODOS")
-        self._cap_filtro_status.pack(side="left", padx=(5,15))
+        self._cap_filtro_status.pack(side="left", padx=(4,12))
 
-        tk.Label(tb, text="Empresa:", fg=text, bg=surface,
-                 font=("Segoe UI",11)).pack(side="left")
+        tk.Label(tb, text="Empresa:", fg="#f8fafc", bg="#0a0f1e",
+                 font=("Segoe UI",10)).pack(side="left")
         self._cap_filtro_emp = ttk.Combobox(tb,
             values=["TODOS","LALUA","SOLAR"],
-            state="readonly", width=10, font=("Segoe UI",11))
+            state="readonly", width=8, font=("Segoe UI",10))
         self._cap_filtro_emp.set("TODOS")
-        self._cap_filtro_emp.pack(side="left", padx=(5,15))
+        self._cap_filtro_emp.pack(side="left", padx=(4,12))
+
+        tk.Label(tb, text="Venc. De:", fg="#94a3b8", bg="#0a0f1e",
+                 font=("Segoe UI",9)).pack(side="left")
+        self._cap_dt_de_var = tk.StringVar()
+        ent_de = tk.Entry(tb, textvariable=self._cap_dt_de_var,
+                          font=("Segoe UI",9), bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2, width=11)
+        ent_de.pack(side="left", padx=(4,6))
+        _aplicar_mascara_data(ent_de)
+
+        tk.Label(tb, text="Até:", fg="#94a3b8", bg="#0a0f1e",
+                 font=("Segoe UI",9)).pack(side="left")
+        self._cap_dt_ate_var = tk.StringVar()
+        ent_ate = tk.Entry(tb, textvariable=self._cap_dt_ate_var,
+                           font=("Segoe UI",9), bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2, width=11)
+        ent_ate.pack(side="left", padx=(4,12))
+        _aplicar_mascara_data(ent_ate)
 
         self._cap_busca_var = tk.StringVar()
-        tk.Entry(tb, textvariable=self._cap_busca_var, font=("Segoe UI",11),
-                 bg="#0a0f1e", fg=text, insertbackground=accent,
-                 relief="flat", bd=2, width=25).pack(side="left", padx=(0,10))
+        tk.Entry(tb, textvariable=self._cap_busca_var, font=("Segoe UI",10),
+                 bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent,
+                 relief="flat", bd=2, width=20).pack(side="left", padx=(0,8))
 
-        tk.Button(tb, text="🔍 Filtrar", font=("Segoe UI",11),
-                  bg="#1e293b", fg=accent, relief="flat", bd=0,
-                  padx=12, pady=4, cursor="hand2",
-                  command=self._cap_carregar_lista).pack(side="left", padx=(0,10))
+        tk.Button(tb, text="Filtrar", font=("Segoe UI",10),
+                  bg="#0a0f1e", fg="#f8fafc", relief="flat", bd=0,
+                  padx=10, pady=4, cursor="hand2",
+                  command=self._cap_carregar_lista).pack(side="left", padx=(0,8))
 
-        tk.Button(tb, text="➕ Nova Nota", font=("Segoe UI",11,"bold"),
+        tk.Button(tb, text="⟳", font=("Segoe UI",10),
+                  bg="#0a0f1e", fg="#94a3b8", relief="flat", bd=0,
+                  padx=8, pady=4, cursor="hand2",
+                  command=lambda: [self._cap_filtro_status.set("TODOS"),
+                                   self._cap_filtro_emp.set("TODOS"),
+                                   self._cap_dt_de_var.set(""),
+                                   self._cap_dt_ate_var.set(""),
+                                   self._cap_busca_var.set(""),
+                                   self._cap_carregar_lista()]
+                  ).pack(side="left", padx=(0,12))
+
+        tk.Button(tb, text="Nova Nota", font=("Segoe UI",10,"bold"),
                   bg=accent, fg="#0f172a", relief="flat", bd=0,
-                  padx=15, pady=4, cursor="hand2",
-                  command=lambda: nb_pai.select(1)).pack(side="left", padx=(0,8))
+                  padx=14, pady=4, cursor="hand2",
+                   command=lambda: [self._cap_limpar_form(), self._cap_select_tab(1)]
+                  ).pack(side="left", padx=(0,6))
 
-        tk.Button(tb, text="💰 Adiantamento", font=("Segoe UI",11),
-                  bg="#7c3aed", fg="white", relief="flat", bd=0,
-                  padx=15, pady=4, cursor="hand2",
-                  command=lambda: nb_pai.select(3)).pack(side="left")
+        tk.Button(tb, text="💰 Adiantamento", font=("Segoe UI",10),
+                  bg=accent, fg="white", relief="flat", bd=0,
+                  padx=12, pady=4, cursor="hand2",
+                   command=lambda: self._cap_select_tab(3)).pack(side="left", padx=(0,6))
 
-        # Treeview
-        cols = ("Nº TX","Tipo","Fornecedor","Empresa","Emissão",
-                "Vencimento","Bruto","Líquido","Status","Categoria")
+        tk.Button(tb, text="📊 Exportar CSV", font=("Segoe UI",9),
+                  bg="#0a0f1e", fg="#f8fafc", relief="flat", bd=0,
+                  padx=10, pady=4, cursor="hand2",
+                  command=self._cap_exportar_csv).pack(side="right")
+
+        # ── TREEVIEW ──────────────────────────────────────────────────────────
+        cols = ("Nº TX","Nº NF","Tipo","Fornecedor","Empresa","Emissão",
+                "Vencimento","Atraso","Bruto","Líquido","Status","Categoria")
         self._cap_tree = ttk.Treeview(parent, columns=cols,
-                                       show="headings", height=14)
-        largs = [110,70,200,70,80,80,100,100,80,160]
+                                       style="DS.Treeview", show="headings", height=13)
+        largs = [110,70,70,180,65,75,80,60,100,100,75,160]
         for c, w in zip(cols, largs):
-            self._cap_tree.heading(c, text=c)
+            self._cap_tree.heading(c, text=c,
+                command=lambda _c=c: self._cap_ordenar_coluna(_c))
             self._cap_tree.column(c, width=w,
-                anchor="e" if c in ("Bruto","Líquido") else "w")
+                anchor="e" if c in ("Bruto","Líquido","Atraso") else "w")
 
-        self._cap_tree.tag_configure("PENDENTE", foreground="#fbbf24")
-        self._cap_tree.tag_configure("APROVADA", foreground="#38bdf8")
-        self._cap_tree.tag_configure("PAGA",     foreground="#4ade80")
-        self._cap_tree.tag_configure("VENCIDA",  foreground="#f87171")
-        self._cap_tree.tag_configure("CANCELADA",foreground="#64748b")
+        self._cap_tree.tag_configure("PENDENTE",  foreground="#fbbf24")
+        self._cap_tree.tag_configure("APROVADA",  foreground="#38bdf8")
+        self._cap_tree.tag_configure("PAGA",      foreground="#4ade80")
+        self._cap_tree.tag_configure("VENCIDA",   foreground="#f87171")
+        self._cap_tree.tag_configure("CANCELADA", foreground="#64748b")
+        self._cap_tree.tag_configure("ATRASADA",  foreground="#f87171",
+                                      background="#1a0000")
 
         sb = ttk.Scrollbar(parent, orient="vertical", command=self._cap_tree.yview)
         self._cap_tree.configure(yscrollcommand=sb.set)
 
-        # Rodapé com totais e ações
-        rod = tk.Frame(parent, bg=surface, pady=10, padx=16)
+        # Double-click → editar nota
+        self._cap_tree.bind("<Double-1>",
+                            lambda e: self._cap_abrir_edicao(nb_pai))
+        # F5 → recarregar
+        self._cap_tree.bind("<F5>", lambda e: self._cap_carregar_lista())
+
+        # ── RODAPÉ ────────────────────────────────────────────────────────────
+        rod = tk.Frame(parent, bg="#0a0f1e", pady=8, padx=16)
         rod.pack(fill="x", side="bottom")
 
-        self._cap_lbl_totais = tk.Label(rod, text="", font=("Segoe UI",11,"bold"),
-                                         fg=accent, bg=surface)
+        self._cap_lbl_totais = tk.Label(rod, text="", font=("Segoe UI",10,"bold"),
+                                         fg="#f8fafc", bg="#0a0f1e")
         self._cap_lbl_totais.pack(side="left")
 
-        tk.Button(rod, text="✅ Marcar PAGA", font=("Segoe UI",8),
-                  bg="#059669", fg="white", relief="flat", bd=0,
+        tk.Button(rod, text="Marcar PAGA", font=("Segoe UI",8),
+                  bg="#7c3aed", fg="white", relief="flat", bd=0,
                   padx=10, pady=3, cursor="hand2",
-                  command=lambda: self._cap_mudar_status("PAGA")).pack(side="right", padx=(4,0))
+                  command=lambda: self._cap_mudar_status("PAGA")
+                  ).pack(side="right", padx=(4,0))
         tk.Button(rod, text="📋 Aprovar", font=("Segoe UI",8),
-                  bg="#0ea5e9", fg="white", relief="flat", bd=0,
+                  bg=accent, fg="white", relief="flat", bd=0,
                   padx=10, pady=3, cursor="hand2",
-                  command=lambda: self._cap_mudar_status("APROVADA")).pack(side="right", padx=(4,0))
+                  command=lambda: self._cap_mudar_status("APROVADA")
+                  ).pack(side="right", padx=(4,0))
+        tk.Button(rod, text="✏️ Editar", font=("Segoe UI",8),
+                  bg=accent, fg="white", relief="flat", bd=0,
+                  padx=10, pady=3, cursor="hand2",
+                  command=lambda: self._cap_abrir_edicao(nb_pai)
+                  ).pack(side="right", padx=(4,0))
         tk.Button(rod, text="❌ Cancelar", font=("Segoe UI",8),
-                  bg="#7f1d1d", fg="#fca5a5", relief="flat", bd=0,
+                  bg="#fee2e2", fg="#dc2626", relief="flat", bd=0,
                   padx=10, pady=3, cursor="hand2",
-                  command=lambda: self._cap_mudar_status("CANCELADA")).pack(side="right", padx=(4,0))
+                  command=lambda: self._cap_mudar_status("CANCELADA")
+                  ).pack(side="right", padx=(4,0))
 
-        self._cap_tree.pack(side="left", fill="both", expand=True, padx=(0,0))
+        self._cap_tree.pack(side="left", fill="both", expand=True)
         sb.pack(side="left", fill="y")
 
+        self._cap_sort_col = None
+        self._cap_sort_rev = False
         self._cap_carregar_lista()
 
+
+
+    def _cap_ordenar_coluna(self, col):
+        """Ordena treeview pela coluna clicada (toggle asc/desc)."""
+        try:
+            items = [(self._cap_tree.set(k, col), k)
+                     for k in self._cap_tree.get_children("")]
+            rev = (self._cap_sort_col == col and not self._cap_sort_rev)
+            items.sort(reverse=rev)
+            for idx, (_, k) in enumerate(items):
+                self._cap_tree.move(k, "", idx)
+            self._cap_sort_col = col
+            self._cap_sort_rev = rev
+        except Exception:
+            pass
+
+    def _cap_exportar_csv(self):
+        """Exporta a lista atual para CSV."""
+        from tkinter import filedialog
+        import csv
+        path = filedialog.asksaveasfilename(
+            title="Salvar CSV",
+            defaultextension=".csv",
+            filetypes=[("CSV","*.csv"),("Todos","*.*")],
+            initialfile=f"notas_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
+        )
+        if not path: return
+        cols = [self._cap_tree.heading(c)["text"]
+                for c in self._cap_tree["columns"]]
+        try:
+            with open(path, "w", newline="", encoding="utf-8-sig") as f:
+                w = csv.writer(f, delimiter=";")
+                w.writerow(cols)
+                for iid in self._cap_tree.get_children():
+                    w.writerow(self._cap_tree.item(iid, "values"))
+            messagebox.showinfo("Exportado",
+                f"CSV salvo com sucesso:\n{path}")
+        except Exception as e:
+            messagebox.showerror("Erro", str(e))
+
+    def _cap_abrir_edicao(self, nb_pai):
+        """Carrega a nota selecionada no formulario para edicao."""
+        sel = self._cap_tree.selection()
+        if not sel: return
+        nota_id = int(sel[0])
+        try:
+            with db_conn() as conn:
+                conn.row_factory = __import__('sqlite3').Row
+                row = conn.execute(
+                    "SELECT * FROM notas WHERE id=?", (nota_id,)).fetchone()
+            if not row: return
+            n = dict(row)
+        except Exception:
+            # Fallback: busca via listar_notas
+            todas = listar_notas() or []
+            ns = [x for x in todas if x.get("id") == nota_id]
+            if not ns: return
+            n = ns[0]
+
+        # Marca modo edicao
+        self._cap_editando_id = nota_id
+        self._cap_limpar_form()
+
+        # Preenche campos
+        self._cap_forn.insert(0, n.get("fornecedor",""))
+        self._cap_cnpj.insert(0, n.get("cnpj",""))
+        self._cap_desc.insert(0, n.get("descricao",""))
+        self._cap_dt_emissao.delete(0,"end")
+        self._cap_dt_emissao.insert(0, n.get("dt_emissao",""))
+        self._cap_dt_venc.insert(0, n.get("dt_vencimento",""))
+        vb = n.get("valor_bruto", 0)
+        self._cap_valor.insert(0,
+            f"{vb:,.2f}".replace(",","X").replace(".",",").replace("X","."))
+        self._cap_obs.insert(0, n.get("observacao","") or "")
+        if n.get("categoria"): self._cap_cat_var.set(n["categoria"])
+        if n.get("responsavel"): self._cap_resp.set(n["responsavel"])
+        if n.get("empresa"): self._cap_emp_var.set(n["empresa"])
+        if n.get("natureza"): self._cap_natureza_var.set(n["natureza"])
+        if n.get("forma_pgto"): self._cap_forma_pgto.set(n["forma_pgto"])
+        difal = n.get("valor_difal", 0) or 0
+        self._cap_difal.delete(0,"end")
+        self._cap_difal.insert(0, f"{difal:,.2f}".replace(",","X").replace(".",",").replace("X","."))
+        
+        # Anexo
+        arq = n.get("arquivo_path","")
+        if hasattr(self, "_cap_arquivo_path_var"):
+            self._cap_arquivo_path_var.set(arq)
+            try:
+                import os
+                self._cap_lbl_anexo.config(text=f"{os.path.basename(arq)}" if arq else "")
+            except: pass
+
+        # Atualiza titulo do formulario
+        try:
+            self._cap_lbl_form_titulo.config(
+                text=f"✏️  Editando Nota #{nota_id}")
+        except Exception:
+            pass
+
+        self._cap_select_tab(1)
+
+    def _cap_limpar_form(self):
+        """Reseta o formulario para nova nota."""
+        self._cap_editando_id = None
+        for w in [self._cap_forn, self._cap_cnpj, self._cap_desc,
+                  self._cap_valor, self._cap_obs, self._cap_dt_venc,
+                  self._cap_cod_barras, self._cap_pix_chave,
+                  self._cap_banco_dest, self._cap_ag_dest,
+                  self._cap_conta_dest, self._cap_cpf_cnpj_dest,
+                  self._cap_chave_ref]:
+            try: w.delete(0,"end")
+            except Exception: pass
+        try:
+            self._cap_difal.delete(0,"end"); self._cap_difal.insert(0,"0,00")
+            self._cap_fcp.delete(0,"end");   self._cap_fcp.insert(0,"0,00")
+            self._cap_dt_emissao.delete(0,"end")
+            self._cap_dt_emissao.insert(0, datetime.now().strftime("%d/%m/%Y"))
+            self._cap_cat_var.set("")
+            self._cap_lbl_form_titulo.config(text=" Nova Nota / Despesa")
+            self._cap_arquivo_path_var.set("")
+            self._cap_lbl_anexo.config(text="")
+            self._cap_lbl_alerta_imposto.config(text="")
+        except Exception:
+            pass
+
+    def _cap_validar_aliquotas(self):
+        """Avisa se PIS for maior que COFINS (erro comum)."""
+        if not hasattr(self, "_cap_imp_rows"): return
+        pis_val = 0
+        cofins_val = 0
+        for r in self._cap_imp_rows:
+            tp = r["tipo"].get()
+            try:
+                al = _parse_valor(r["aliq"].get())
+                if tp == "PIS": pis_val = al
+                elif tp == "COFINS": cofins_val = al
+            except: pass
+        try:
+            if pis_val > 0 and cofins_val > 0 and pis_val >= cofins_val:
+                self._cap_lbl_alerta_imposto.config(
+                    text="⚠️ Atenção: A alíquota de PIS geralmente é menor que a de COFINS.",
+                    fg="#dc2626")
+            else:
+                self._cap_lbl_alerta_imposto.config(text="")
+        except: pass
+
+    def _cap_anexar_comprovante(self):
+        """Abre dialogo para selecionar arquivo e copia para a pasta da aplicacao."""
+        from tkinter import filedialog
+        import shutil
+        import os
+        from datetime import datetime
+        
+        path = filedialog.askopenfilename(
+            title="Selecionar Anexo",
+            filetypes=[("PDF/XML", "*.pdf *.xml"), ("Todos os Arquivos", "*.*")]
+        )
+        if not path: return
+
+        # Salva o path temporariamente (será copiado de verdade no _cap_salvar_nota)
+        self._cap_arquivo_path_var.set(path)
+        try:
+            self._cap_lbl_anexo.config(text=f"{os.path.basename(path)}")
+        except Exception: pass
 
     def _cap_carregar_lista(self):
         for r in self._cap_tree.get_children():
@@ -672,49 +987,116 @@ class AbaContasPagarMixin:
         st  = self._cap_filtro_status.get()
         emp = self._cap_filtro_emp.get()
         bsc = self._cap_busca_var.get().strip()
+        dt_de_str  = getattr(self, "_cap_dt_de_var",  tk.StringVar()).get().strip()
+        dt_ate_str = getattr(self, "_cap_dt_ate_var", tk.StringVar()).get().strip()
 
         notas = listar_notas(
             status=None if st=="TODOS" else st,
             empresa=None if emp=="TODOS" else emp,
             busca=bsc
-        )
+        ) or []
+
+        # Filtra por periodo de vencimento
+        hoje = date.today()
+        if dt_de_str or dt_ate_str:
+            filtradas = []
+            try:
+                d_de  = datetime.strptime(dt_de_str,  "%d/%m/%Y").date() if dt_de_str  else None
+                d_ate = datetime.strptime(dt_ate_str, "%d/%m/%Y").date() if dt_ate_str else None
+                for n in notas:
+                    try:
+                        dv = datetime.strptime(n["dt_vencimento"], "%d/%m/%Y").date()
+                        if d_de  and dv < d_de:  continue
+                        if d_ate and dv > d_ate: continue
+                        filtradas.append(n)
+                    except Exception:
+                        filtradas.append(n)
+                notas = filtradas
+            except Exception:
+                pass
 
         total_receita = 0.0
         total_despesa = 0.0
+        # Acumuladores para dashboard
+        v_venc=v_hoje=v_sem=v_paga=0.0
+        c_venc=c_hoje=c_sem=c_paga=0
+        prox7 = hoje + timedelta(days=7)
+        ini_mes = hoje.replace(day=1)
+
         for n in notas:
-            tag = n["status"] if n["status"] in STATUS_NOTA else "PENDENTE"
-            
+            status = n.get("status","PENDENTE")
+            tag = status if status in STATUS_NOTA else "PENDENTE"
+
             tipo_op = n.get("tipo_operacao", "DESPESA")
-            valor = n["valor_bruto"]
-            
+            valor = n.get("valor_bruto", 0) or 0
             if tipo_op == "RECEITA":
-                total_receita += valor
-                op_prefix = "(+) "
+                total_receita += valor; op_prefix = "(+) "
             else:
-                total_despesa += valor
-                op_prefix = "(-) "
+                total_despesa += valor; op_prefix = "(-) "
+
+            # Calcula atraso
+            atraso_txt = ""
+            try:
+                dv = datetime.strptime(n["dt_vencimento"], "%d/%m/%Y").date()
+                if status in ("PENDENTE","APROVADA","VENCIDA") and dv < hoje:
+                    dias = (hoje - dv).days
+                    atraso_txt = f"-{dias}d"
+                    tag = "ATRASADA"
+                # Acumuladores dashboard
+                if status in ("PENDENTE","APROVADA","VENCIDA"):
+                    if dv < hoje:
+                        v_venc += valor; c_venc += 1
+                    elif dv == hoje:
+                        v_hoje += valor; c_hoje += 1
+                    elif hoje < dv <= prox7:
+                        v_sem += valor; c_sem += 1
+                if status == "PAGA" and dv >= ini_mes:
+                    v_paga += valor; c_paga += 1
+            except Exception:
+                pass
+
+            num_nf = n.get("numero_nf","") or ""
 
             self._cap_tree.insert("", "end", iid=str(n["id"]), tags=(tag,),
                 values=(
-                    n["numero_tx"], 
-                    f"{op_prefix}{n.get('natureza','NOTA')}", 
-                    n["fornecedor"][:30],
-                    n["empresa"], n["dt_emissao"], n["dt_vencimento"],
-                    f"R$ {n['valor_bruto']:,.2f}",
-                    f"R$ {n['valor_liquido']:,.2f}",
-                    n["status"], n["categoria"][:25]
+                    n["numero_tx"],
+                    num_nf,
+                    f"{op_prefix}{n.get('natureza','NOTA')}",
+                    n["fornecedor"][:28],
+                    n["empresa"],
+                    n.get("dt_emissao",""),
+                    n["dt_vencimento"],
+                    atraso_txt,
+                    f"R$ {valor:,.2f}",
+                    f"R$ {n.get('valor_liquido',valor):,.2f}",
+                    status,
+                    (n.get("categoria") or "")[:25]
                 ))
 
         saldo = total_receita - total_despesa
         cor_saldo = "#4ade80" if saldo >= 0 else "#f87171"
-
         self._cap_lbl_totais.config(
             text=f"{len(notas)} nota(s)  |  "
                  f"Receitas: R$ {total_receita:,.2f}  |  "
                  f"Despesas: R$ {total_despesa:,.2f}  |  "
                  f"SALDO: R$ {saldo:,.2f}",
-            fg=cor_saldo
-        )
+            fg=cor_saldo)
+
+        # Atualiza dashboard cards
+        try:
+            self._cap_dash_venc_val.config(text=f"R$ {v_venc:,.2f}")
+            self._cap_dash_venc_cnt.config(text=f"{c_venc} nota(s)")
+            self._cap_dash_hoje_val.config(text=f"R$ {v_hoje:,.2f}")
+            self._cap_dash_hoje_cnt.config(text=f"{c_hoje} nota(s)")
+            self._cap_dash_sem_val.config(text=f"R$ {v_sem:,.2f}")
+            self._cap_dash_sem_cnt.config(text=f"{c_sem} nota(s)")
+            self._cap_dash_paga_val.config(text=f"R$ {v_paga:,.2f}")
+            self._cap_dash_paga_cnt.config(text=f"{c_paga} nota(s)")
+        except Exception:
+            pass
+
+        # Atualiza badge de alertas
+        self._cap_atualizar_badge_alertas()
 
 
     def _cap_mudar_status(self, novo_status):
@@ -730,13 +1112,13 @@ class AbaContasPagarMixin:
     def _cap_build_nova_nota(self, parent, bg, surface, accent, green, yellow, text, muted, nb_pai):
 
         # Canvas + scrollbar para caber tudo
-        canvas = tk.Canvas(parent, bg=bg, highlightthickness=0)
+        canvas = tk.Canvas(parent, bg="#020617", highlightthickness=0)
         sb = ttk.Scrollbar(parent, orient="vertical", command=canvas.yview)
         canvas.configure(yscrollcommand=sb.set)
         sb.pack(side="right", fill="y")
         canvas.pack(side="left", fill="both", expand=True)
 
-        frm = tk.Frame(canvas, bg=bg)
+        frm = tk.Frame(canvas, bg="#020617")
         win = canvas.create_window((0,0), window=frm, anchor="nw")
 
         def _resize(e):
@@ -755,93 +1137,117 @@ class AbaContasPagarMixin:
 
         pad = dict(padx=20, pady=4)
 
-        # ── TÍTULO + BOTÃO XML ──
-        frm_tit = tk.Frame(frm, bg=bg)
+        # ── TÍTULO + BOTÕES ──
+        frm_tit = tk.Frame(frm, bg="#020617")
         frm_tit.pack(fill="x", padx=20, pady=10)
-        tk.Label(frm_tit, text="➕  Nova Nota / Despesa",
-                 font=("Segoe UI",16,"bold"), fg=accent, bg=bg
-                 ).pack(side="left")
+        self._cap_lbl_form_titulo = tk.Label(
+            frm_tit, text=" Nova Nota / Despesa",
+            font=("Segoe UI",16,"bold"), fg="#f8fafc", bg="#020617")
+        self._cap_lbl_form_titulo.pack(side="left")
 
         tk.Button(frm_tit, text="📎 Importar XML (NF-e)",
-                  font=("Segoe UI",9,"bold"), bg="#7c3aed", fg="white",
+                  font=("Segoe UI",9,"bold"), bg=accent, fg="white",
                   relief="flat", bd=0, padx=12, pady=5, cursor="hand2",
                   command=lambda: self._cap_importar_xml()
                   ).pack(side="right")
 
         self._cap_lbl_xml = tk.Label(frm_tit, text="",
-                                      font=("Segoe UI",8), fg=green, bg=bg)
+                                      font=("Segoe UI",8), fg="#f8fafc", bg="#020617")
         self._cap_lbl_xml.pack(side="right", padx=8)
 
-        # Botão Salvar Rápido (Topo)
+        # Botão Salvar (Topo)
         tk.Button(frm_tit, text="💾 Salvar",
-                  font=("Segoe UI",9,"bold"), bg="#059669", fg="white",
+                  font=("Segoe UI",9,"bold"), bg="#7c3aed", fg="white",
                   relief="flat", bd=0, padx=15, pady=5, cursor="hand2",
                   command=lambda: self._cap_salvar_nota(nb_pai)
                   ).pack(side="right", padx=10)
 
+        # Botão Nova Nota / Limpar
+        tk.Button(frm_tit, text="➕ Nova",
+                  font=("Segoe UI",9), bg="#0a0f1e", fg="#f8fafc",
+                  relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
+                  command=self._cap_limpar_form
+                  ).pack(side="right", padx=4)
+
+        # Botão Anexar
+        tk.Button(frm_tit, text="📎 Anexar PDF",
+                  font=("Segoe UI",9), bg="#475569", fg="white",
+                  relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
+                  command=self._cap_anexar_comprovante
+                  ).pack(side="right", padx=10)
+
+        # Atalho Ctrl+Enter = Salvar
+        frm.bind_all("<Control-Return>",
+                     lambda e: self._cap_salvar_nota(nb_pai))
+
+        # Variável para armazenar o anexo
+        self._cap_arquivo_path_var = tk.StringVar()
+        self._cap_lbl_anexo = tk.Label(frm_tit, text="", font=("Segoe UI",8), fg="#f8fafc", bg="#020617")
+        self._cap_lbl_anexo.pack(side="right", padx=5)
+
         # ── CAMPO CHAVE DE ACESSO ──
-        frm_chave = tk.Frame(frm, bg=surface, padx=14, pady=10)
+        frm_chave = tk.Frame(frm, bg="#0a0f1e", padx=14, pady=10)
         frm_chave.pack(fill="x", padx=20, pady=(0,10))
 
         tk.Label(frm_chave, text="🔑 Chave de Acesso NF-e:",
-                 fg=accent, bg=surface, font=("Segoe UI",11,"bold")
+                 fg="#f8fafc", bg="#0a0f1e", font=("Segoe UI",11,"bold")
                  ).pack(side="left", padx=(0,10))
 
         self._cap_chave_var = tk.StringVar()
         ent_chave = tk.Entry(frm_chave, textvariable=self._cap_chave_var,
-                             font=("Consolas",12), bg="#0a0f1e", fg=yellow,
-                             insertbackground=accent, relief="flat", bd=2, width=55)
+                             font=("Consolas",12), bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2, width=55)
         ent_chave.pack(side="left", padx=(0,10))
         tk.Label(frm_chave, text="(44 dígitos — pode bipar ou colar)",
-                 fg="#94a3b8", bg=surface, font=("Consolas",9)
+                 fg="#94a3b8", bg="#0a0f1e", font=("Consolas",9)
                  ).pack(side="left", padx=(0,10))
 
         tk.Button(frm_chave, text="🔍 Consultar SEFAZ",
-                  font=("Segoe UI",10,"bold"), bg="#059669", fg="white",
+                  font=("Segoe UI",10,"bold"), bg="#7c3aed", fg="white",
                   relief="flat", bd=0, padx=15, pady=6, cursor="hand2",
                   command=lambda: self._cap_consultar_sefaz()
                   ).pack(side="left")
 
         # ── BLOCO 1: DADOS BÁSICOS ──
-        b1 = tk.LabelFrame(frm, text="  Dados da Nota  ", bg=surface,
-                            fg=accent, font=("Segoe UI",11,"bold"), padx=15, pady=12)
+        b1 = tk.LabelFrame(frm, text="  Dados da Nota  ", bg="#0a0f1e",
+                            fg="#f8fafc", font=("Segoe UI",11,"bold"), padx=15, pady=12)
         b1.pack(fill="x", padx=20, pady=(0,10))
 
-        def lbl(parent, t): return tk.Label(parent, text=t, fg=text, bg=surface,
+        def lbl(parent, t): return tk.Label(parent, text=t, fg="#f8fafc", bg="#0a0f1e",
                                              font=("Segoe UI",11), anchor="w")
         def ent(parent, w=25, **kw):
-            e = tk.Entry(parent, font=("Segoe UI",12), bg="#0a0f1e", fg=text,
+            e = tk.Entry(parent, font=("Segoe UI",12), bg="#0a0f1e", fg="#f8fafc",
                          insertbackground=accent, relief="flat", bd=2, width=w, **kw)
             return e
 
         # Linha 0 — Tipo e Operação
-        frm_tipo_op = tk.Frame(b1, bg=surface)
+        frm_tipo_op = tk.Frame(b1, bg="#0a0f1e")
         frm_tipo_op.grid(row=0,column=0,columnspan=6,sticky="w",pady=8)
 
         lbl(frm_tipo_op,"Tipo:").pack(side="left", padx=(0,8))
         self._cap_tipo_var = tk.StringVar(value="NOTA")
         for val,lbl_t in [("NOTA","Nota Fiscal"),("ADIANTAMENTO","Adiantamento")]:
             tk.Radiobutton(frm_tipo_op, text=lbl_t, variable=self._cap_tipo_var,
-                           value=val, bg=surface, fg=text, selectcolor="#0a0f1e",
+                           value=val, bg="#0a0f1e", fg="#f8fafc", selectcolor="#0a0f1e",
                            font=("Segoe UI",11)).pack(side="left", padx=8)
 
-        tk.Label(frm_tipo_op, text="  |  ", fg="#475569", bg=surface, font=("Segoe UI",12)).pack(side="left", padx=10)
+        tk.Label(frm_tipo_op, text="  |  ", fg="#94a3b8", bg="#0a0f1e", font=("Segoe UI",12)).pack(side="left", padx=10)
 
         lbl(frm_tipo_op,"Operação:").pack(side="left", padx=(0,8))
         self._cap_operacao_var = tk.StringVar(value="DESPESA")
         for val,lbl_o in [("DESPESA","Despesa (-)"),("RECEITA","Receita (+)")]:
             tk.Radiobutton(frm_tipo_op, text=lbl_o, variable=self._cap_operacao_var,
-                           value=val, bg=surface, fg=text, selectcolor="#0a0f1e",
+                           value=val, bg="#0a0f1e", fg="#f8fafc", selectcolor="#0a0f1e",
                            font=("Segoe UI",11)).pack(side="left", padx=8)
 
         # Linha 1 — Fornecedor / CNPJ
         lbl(b1,"Fornecedor:").grid(row=1,column=0,sticky="w",pady=6)
-        frm_forn = tk.Frame(b1, bg=surface)
+        frm_forn = tk.Frame(b1, bg="#0a0f1e")
         frm_forn.grid(row=1,column=1,columnspan=2,sticky="w",padx=(0,15))
         self._cap_forn = ent(frm_forn, 35)
         self._cap_forn.pack(side="left")
         tk.Button(frm_forn, text="🔍 Buscar", font=("Segoe UI",10,"bold"),
-                  bg="#1e293b", fg=accent, relief="flat", bd=0,
+                  bg="#0a0f1e", fg="#f8fafc", relief="flat", bd=0,
                   padx=10, pady=4, cursor="hand2",
                   command=lambda: _abrir_busca_forn()
                   ).pack(side="left", padx=(5,0))
@@ -849,6 +1255,68 @@ class AbaContasPagarMixin:
         lbl(b1,"CNPJ/CPF:").grid(row=1,column=3,sticky="w", padx=(15,0))
         self._cap_cnpj = ent(b1, 22)
         self._cap_cnpj.grid(row=1,column=4,sticky="w")
+        self._cap_lbl_cnpj_status = tk.Label(b1, text="", fg="#f8fafc", bg="#0a0f1e",
+                                              font=("Segoe UI",8))
+        self._cap_lbl_cnpj_status.grid(row=1, column=5, sticky="w", padx=(6,0))
+
+        def _validar_cnpj_api(event=None):
+            """Valida CNPJ e consulta BrasilAPI em background."""
+            cnpj_raw = re.sub(r'\D', '', self._cap_cnpj.get())
+            # Formata CNPJ automaticamente
+            if len(cnpj_raw) == 14:
+                fmt = f"{cnpj_raw[:2]}.{cnpj_raw[2:5]}.{cnpj_raw[5:8]}/{cnpj_raw[8:12]}-{cnpj_raw[12:14]}"
+                self._cap_cnpj.delete(0,"end")
+                self._cap_cnpj.insert(0, fmt)
+                # Valida dígito verificador localmente
+                def _dv_ok(c):
+                    pesos = [5,4,3,2,9,8,7,6,5,4,3,2]
+                    s = sum(int(c[i])*pesos[i] for i in range(12))
+                    r = 0 if s%11<2 else 11-s%11
+                    if r != int(c[12]): return False
+                    pesos2 = [6]+pesos
+                    s2 = sum(int(c[i])*pesos2[i] for i in range(13))
+                    r2 = 0 if s2%11<2 else 11-s2%11
+                    return r2 == int(c[13])
+                if not _dv_ok(cnpj_raw):
+                    self._cap_lbl_cnpj_status.config(
+                        text="CNPJ inválido", fg="#dc2626")
+                    return
+                self._cap_lbl_cnpj_status.config(
+                    text="⏳ Consultando...", fg="#94a3b8")
+                def _bg():
+                    try:
+                        import requests as _req
+                        r = _req.get(
+                            f"https://brasilapi.com.br/api/cnpj/v1/{cnpj_raw}",
+                            timeout=8)
+                        if r.status_code == 200:
+                            d = r.json()
+                            sit = d.get("descricao_situacao_cadastral","").upper()
+                            nome = d.get("razao_social","")
+                            cor = "#4ade80" if sit == "ATIVA" else "#f87171"
+                            self.root.after(0, lambda: [
+                                self._cap_lbl_cnpj_status.config(
+                                    text=f"⬤ {sit}", fg=cor),
+                                (self._cap_forn.delete(0,"end") or
+                                 self._cap_forn.insert(0, nome))
+                                if not self._cap_forn.get().strip() else None
+                            ])
+                        else:
+                            self.root.after(0, lambda: self._cap_lbl_cnpj_status.config(
+                                text="⚠️ não encontrado", fg="#fbbf24"))
+                    except Exception:
+                        self.root.after(0, lambda: self._cap_lbl_cnpj_status.config(
+                            text="⚠️ offline", fg="#fbbf24"))
+                threading.Thread(target=_bg, daemon=True).start()
+            elif len(cnpj_raw) == 11:
+                # CPF — apenas formata
+                fmt = f"{cnpj_raw[:3]}.{cnpj_raw[3:6]}.{cnpj_raw[6:9]}-{cnpj_raw[9:11]}"
+                self._cap_cnpj.delete(0,"end")
+                self._cap_cnpj.insert(0, fmt)
+                self._cap_lbl_cnpj_status.config(text="👤 CPF", fg="#94a3b8")
+
+        self._cap_cnpj.bind("<FocusOut>", _validar_cnpj_api)
+
 
         # Linha 2 — Empresa / Categoria
         lbl(b1,"Empresa:").grid(row=2,column=0,sticky="w",pady=6)
@@ -877,10 +1345,13 @@ class AbaContasPagarMixin:
                                        state="readonly", width=22, font=("Segoe UI",12))
         self._cap_resp.grid(row=3,column=3,sticky="w")
 
-        # Linha 4 — Descrição
+        # Linha 4 — Descrição / Nº NF
         lbl(b1,"Descrição:").grid(row=4,column=0,sticky="w",pady=6)
-        self._cap_desc = ent(b1, 75)
-        self._cap_desc.grid(row=4,column=1,columnspan=4,sticky="w")
+        self._cap_desc = ent(b1, 52)
+        self._cap_desc.grid(row=4,column=1,columnspan=3,sticky="w")
+        lbl(b1,"Nº NF:").grid(row=4,column=4,sticky="w", padx=(8,0))
+        self._cap_numero_nf = ent(b1, 12)
+        self._cap_numero_nf.grid(row=4,column=5,sticky="w")
 
         # Linha 5 — Datas / Valor
         lbl(b1,"Emissão:").grid(row=5,column=0,sticky="w",pady=6)
@@ -920,17 +1391,17 @@ class AbaContasPagarMixin:
         lbl(b1,"Repetir:").grid(row=7,column=0,sticky="w",pady=2)
         self._cap_recorr_var = tk.BooleanVar(value=False)
         tk.Checkbutton(b1, text="Despesa Fixa Mensal", variable=self._cap_recorr_var,
-                       bg=surface, fg=text, selectcolor="#0a0f1e",
+                       bg="#0a0f1e", fg="#f8fafc", selectcolor="#0a0f1e",
                        font=("Segoe UI",8)).grid(row=7,column=1,columnspan=2,sticky="w")
         
         lbl(b1,"Meses:").grid(row=7,column=3,sticky="w")
         self._cap_recorr_meses = tk.Spinbox(b1, from_=2, to=36, width=5, font=("Segoe UI",8),
-                                            bg="#0a0f1e", fg=text, relief="flat", bd=2)
+                                            bg="#0a0f1e", fg="#f8fafc", relief="flat", bd=2)
         self._cap_recorr_meses.grid(row=7,column=4,sticky="w")
 
         # Alerta de Restituição DIFAL
         self._cap_lbl_alerta_restit = tk.Label(b1, text="", font=("Segoe UI",8,"bold"),
-                                               fg=yellow, bg=surface)
+                                               fg="#f8fafc", bg="#0a0f1e")
         self._cap_lbl_alerta_restit.grid(row=7,column=5,sticky="w")
 
 
@@ -944,14 +1415,14 @@ class AbaContasPagarMixin:
 
         # Linha 9 — Código de Barras
         lbl(b1,"Cód. Barras:").grid(row=9,column=0,sticky="w",pady=2)
-        frm_cb = tk.Frame(b1, bg=surface)
+        frm_cb = tk.Frame(b1, bg="#0a0f1e")
         frm_cb.grid(row=9,column=1,columnspan=5,sticky="w")
         self._cap_cod_barras = tk.Entry(
-            frm_cb, font=("Consolas",9), bg="#0a0f1e", fg=yellow,
-            insertbackground=accent, relief="flat", bd=2, width=65)
+            frm_cb, font=("Consolas",9), bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2, width=65)
         self._cap_cod_barras.pack(side="left")
         tk.Label(frm_cb, text="← bipe aqui com a pistola",
-                 fg="#475569", bg=surface,
+                 fg="#94a3b8", bg="#0a0f1e",
                  font=("Consolas",7)).pack(side="left", padx=6)
 
         # Ao bipar, detecta automaticamente o tipo de pagamento
@@ -982,8 +1453,8 @@ class AbaContasPagarMixin:
         self._cap_cod_barras.bind("<FocusOut>", _detectar_tipo_barras)
 
         # ── BLOCO 1b: DADOS DE PAGAMENTO ──
-        b1b = tk.LabelFrame(frm, text="  Dados de Pagamento  ", bg=surface,
-                             fg=green, font=("Segoe UI",9,"bold"),
+        b1b = tk.LabelFrame(frm, text="  Dados de Pagamento  ", bg="#0a0f1e",
+                             fg="#f8fafc", font=("Segoe UI",9,"bold"),
                              padx=12, pady=8)
         b1b.pack(fill="x", padx=20, pady=(0,6))
 
@@ -1013,7 +1484,7 @@ class AbaContasPagarMixin:
         self._cap_forma_pgto.bind("<<ComboboxSelected>>", _toggle_campos_pgto)
 
         # Linha PIX (escondida inicialmente)
-        frm_pix = tk.Frame(b1b, bg=surface)
+        frm_pix = tk.Frame(b1b, bg="#0a0f1e")
         frm_pix.grid(row=1,column=0,columnspan=6,sticky="w",pady=2)
 
         lbl(frm_pix,"Tipo chave:").pack(side="left",padx=(0,4))
@@ -1025,52 +1496,52 @@ class AbaContasPagarMixin:
 
         lbl(frm_pix,"Chave PIX:").pack(side="left",padx=(0,4))
         self._cap_pix_chave = tk.Entry(frm_pix, font=("Consolas",9),
-                                        bg="#0a0f1e", fg=green,
-                                        insertbackground=accent,
+                                        bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent,
                                         relief="flat", bd=2, width=35)
         self._cap_pix_chave.pack(side="left")
         frm_pix.grid_remove()
 
         # Linha dados bancários TED
-        frm_banco = tk.Frame(b1b, bg=surface)
+        frm_banco = tk.Frame(b1b, bg="#0a0f1e")
         frm_banco.grid(row=2,column=0,columnspan=6,sticky="w",pady=2)
 
         lbl(frm_banco,"Banco:").pack(side="left",padx=(0,4))
         self._cap_banco_dest = tk.Entry(frm_banco, font=("Segoe UI",8),
-                                         bg="#0a0f1e", fg=text,
-                                         insertbackground=accent,
+                                         bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent,
                                          relief="flat", bd=2, width=8)
         self._cap_banco_dest.pack(side="left",padx=(0,10))
 
         lbl(frm_banco,"Agência:").pack(side="left",padx=(0,4))
         self._cap_ag_dest = tk.Entry(frm_banco, font=("Segoe UI",8),
-                                      bg="#0a0f1e", fg=text,
-                                      insertbackground=accent,
+                                      bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent,
                                       relief="flat", bd=2, width=8)
         self._cap_ag_dest.pack(side="left",padx=(0,10))
 
         lbl(frm_banco,"Conta:").pack(side="left",padx=(0,4))
         self._cap_conta_dest = tk.Entry(frm_banco, font=("Segoe UI",8),
-                                         bg="#0a0f1e", fg=text,
-                                         insertbackground=accent,
+                                         bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent,
                                          relief="flat", bd=2, width=12)
         self._cap_conta_dest.pack(side="left",padx=(0,10))
 
         lbl(frm_banco,"CPF/CNPJ dest:").pack(side="left",padx=(0,4))
         self._cap_cpf_cnpj_dest = tk.Entry(frm_banco, font=("Segoe UI",8),
-                                             bg="#0a0f1e", fg=text,
-                                             insertbackground=accent,
+                                             bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent,
                                              relief="flat", bd=2, width=18)
         self._cap_cpf_cnpj_dest.pack(side="left")
         frm_banco.grid_remove()
 
         # Linha boleto (visível por padrão)
-        frm_boleto = tk.Frame(b1b, bg=surface)
+        frm_boleto = tk.Frame(b1b, bg="#0a0f1e")
         frm_boleto.grid(row=3,column=0,columnspan=6,sticky="w",pady=2)
         tk.Label(frm_boleto,
                  text="ℹ️  Bipe o código de barras no campo acima. "
                       "Para PIX ou TED, selecione a forma e preencha os dados bancários.",
-                 fg="#475569", bg=surface, font=("Consolas",7)
+                 fg="#94a3b8", bg="#0a0f1e", font=("Consolas",7)
                  ).pack(side="left")
 
         # Auto-preenche dados bancários do fornecedor quando selecionado
@@ -1107,23 +1578,23 @@ class AbaContasPagarMixin:
                 _toggle_campos_pgto()
 
         # ── BLOCO 1c: ITENS DA NOTA / SERVIÇO ──
-        b1c = tk.LabelFrame(frm, text="  Itens da Nota / Serviço  ", bg=surface,
-                             fg=accent, font=("Segoe UI",11,"bold"), padx=15, pady=12)
+        b1c = tk.LabelFrame(frm, text="  Itens da Nota / Serviço  ", bg="#0a0f1e",
+                             fg="#f8fafc", font=("Segoe UI",11,"bold"), padx=15, pady=12)
         b1c.pack(fill="x", padx=20, pady=(0,10))
 
         self._cap_item_rows = []
-        self._cap_frm_items = tk.Frame(b1c, bg=surface)
+        self._cap_frm_items = tk.Frame(b1c, bg="#0a0f1e")
         self._cap_frm_items.pack(fill="x")
 
         # Cabeçalho itens
         for i, (h, w) in enumerate([("Descrição / Produto", 70), ("Valor Total", 20)]):
-            tk.Label(self._cap_frm_items, text=h, fg=accent, bg=surface,
+            tk.Label(self._cap_frm_items, text=h, fg="#f8fafc", bg="#0a0f1e",
                      font=("Segoe UI",10,"bold")).grid(row=0, column=i*2, sticky="w", padx=6, pady=(0,5))
 
         self._cap_add_item_row() # Começa com uma linha
 
         tk.Button(b1c, text="+ item", font=("Segoe UI",10,"bold"),
-                  bg="#1e293b", fg=accent, relief="flat", bd=0,
+                  bg="#0a0f1e", fg="#f8fafc", relief="flat", bd=0,
                   padx=10, pady=4, cursor="hand2",
                   command=self._cap_add_item_row).pack(anchor="w", pady=(8,0))
 
@@ -1131,20 +1602,20 @@ class AbaContasPagarMixin:
         self._cap_preencher_banco = _preencher_dados_banco
 
         # ── BLOCO 2: IMPOSTOS ──
-        b2 = tk.LabelFrame(frm, text="  Impostos Retidos  ", bg=surface,
-                            fg=yellow, font=("Segoe UI",11,"bold"), padx=15, pady=12)
+        b2 = tk.LabelFrame(frm, text="  Impostos Retidos  ", bg="#0a0f1e",
+                            fg="#f8fafc", font=("Segoe UI",11,"bold"), padx=15, pady=12)
         b2.pack(fill="x", padx=20, pady=(0,10))
 
         tk.Label(b2, text="Valor Bruto de referência é preenchido automaticamente ao digitar acima.",
-                 fg="#94a3b8", bg=surface, font=("Consolas",9)).pack(anchor="w", pady=(0,8))
+                 fg="#94a3b8", bg="#0a0f1e", font=("Consolas",9)).pack(anchor="w", pady=(0,8))
 
         self._cap_imp_rows = []
-        frm_imps = tk.Frame(b2, bg=surface)
+        frm_imps = tk.Frame(b2, bg="#0a0f1e")
         frm_imps.pack(fill="x")
 
         # Cabeçalho impostos
         for i, h in enumerate(["Imposto","Alíquota %","Valor R$","Venc. DARF/GPS"]):
-            tk.Label(frm_imps, text=h, fg=accent, bg=surface,
+            tk.Label(frm_imps, text=h, fg="#f8fafc", bg="#0a0f1e",
                      font=("Segoe UI",9,"bold")).grid(row=0,column=i*2,sticky="w",padx=6,pady=(0,5))
 
         def _add_imposto(tipo="", aliq="", venc=""):
@@ -1160,18 +1631,18 @@ class AbaContasPagarMixin:
             cb.grid(row=row_i, column=0, padx=6, pady=4)
 
             aliq_e = tk.Entry(frm_imps, textvariable=aliq_var, width=10,
-                              font=("Segoe UI",11), bg="#0a0f1e", fg=text,
-                              insertbackground=accent, relief="flat", bd=2)
+                              font=("Segoe UI",11), bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2)
             aliq_e.grid(row=row_i, column=2, padx=6)
 
             val_e = tk.Entry(frm_imps, textvariable=val_var, width=15,
-                             font=("Segoe UI",11), bg="#0a0f1e", fg=yellow,
-                             insertbackground=accent, relief="flat", bd=2)
+                             font=("Segoe UI",11), bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2)
             val_e.grid(row=row_i, column=4, padx=6)
 
             venc_e = tk.Entry(frm_imps, textvariable=venc_var, width=14,
-                              font=("Segoe UI",11), bg="#0a0f1e", fg=text,
-                              insertbackground=accent, relief="flat", bd=2)
+                              font=("Segoe UI",11), bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2)
             venc_e.grid(row=row_i, column=6, padx=6)
 
             # Auto-calcula valor quando alíquota ou tipo muda
@@ -1181,6 +1652,8 @@ class AbaContasPagarMixin:
                     al = _parse_valor(aliq_var.get())
                     val_var.set(f"{vb * al / 100:.2f}")
                 except: pass
+                # Validação de alíquotas invertidas
+                self._cap_validar_aliquotas()
 
             def _preenche_aliq(*args):
                 tp = tipo_var.get()
@@ -1190,7 +1663,7 @@ class AbaContasPagarMixin:
 
             tipo_var.trace_add("write", _preenche_aliq)
             aliq_var.trace_add("write", _calc)
-            self._cap_valor.bind("<FocusOut>", lambda e: [_calc() for _ in [1]])
+            self._cap_valor.bind("<FocusOut>", lambda e: [_calc() for _ in [1]], add="+")
 
             self._cap_imp_rows.append({
                 "tipo": tipo_var, "aliq": aliq_var,
@@ -1200,14 +1673,17 @@ class AbaContasPagarMixin:
         for tp in ["PIS","COFINS","IRRF"]:  # 3 linhas padrão
             _add_imposto(tp, ALIQUOTAS_PADRAO.get(tp,""))
 
+        self._cap_lbl_alerta_imposto = tk.Label(b2, text="", fg="#fbbf24", bg="#0a0f1e", font=("Segoe UI",9,"bold"))
+        self._cap_lbl_alerta_imposto.pack(anchor="w", pady=(4,0))
+
         tk.Button(b2, text="+ imposto", font=("Segoe UI",10,"bold"),
-                  bg="#1e293b", fg=yellow, relief="flat", bd=0,
+                  bg="#0a0f1e", fg="#f8fafc", relief="flat", bd=0,
                   padx=10, pady=4, cursor="hand2",
                   command=_add_imposto).pack(anchor="w", pady=(8,0))
 
         # Label valor líquido
         self._cap_lbl_liq = tk.Label(b2, text="Valor líquido a pagar:  R$ 0,00",
-                                      font=("Segoe UI",12,"bold"), fg=green, bg=surface)
+                                      font=("Segoe UI",12,"bold"), fg="#f8fafc", bg="#0a0f1e")
         self._cap_lbl_liq.pack(anchor="e", pady=(8,0))
 
         def _atualiza_liquido(*args):
@@ -1221,59 +1697,59 @@ class AbaContasPagarMixin:
         self._cap_valor.bind("<KeyRelease>", _atualiza_liquido)
 
         # ── BLOCO 3: PARCELAMENTO ──
-        b3 = tk.LabelFrame(frm, text="  Parcelamento  ", bg=surface,
-                            fg=accent, font=("Segoe UI",11,"bold"), padx=15, pady=12)
+        b3 = tk.LabelFrame(frm, text="  Parcelamento  ", bg="#0a0f1e",
+                            fg="#f8fafc", font=("Segoe UI",11,"bold"), padx=15, pady=12)
         b3.pack(fill="x", padx=20, pady=(0,10))
 
-        frame_parc_ctrl = tk.Frame(b3, bg=surface)
+        frame_parc_ctrl = tk.Frame(b3, bg="#0a0f1e")
         frame_parc_ctrl.pack(fill="x")
 
-        tk.Label(frame_parc_ctrl, text="Nº parcelas:", fg=text, bg=surface,
+        tk.Label(frame_parc_ctrl, text="Nº parcelas:", fg="#f8fafc", bg="#0a0f1e",
                  font=("Segoe UI",11)).pack(side="left")
         self._cap_nparc = tk.Spinbox(frame_parc_ctrl, from_=1, to=48, width=6,
-                                      font=("Segoe UI",11), bg="#0a0f1e", fg=text,
-                                      insertbackground=accent, relief="flat", bd=2)
+                                      font=("Segoe UI",11), bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2)
         self._cap_nparc.pack(side="left", padx=(6,15))
 
-        tk.Label(frame_parc_ctrl, text="1ª parcela:", fg=text, bg=surface,
+        tk.Label(frame_parc_ctrl, text="1ª parcela:", fg="#f8fafc", bg="#0a0f1e",
                  font=("Segoe UI",11)).pack(side="left")
         self._cap_dt_1parc = ent(frame_parc_ctrl, 14)
         self._cap_dt_1parc.pack(side="left", padx=(6,15))
         _aplicar_mascara_data(self._cap_dt_1parc)
 
-        tk.Label(frame_parc_ctrl, text="Intervalo (dias):", fg=text, bg=surface,
+        tk.Label(frame_parc_ctrl, text="Intervalo (dias):", fg="#f8fafc", bg="#0a0f1e",
                  font=("Segoe UI",11)).pack(side="left")
         self._cap_intervalo = tk.Spinbox(frame_parc_ctrl, from_=1, to=90,
                                           width=6, font=("Segoe UI",11),
-                                          bg="#0a0f1e", fg=text,
-                                          insertbackground=accent, relief="flat", bd=2)
+                                          bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2)
         self._cap_intervalo.delete(0,"end"); self._cap_intervalo.insert(0,"30")
         self._cap_intervalo.pack(side="left", padx=(6,15))
 
         tk.Button(frame_parc_ctrl, text="⚡ Calcular parcelas",
-                  font=("Segoe UI",10,"bold"), bg="#1e293b", fg=accent,
+                  font=("Segoe UI",10,"bold"), bg="#0a0f1e", fg="#f8fafc",
                   relief="flat", bd=0, padx=12, pady=4, cursor="hand2",
                   command=self._cap_calcular_parcelas).pack(side="left")
 
-        self._cap_frm_parcelas = tk.Frame(b3, bg=surface)
+        self._cap_frm_parcelas = tk.Frame(b3, bg="#0a0f1e")
         self._cap_frm_parcelas.pack(fill="x", pady=(6,0))
         self._cap_parc_widgets = []
 
         # ── BLOCO 4: RATEIO ──
-        b4 = tk.LabelFrame(frm, text="  Rateio por Filial / Histórico Contábil  ",
-                            bg=surface, fg=accent,
+        b4 = tk.LabelFrame(frm, text="  Centro de Custo Simplificado / Rateio  ",
+                            bg="#0a0f1e", fg="#f8fafc",
                             font=("Segoe UI",11,"bold"), padx=15, pady=12)
         b4.pack(fill="x", padx=20, pady=(0,10))
 
         tk.Label(b4, text="Soma dos percentuais deve ser 100%",
-                 fg="#94a3b8", bg=surface, font=("Consolas",9)).pack(anchor="w", pady=(0,8))
+                 fg="#94a3b8", bg="#0a0f1e", font=("Consolas",9)).pack(anchor="w", pady=(0,8))
 
         self._cap_rat_rows = []
-        frm_rats = tk.Frame(b4, bg=surface)
+        frm_rats = tk.Frame(b4, bg="#0a0f1e")
         frm_rats.pack(fill="x")
 
         for i,h in enumerate(["Filial","% Rateio","Categoria","Valor R$"]):
-            tk.Label(frm_rats, text=h, fg=accent, bg=surface,
+            tk.Label(frm_rats, text=h, fg="#f8fafc", bg="#0a0f1e",
                      font=("Segoe UI",9,"bold")).grid(row=0,column=i*2,sticky="w",padx=6,pady=(0,5))
 
         def _add_rateio():
@@ -1289,8 +1765,8 @@ class AbaContasPagarMixin:
                          ).grid(row=ri, column=0, padx=6, pady=4)
 
             pct_e = tk.Entry(frm_rats, textvariable=pct_var, width=10,
-                             font=("Segoe UI",11), bg="#0a0f1e", fg=text,
-                             insertbackground=accent, relief="flat", bd=2)
+                             font=("Segoe UI",11), bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2)
             pct_e.grid(row=ri, column=2, padx=6)
 
             ttk.Combobox(frm_rats, textvariable=cat_var,
@@ -1299,7 +1775,7 @@ class AbaContasPagarMixin:
                          ).grid(row=ri, column=4, padx=6)
 
             val_lbl = tk.Label(frm_rats, textvariable=val_var,
-                               fg=yellow, bg=surface, font=("Consolas",11,"bold"), width=15)
+                               fg="#f8fafc", bg="#0a0f1e", font=("Consolas",11,"bold"), width=15)
             val_lbl.grid(row=ri, column=6, padx=6)
 
             def _calc_rat(*args):
@@ -1318,25 +1794,27 @@ class AbaContasPagarMixin:
             })
 
         _add_rateio(); _add_rateio()  # 2 linhas iniciais
+        # Auto-preenche 100% na primeira linha para simplificar o centro de custo
+        self._cap_rat_rows[0]["pct"].set("100")
 
         tk.Button(b4, text="+ filial", font=("Segoe UI",10,"bold"),
-                  bg="#1e293b", fg=accent, relief="flat", bd=0,
+                  bg="#0a0f1e", fg="#f8fafc", relief="flat", bd=0,
                   padx=10, pady=4, cursor="hand2",
                   command=_add_rateio).pack(anchor="w", pady=(8,0))
 
         self._cap_lbl_pct_total = tk.Label(b4, text="Total rateio: 0%",
-                                            font=("Segoe UI",11,"bold"), fg=text, bg=surface)
+                                            font=("Segoe UI",11,"bold"), fg="#f8fafc", bg="#0a0f1e")
         self._cap_lbl_pct_total.pack(anchor="e", pady=5)
 
         # ── BOTÃO SALVAR ──
-        tk.Button(frm, text="💾  SALVAR NOTA",
-                  font=("Segoe UI",14,"bold"), bg="#059669", fg="white",
+        tk.Button(frm, text="💾 SALVAR NOTA",
+                  font=("Segoe UI",14,"bold"), bg="#7c3aed", fg="white",
                   relief="flat", bd=0, padx=35, pady=15, cursor="hand2",
                   command=lambda: self._cap_salvar_nota(nb_pai)
                   ).pack(padx=20, pady=(10,25), anchor="e")
 
         self._cap_lbl_save = tk.Label(frm, text="", font=("Segoe UI",9),
-                                       fg=green, bg=bg)
+                                       fg="#f8fafc", bg="#020617")
         self._cap_lbl_save.pack(padx=20, anchor="e")
 
     def _cap_check_restituicao(self, event=None):
@@ -1400,10 +1878,10 @@ class AbaContasPagarMixin:
         bg_s = "#0a0f1e"
         text_c = "white"
 
-        hdr = tk.Frame(self._cap_frm_parcelas, bg="#1e293b")
+        hdr = tk.Frame(self._cap_frm_parcelas, bg="#0a0f1e")
         hdr.pack(fill="x", pady=(0,2))
         for h, w in [("Parcela",60),("Vencimento",110),("Valor",100)]:
-            tk.Label(hdr, text=h, fg="#94a3b8", bg="#1e293b",
+            tk.Label(hdr, text=h, fg="#94a3b8", bg="#0a0f1e",
                      font=("Segoe UI",7,"bold"), width=w//7).pack(side="left", padx=4)
         self._cap_parc_widgets.append(hdr)
 
@@ -1522,17 +2000,46 @@ class AbaContasPagarMixin:
                 "cpf_cnpj_dest": self._cap_cpf_cnpj_dest.get().strip(),
                 
                 # ERP Fields
-                "tipo_operacao": self._cap_op_var.get(),
-                "natureza":      self._cap_nat_var.get(),
+                "tipo_operacao": self._cap_operacao_var.get(),
+                "natureza":      self._cap_natureza_var.get(),
                 "valor_difal":   _parse_valor(self._cap_difal.get()),
                 "valor_fcp":     _parse_valor(self._cap_fcp.get()),
                 "chave_ref":     self._cap_chave_ref.get().strip(),
-                
+
+                # Campo Nº NF separado
+                "numero_nf":     getattr(self, "_cap_numero_nf", type('',(),{"get":lambda s: ""})()).get().strip(),
+
                 "impostos":      impostos,
                 "parcelas":      parcelas,
                 "rateio":        rateio,
                 "itens":         []
             }
+
+            # ── CÓPIA DO ANEXO ──
+            arq_path = getattr(self, "_cap_arquivo_path_var", tk.StringVar()).get()
+            if arq_path and __import__('os').path.exists(arq_path):
+                import os, shutil
+                # Gera numero tx se nao tiver
+                if not dados_base.get("numero_tx"):
+                    dados_base["numero_tx"] = getattr(self, "_cap_editando_id", None) and f"TX_{getattr(self, '_cap_editando_id')}" or f"TX{int(time.time()*100)}"
+                dt_venc = datetime.strptime(dados_base["dt_vencimento"], "%d/%m/%Y")
+                dir_dest = os.path.join(config.BASE_DIR, "FINANCEIRO", "NOTAS", dt_venc.strftime("%Y_%m"))
+                os.makedirs(dir_dest, exist_ok=True)
+                # Não copia se já estiver na pasta
+                if not arq_path.startswith(dir_dest):
+                    ext = os.path.splitext(arq_path)[1]
+                    new_path = os.path.join(dir_dest, f"{dados_base['numero_tx']}{ext}")
+                    try:
+                        shutil.copy2(arq_path, new_path)
+                        dados_base["arquivo_path"] = new_path
+                    except Exception as e:
+                        print(f"Erro ao copiar anexo: {e}")
+                        dados_base["arquivo_path"] = arq_path
+                else:
+                    dados_base["arquivo_path"] = arq_path
+            else:
+                dados_base["arquivo_path"] = arq_path
+
 
             # Coleta Itens
             for ir in self._cap_item_rows:
@@ -1544,8 +2051,118 @@ class AbaContasPagarMixin:
                         "valor_total": _parse_valor(t)
                     })
 
-            # Lógica de Recorrência
-            if self._cap_recorr_var.get():
+            # ── DETECÇÃO DE DUPLICIDADE (HEURÍSTICA/FUZZY) ──
+            if not getattr(self, "_cap_editando_id", None):
+                cnpj_check = dados_base.get("cnpj","").strip()
+                num_nf_check = dados_base.get("numero_nf","").strip()
+                forn_check = dados_base.get("fornecedor","").strip().upper()
+                valor_check = float(dados_base.get("valor_bruto", 0.0))
+                
+                try:
+                    import difflib
+                    from datetime import datetime
+                    
+                    todas = listar_notas() or []
+                    dup_exata = None
+                    dup_heuristica = None
+                    
+                    for n in todas:
+                        if n.get("status","") == "CANCELADA":
+                            continue
+                            
+                        n_cnpj = n.get("cnpj","").strip()
+                        n_forn = n.get("fornecedor","").strip().upper()
+                        n_num = n.get("numero_nf","").strip()
+                        n_val = float(n.get("valor_bruto", 0.0) or 0.0)
+                        
+                        # 1. Match Exato (CNPJ + Num NF)
+                        if cnpj_check and num_nf_check and n_cnpj == cnpj_check and n_num == num_nf_check:
+                            dup_exata = n
+                            break
+                            
+                        # 2. Match Heurístico (Valor Exato + CNPJ ou Nome Parecido) num curto período
+                        if valor_check > 0 and n_val == valor_check:
+                            # Tenta parsear datas para ver se estao próximas (ex: mesmo mes)
+                            try:
+                                dt1 = datetime.strptime(dados_base.get("dt_emissao",""), "%d/%m/%Y")
+                                dt2 = datetime.strptime(n.get("dt_emissao","") or n.get("dt_vencimento",""), "%d/%m/%Y")
+                                diff_dias = abs((dt1 - dt2).days)
+                            except:
+                                diff_dias = 0
+                                
+                            if diff_dias <= 45:
+                                # CNPJ igual
+                                if cnpj_check and n_cnpj == cnpj_check:
+                                    dup_heuristica = n
+                                # Ou Fornecedor Fuzzy (>85% de similaridade)
+                                elif forn_check and n_forn:
+                                    ratio = difflib.SequenceMatcher(None, forn_check, n_forn).ratio()
+                                    if ratio > 0.85:
+                                        dup_heuristica = n
+                    
+                    dup = dup_exata or dup_heuristica
+                    if dup:
+                        tipo_alerta = "Duplicidade EXATA" if dup_exata else "Possível Duplicidade (Valor e Fornecedor)"
+                        resp = messagebox.askyesno(
+                            f"⚠️ {tipo_alerta}",
+                            f"O sistema detectou um lançamento muito similar:\n\n"
+                            f"  Nº TX: {dup.get('numero_tx','')}\n"
+                            f"  Fornecedor: {dup.get('fornecedor','')}\n"
+                            f"  Data Base:  {dup.get('dt_vencimento','')}\n"
+                            f"  Valor: R$ {dup.get('valor_bruto',0):,.2f}\n"
+                            f"  Status: {dup.get('status','')}\n\n"
+                            f"Deseja salvar a nova nota mesmo assim?")
+                        if not resp:
+                            self._cap_lbl_save.config(
+                                text="⚠️ Salvamento cancelado — duplicidade detectada.",
+                                fg="#fbbf24")
+                            return
+                except Exception as e:
+                    print(f"Erro no motor anti-duplicidade: {e}")
+
+            # ── MODO EDICAO (UPDATE) ──
+            editando_id = getattr(self, "_cap_editando_id", None)
+            if editando_id:
+                try:
+                    with db_conn() as conn:
+                        conn.execute("""
+                            UPDATE notas SET
+                                fornecedor=?, cnpj=?, descricao=?, numero_nf=?, arquivo_path=?,
+                                dt_emissao=?, dt_vencimento=?, valor_bruto=?, valor_liquido=?,
+                                categoria=?, responsavel=?, empresa=?, observacao=?,
+                                natureza=?, tipo_operacao=?, valor_difal=?,
+                                forma_pgto=?, banco_dest=?, agencia_dest=?,
+                                conta_dest=?, pix_chave=?, cpf_cnpj_dest=?, chave_ref=?
+                            WHERE id=?""",
+                            (dados_base["fornecedor"],  dados_base["cnpj"],
+                             dados_base["descricao"],   dados_base.get("numero_nf",""), dados_base.get("arquivo_path",""),
+                             dados_base["dt_emissao"],  dados_base["dt_vencimento"],
+                             dados_base["valor_bruto"], dados_base["valor_liquido"],
+                             dados_base["categoria"],   dados_base["responsavel"],
+                             dados_base["empresa"],     dados_base["observacao"],
+                             dados_base.get("natureza",""),
+                             dados_base.get("tipo_operacao","DESPESA"),
+                             dados_base.get("valor_difal",0),
+                             dados_base.get("forma_pgto",""),
+                             dados_base.get("banco_dest",""),
+                             dados_base.get("agencia_dest",""),
+                             dados_base.get("conta_dest",""),
+                             dados_base.get("pix_chave",""),
+                             dados_base.get("cpf_cnpj_dest",""),
+                             dados_base.get("chave_ref",""),
+                             editando_id)
+                        )
+                    self._cap_editando_id = None
+                    self._cap_lbl_save.config(
+                        text=f"Nota #{editando_id} atualizada!", fg="#4ade80")
+                    try: self._cap_lbl_form_titulo.config(text=" Nova Nota / Despesa")
+                    except: pass
+                except Exception as e_upd:
+                    self._cap_lbl_save.config(
+                        text=f"Erro ao atualizar: {e_upd}", fg="#dc2626")
+                    return
+            # ── MODO INSERÇÃO (padrão) ──
+            elif self._cap_recorr_var.get():
                 meses = int(self._cap_recorr_meses.get())
                 id_recorr = f"REC_{int(time.time())}"
                 
@@ -1569,11 +2186,11 @@ class AbaContasPagarMixin:
                     salvar_nota(d_mes)
                 
                 self._cap_lbl_save.config(
-                    text=f"✅ {meses} Notas recorrentes salvas!", fg="#4ade80")
+                    text=f"{meses} Notas recorrentes salvas!", fg="#4ade80")
             else:
                 numero_tx = salvar_nota(dados_base)
                 self._cap_lbl_save.config(
-                    text=f"✅ Nota salva com sucesso! Nº: {numero_tx}", fg="#4ade80")
+                    text=f"Nota salva com sucesso! Nº: {numero_tx}", fg="#4ade80")
 
             # Limpa campos
             for w in [self._cap_forn, self._cap_cnpj, self._cap_desc,
@@ -1605,30 +2222,30 @@ class AbaContasPagarMixin:
                 self._cap_parc_data = []
 
             # Volta para a lista e atualiza
-            nb_pai.select(0)
+            self._cap_select_tab(0)
             self._cap_carregar_lista()
 
         except Exception as e:
-            self._cap_lbl_save.config(text=f"❌ Erro: {e}", fg="#f87171")
+            self._cap_lbl_save.config(text=f"Erro: {e}", fg="#dc2626")
 
 
     # ── SUB-ABA: ADIANTAMENTOS ────────────────────────────────────────────────
     def _cap_build_adiantamentos(self, parent, bg, surface, accent, green, yellow, text, muted):
 
         tk.Label(parent, text="💰  Adiantamentos",
-                 font=("Segoe UI",16,"bold"), fg=accent, bg=bg
+                 font=("Segoe UI",16,"bold"), fg="#f8fafc", bg="#020617"
                  ).pack(anchor="w", padx=20, pady=(15,8))
 
         # Formulário
-        frm = tk.LabelFrame(parent, text="  Novo Adiantamento  ", bg=surface,
-                             fg=accent, font=("Segoe UI",11,"bold"), padx=15, pady=12)
+        frm = tk.LabelFrame(parent, text="  Novo Adiantamento  ", bg="#0a0f1e",
+                             fg="#f8fafc", font=("Segoe UI",11,"bold"), padx=15, pady=12)
         frm.pack(fill="x", padx=20, pady=(0,10))
 
-        def lbl(t): return tk.Label(frm, text=t, fg=text, bg=surface,
+        def lbl(t): return tk.Label(frm, text=t, fg="#f8fafc", bg="#0a0f1e",
                                      font=("Segoe UI",11))
         def ent(w=20):
-            return tk.Entry(frm, font=("Segoe UI",12), bg="#0a0f1e", fg=text,
-                            insertbackground=accent, relief="flat", bd=2, width=w)
+            return tk.Entry(frm, font=("Segoe UI",12), bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2, width=w)
 
         lbl("Beneficiário:").grid(row=0,column=0,sticky="w",pady=6)
         self._ad_benef = ent(35)
@@ -1667,7 +2284,7 @@ class AbaContasPagarMixin:
         self._ad_dt.grid(row=3,column=3,sticky="w")
         _aplicar_mascara_data(self._ad_dt)
 
-        self._ad_lbl = tk.Label(frm, text="", fg=green, bg=surface, font=("Segoe UI",9))
+        self._ad_lbl = tk.Label(frm, text="", fg="#f8fafc", bg="#0a0f1e", font=("Segoe UI",9))
         self._ad_lbl.grid(row=4,column=0,columnspan=4,sticky="w",pady=4)
 
         def _salvar_ad():
@@ -1686,27 +2303,27 @@ class AbaContasPagarMixin:
                     "valor":        valor,
                     "dt_adiantamento": self._ad_dt.get().strip(),
                 })
-                self._ad_lbl.config(text=f"✅ Adiantamento salvo: {tx}", fg=green)
+                self._ad_lbl.config(text=f"Adiantamento salvo: {tx}", fg="#f8fafc")
                 self._ad_benef.delete(0,"end")
                 self._ad_valor.delete(0,"end")
                 self._ad_final.delete(0,"end")
                 _reload_ad()
             except Exception as e:
-                self._ad_lbl.config(text=f"❌ {e}", fg="#f87171")
+                self._ad_lbl.config(text=f"{e}", fg="#dc2626")
 
-        tk.Button(frm, text="💾 Salvar Adiantamento",
-                  font=("Segoe UI",9,"bold"), bg="#7c3aed", fg="white",
+        tk.Button(frm, text="Salvar Adiantamento",
+                  font=("Segoe UI",9,"bold"), bg=accent, fg="white",
                   relief="flat", bd=0, padx=14, pady=6, cursor="hand2",
                   command=_salvar_ad).grid(row=5,column=0,columnspan=4,
                                             sticky="e", pady=(4,0))
 
         # Lista de adiantamentos
         tk.Label(parent, text="📋 Adiantamentos em aberto",
-                 font=("Segoe UI",9,"bold"), fg=text, bg=bg
+                 font=("Segoe UI",9,"bold"), fg="#f8fafc", bg="#020617"
                  ).pack(anchor="w", padx=20, pady=(4,2))
 
         cols = ("Nº TX","Beneficiário","Tipo","Empresa","Data","Valor","Saldo","Status","Finalidade")
-        self._ad_tree = ttk.Treeview(parent, columns=cols, show="headings", height=8)
+        self._ad_tree = ttk.Treeview(parent, style="DS.Treeview", columns=cols, show="headings", height=8)
         largs = [100,180,100,70,90,100,100,80,200]
         for c,w in zip(cols,largs):
             self._ad_tree.heading(c,text=c)
@@ -1741,22 +2358,22 @@ class AbaContasPagarMixin:
     # ── SUB-ABA: PRESTAÇÃO DE CONTAS ─────────────────────────────────────────
     def _cap_build_prestacao(self, parent, bg, surface, accent, green, yellow, text, muted):
 
-        tk.Label(parent, text="✅  Prestação de Contas",
-                 font=("Segoe UI",12,"bold"), fg=accent, bg=bg
+        tk.Label(parent, text=" Prestação de Contas",
+                 font=("Segoe UI",12,"bold"), fg="#f8fafc", bg="#020617"
                  ).pack(anchor="w", padx=20, pady=(12,4))
         tk.Label(parent, text="Selecione o adiantamento e vincule as despesas realizadas.",
-                 font=("Segoe UI",9), fg="#64748b", bg=bg
+                 font=("Segoe UI",9), fg="#64748b", bg="#020617"
                  ).pack(anchor="w", padx=20, pady=(0,8))
 
-        frm = tk.LabelFrame(parent, text="  Registrar Prestação  ", bg=surface,
-                             fg=accent, font=("Segoe UI",9,"bold"), padx=14, pady=10)
+        frm = tk.LabelFrame(parent, text="  Registrar Prestação  ", bg="#0a0f1e",
+                             fg="#f8fafc", font=("Segoe UI",9,"bold"), padx=14, pady=10)
         frm.pack(fill="x", padx=20, pady=(0,8))
 
-        def lbl(t): return tk.Label(frm, text=t, fg="#94a3b8", bg=surface,
+        def lbl(t): return tk.Label(frm, text=t, fg="#94a3b8", bg="#0a0f1e",
                                      font=("Segoe UI",8))
         def ent(w=20):
-            return tk.Entry(frm, font=("Segoe UI",9), bg="#0a0f1e", fg=text,
-                            insertbackground=accent, relief="flat", bd=2, width=w)
+            return tk.Entry(frm, font=("Segoe UI",9), bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2, width=w)
 
         lbl("Adiantamento (Nº TX):").grid(row=0,column=0,sticky="w",pady=3)
         self._pr_ad_var = tk.StringVar()
@@ -1801,7 +2418,7 @@ class AbaContasPagarMixin:
         self._pr_obs = ent(50)
         self._pr_obs.grid(row=3,column=1,columnspan=4,sticky="w")
 
-        self._pr_lbl = tk.Label(frm, text="", fg=green, bg=surface, font=("Segoe UI",9))
+        self._pr_lbl = tk.Label(frm, text="", fg="#f8fafc", bg="#0a0f1e", font=("Segoe UI",9))
         self._pr_lbl.grid(row=4,column=0,columnspan=5,sticky="w",pady=4)
 
         def _salvar_pr():
@@ -1827,16 +2444,16 @@ class AbaContasPagarMixin:
                 registrar_prestacao(ad_id, nota_id, val_ap, val_dev,
                                      self._pr_desc.get().strip(),
                                      self._pr_obs.get().strip())
-                self._pr_lbl.config(text="✅ Prestação registrada!", fg=green)
+                self._pr_lbl.config(text="Prestação registrada!", fg="#f8fafc")
                 for w in [self._pr_desc, self._pr_val_ap, self._pr_obs]:
                     w.delete(0,"end")
                 self._pr_val_dev.delete(0,"end")
                 self._pr_val_dev.insert(0,"0,00")
             except Exception as e:
-                self._pr_lbl.config(text=f"❌ {e}", fg="#f87171")
+                self._pr_lbl.config(text=f"{e}", fg="#dc2626")
 
-        tk.Button(frm, text="✅ Registrar Prestação",
-                  font=("Segoe UI",9,"bold"), bg="#059669", fg="white",
+        tk.Button(frm, text="Registrar Prestação",
+                  font=("Segoe UI",9,"bold"), bg="#7c3aed", fg="white",
                   relief="flat", bd=0, padx=14, pady=6, cursor="hand2",
                   command=_salvar_pr).grid(row=5,column=0,columnspan=5,
                                             sticky="e", pady=(4,0))
@@ -1846,18 +2463,18 @@ class AbaContasPagarMixin:
     def _cap_build_impostos(self, parent, bg, surface, accent, green, yellow, text, muted):
 
         tk.Label(parent, text="🏛️  Impostos Retidos — Conferência e Baixa",
-                 font=("Segoe UI",12,"bold"), fg=accent, bg=bg
+                 font=("Segoe UI",12,"bold"), fg="#f8fafc", bg="#020617"
                  ).pack(anchor="w", padx=20, pady=(12,4))
         tk.Label(parent,
                  text="Todos os impostos destacados nas notas aparecem aqui para conferência e baixa.",
-                 font=("Segoe UI",9), fg="#64748b", bg=bg
+                 font=("Segoe UI",9), fg="#64748b", bg="#020617"
                  ).pack(anchor="w", padx=20, pady=(0,8))
 
         # Toolbar
-        tb = tk.Frame(parent, bg=surface, pady=6, padx=14)
+        tb = tk.Frame(parent, bg="#0a0f1e", pady=6, padx=14)
         tb.pack(fill="x", padx=0)
 
-        tk.Label(tb, text="Status:", fg=muted, bg=surface,
+        tk.Label(tb, text="Status:", fg="#94a3b8", bg="#0a0f1e",
                  font=("Segoe UI",8)).pack(side="left")
         self._imp_filtro = ttk.Combobox(tb,
             values=["TODOS","PENDENTE","PAGO"],
@@ -1865,21 +2482,21 @@ class AbaContasPagarMixin:
         self._imp_filtro.set("PENDENTE")
         self._imp_filtro.pack(side="left", padx=(2,10))
 
-        tk.Button(tb, text="🔍 Atualizar",
-                  font=("Segoe UI",8), bg="#1e293b", fg=accent,
+        tk.Button(tb, text="Atualizar",
+                  font=("Segoe UI",8), bg="#0a0f1e", fg="#f8fafc",
                   relief="flat", bd=0, padx=8, pady=3, cursor="hand2",
                   command=self._imp_carregar).pack(side="left", padx=(0,8))
 
-        tk.Button(tb, text="✅ Marcar PAGO",
-                  font=("Segoe UI",8,"bold"), bg="#059669", fg="white",
+        tk.Button(tb, text="Marcar PAGO",
+                  font=("Segoe UI",8,"bold"), bg="#7c3aed", fg="white",
                   relief="flat", bd=0, padx=10, pady=3, cursor="hand2",
                   command=self._imp_marcar_pago).pack(side="right")
 
         # Treeview
         cols = ("ID Imp","Nº TX","Fornecedor","Tipo Imp","Alíquota",
                 "Valor","Venc. DARF","Status","Nº Doc")
-        self._imp_tree = ttk.Treeview(parent, columns=cols,
-                                       show="headings", height=14)
+        self._imp_tree = ttk.Treeview(parent, style="DS.Treeview", columns=cols,
+                                       show="headings", height=12)
         largs = [60,110,200,100,80,100,100,80,120]
         for c,w in zip(cols,largs):
             self._imp_tree.heading(c,text=c)
@@ -1892,10 +2509,10 @@ class AbaContasPagarMixin:
         self._imp_tree.configure(yscrollcommand=sb_i.set)
 
         # Rodapé totais
-        rod = tk.Frame(parent, bg=surface, pady=4, padx=14)
+        rod = tk.Frame(parent, bg="#0a0f1e", pady=4, padx=14)
         rod.pack(fill="x", side="bottom")
         self._imp_lbl_total = tk.Label(rod, text="", font=("Consolas",8),
-                                        fg=muted, bg=surface)
+                                        fg="#94a3b8", bg="#0a0f1e")
         self._imp_lbl_total.pack(side="left")
 
         self._imp_tree.pack(side="left", fill="both", expand=True,
@@ -1953,31 +2570,31 @@ class AbaContasPagarMixin:
     def _cap_build_fornecedores(self, parent, bg, surface, accent, green, yellow, text, muted):
 
         # ── TOOLBAR ──
-        tb = tk.Frame(parent, bg=surface, pady=6, padx=14)
+        tb = tk.Frame(parent, bg="#0a0f1e", pady=6, padx=14)
         tb.pack(fill="x")
 
         tk.Label(tb, text="🏢 Cadastro de Fornecedores",
-                 font=("Segoe UI",12,"bold"), fg=accent, bg=surface
+                 font=("Segoe UI",12,"bold"), fg="#f8fafc", bg="#0a0f1e"
                  ).pack(side="left", padx=(0,16))
 
         self._forn_busca_var = tk.StringVar()
         tk.Entry(tb, textvariable=self._forn_busca_var,
-                 font=("Segoe UI",8), bg="#0a0f1e", fg=text,
-                 insertbackground=accent, relief="flat", bd=2, width=22
+                 font=("Segoe UI",8), bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2, width=22
                  ).pack(side="left", padx=(0,4))
 
         tk.Button(tb, text="🔍", font=("Segoe UI",9),
-                  bg="#1e293b", fg=accent, relief="flat", bd=0,
+                  bg="#0a0f1e", fg="#f8fafc", relief="flat", bd=0,
                   padx=6, pady=3, cursor="hand2",
                   command=self._forn_carregar).pack(side="left", padx=(0,10))
 
         self._forn_filtro_ativo = tk.BooleanVar(value=True)
         tk.Checkbutton(tb, text="Só ativos", variable=self._forn_filtro_ativo,
-                       bg=surface, fg=muted, font=("Segoe UI",8),
+                       bg="#0a0f1e", fg="#94a3b8", font=("Segoe UI",8),
                        selectcolor="#0a0f1e",
                        command=self._forn_carregar).pack(side="left", padx=(0,10))
 
-        tk.Button(tb, text="➕ Novo Fornecedor",
+        tk.Button(tb, text="Novo Fornecedor",
                   font=("Segoe UI",8,"bold"), bg=accent, fg="#0f172a",
                   relief="flat", bd=0, padx=10, pady=3, cursor="hand2",
                   command=self._forn_novo).pack(side="right")
@@ -1986,7 +2603,7 @@ class AbaContasPagarMixin:
         cols = ("ID","Razão Social","Nome Fantasia","CNPJ/CPF","Tipo",
                 "Empresa","Categoria","Responsável","PIX","Contato")
         self._forn_tree = ttk.Treeview(parent, columns=cols,
-                                        show="headings", height=12)
+                                        style="DS.Treeview", show="headings", height=12)
         largs = [40,220,140,130,90,70,170,120,160,130]
         for c, w in zip(cols, largs):
             self._forn_tree.heading(c, text=c)
@@ -2002,21 +2619,21 @@ class AbaContasPagarMixin:
         self._forn_tree.bind("<Double-1>", self._forn_editar)
 
         # ── RODAPÉ ──
-        rod = tk.Frame(parent, bg=surface, pady=5, padx=14)
+        rod = tk.Frame(parent, bg="#0a0f1e", pady=5, padx=14)
         rod.pack(fill="x", side="bottom")
         self._forn_lbl_count = tk.Label(rod, text="", font=("Consolas",8),
-                                         fg=muted, bg=surface)
+                                         fg="#94a3b8", bg="#0a0f1e")
         self._forn_lbl_count.pack(side="left")
         tk.Button(rod, text="✏️ Editar", font=("Segoe UI",8),
-                  bg="#1e293b", fg=accent, relief="flat", bd=0,
+                  bg="#0a0f1e", fg="#f8fafc", relief="flat", bd=0,
                   padx=8, pady=3, cursor="hand2",
                   command=self._forn_editar).pack(side="right", padx=(4,0))
         tk.Button(rod, text="🚫 Inativar", font=("Segoe UI",8),
-                  bg="#7f1d1d", fg="#fca5a5", relief="flat", bd=0,
+                  bg="#fee2e2", fg="#dc2626", relief="flat", bd=0,
                   padx=8, pady=3, cursor="hand2",
                   command=self._forn_inativar).pack(side="right", padx=(4,0))
         tk.Button(rod, text="🗑 Excluir", font=("Segoe UI",8),
-                  bg="#450a0a", fg="#fca5a5", relief="flat", bd=0,
+                  bg="#450a0a", fg="#dc2626", relief="flat", bd=0,
                   padx=8, pady=3, cursor="hand2",
                   command=self._forn_excluir).pack(side="right", padx=(4,0))
 
@@ -2113,7 +2730,7 @@ class AbaContasPagarMixin:
         mut   = "#94a3b8"
 
         tk.Label(win, text="🏢  Cadastro de Fornecedor",
-                 font=("Segoe UI",12,"bold"), fg=acc, bg=bg
+                 font=("Segoe UI",12,"bold"), fg=acc, bg="#020617"
                  ).pack(anchor="w", padx=20, pady=(14,8))
 
         frm = tk.Frame(win, bg=surf, padx=16, pady=12)
@@ -2181,7 +2798,7 @@ class AbaContasPagarMixin:
         e_email = ent(6, 1, 28, d.get("email",""), cs=3)
 
         # Dados bancários
-        tk.Label(frm, text="── Dados Bancários ──", fg="#475569", bg=surf,
+        tk.Label(frm, text="── Dados Bancários ──", fg="#94a3b8", bg=surf,
                  font=("Segoe UI",7)).grid(row=7, column=0, columnspan=4,
                                             sticky="w", pady=(8,2))
 
@@ -2206,7 +2823,7 @@ class AbaContasPagarMixin:
                                sticky="w", pady=(8,0))
 
         lbl_save = tk.Label(win, text="", font=("Segoe UI",9),
-                            fg=acc, bg=bg)
+                            fg=acc, bg="#020617")
         lbl_save.pack(anchor="w", padx=20, pady=4)
 
         def _salvar():
@@ -2233,17 +2850,17 @@ class AbaContasPagarMixin:
             }
             forn_id = dados.get("id") if dados else None
             salvar_fornecedor(payload, forn_id)
-            lbl_save.config(text="✅ Salvo com sucesso!", fg="#4ade80")
+            lbl_save.config(text="Salvo com sucesso!", fg="#4ade80")
             self._forn_carregar()
             win.after(800, win.destroy)
 
-        btn_f = tk.Frame(win, bg=bg)
+        btn_f = tk.Frame(win, bg="#020617")
         btn_f.pack(fill="x", padx=20, pady=(0,12))
         tk.Button(btn_f, text="💾 Salvar",
-                  font=("Segoe UI",10,"bold"), bg="#059669", fg="white",
+                  font=("Segoe UI",10,"bold"), bg="#7c3aed", fg="white",
                   relief="flat", bd=0, padx=16, pady=7, cursor="hand2",
                   command=_salvar).pack(side="right", padx=(6,0))
-        tk.Button(btn_f, text="Cancelar",
+        tk.Button(btn_f, text="❌ Cancelar",
                   font=("Segoe UI",9), bg=surf, fg=mut,
                   relief="flat", bd=0, padx=12, pady=7, cursor="hand2",
                   command=win.destroy).pack(side="right")
@@ -2253,21 +2870,21 @@ class AbaContasPagarMixin:
     def _cap_build_cnab(self, parent, bg, surface, accent, green, yellow, text, muted):
 
         tk.Label(parent, text="🏦  Gerador CNAB 240 — Itaú",
-                 font=("Segoe UI",12,"bold"), fg=accent, bg=bg
+                 font=("Segoe UI",12,"bold"), fg="#f8fafc", bg="#020617"
                  ).pack(anchor="w", padx=20, pady=(12,2))
         tk.Label(parent,
                  text="Gera arquivo de remessa para envio ao Itaú Empresas. "
                       "Um arquivo por empresa. Suba no Sispag → Cobrança/Pagamento → Remessa.",
-                 font=("Segoe UI",8), fg=muted, bg=bg
+                 font=("Segoe UI",8), fg="#94a3b8", bg="#020617"
                  ).pack(anchor="w", padx=20, pady=(0,8))
 
         # ── CONFIGURAÇÕES ──
-        cfg = tk.LabelFrame(parent, text="  Configurações  ", bg=surface,
-                             fg=accent, font=("Segoe UI",9,"bold"),
+        cfg = tk.LabelFrame(parent, text="  Configurações  ", bg="#0a0f1e",
+                             fg="#f8fafc", font=("Segoe UI",9,"bold"),
                              padx=14, pady=10)
         cfg.pack(fill="x", padx=20, pady=(0,8))
 
-        def lbl(t): return tk.Label(cfg, text=t, fg=muted, bg=surface,
+        def lbl(t): return tk.Label(cfg, text=t, fg="#94a3b8", bg="#0a0f1e",
                                      font=("Segoe UI",8))
 
         lbl("Empresa:").grid(row=0, column=0, sticky="w", pady=3)
@@ -2287,8 +2904,8 @@ class AbaContasPagarMixin:
 
         lbl("Filtrar vencimento:").grid(row=1, column=0, sticky="w", pady=3)
         self._cnab_dt_de = tk.Entry(cfg, font=("Segoe UI",9),
-                                     bg="#0a0f1e", fg=text,
-                                     insertbackground=accent,
+                                     bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent,
                                      relief="flat", bd=2, width=11)
         self._cnab_dt_de.insert(0, datetime.now().strftime("%d/%m/%Y"))
         self._cnab_dt_de.grid(row=1, column=1, sticky="w", padx=(0,6))
@@ -2296,8 +2913,8 @@ class AbaContasPagarMixin:
 
         lbl("até:").grid(row=1, column=2, sticky="w")
         self._cnab_dt_ate = tk.Entry(cfg, font=("Segoe UI",9),
-                                      bg="#0a0f1e", fg=text,
-                                      insertbackground=accent,
+                                      bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent,
                                       relief="flat", bd=2, width=11)
         self._cnab_dt_ate.insert(0, datetime.now().strftime("%d/%m/%Y"))
         self._cnab_dt_ate.grid(row=1, column=3, sticky="w")
@@ -2306,31 +2923,31 @@ class AbaContasPagarMixin:
         lbl("Nº Remessa:").grid(row=2, column=0, sticky="w", pady=3)
         self._cnab_num_rem = tk.Spinbox(cfg, from_=1, to=9999,
                                          width=6, font=("Segoe UI",9),
-                                         bg="#0a0f1e", fg=text,
-                                         insertbackground=accent,
+                                         bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent,
                                          relief="flat", bd=2)
         self._cnab_num_rem.grid(row=2, column=1, sticky="w")
 
         lbl("Pasta de saída:").grid(row=2, column=2, sticky="w")
         self._cnab_pasta_var = tk.StringVar(value=PASTA_ATUAL)
         tk.Entry(cfg, textvariable=self._cnab_pasta_var,
-                 font=("Consolas",8), bg="#0a0f1e", fg=text,
-                 insertbackground=accent, relief="flat", bd=2, width=35
+                 font=("Consolas",8), bg="#0a0f1e", fg="#f8fafc",
+                         insertbackground=accent, relief="flat", bd=2, width=35
                  ).grid(row=2, column=3, sticky="w", padx=(0,6))
         tk.Button(cfg, text="📂", font=("Segoe UI",8),
-                  bg=surface, fg=accent, relief="flat", bd=0, cursor="hand2",
+                  bg="#0a0f1e", fg="#f8fafc", relief="flat", bd=0, cursor="hand2",
                   command=self._cnab_selecionar_pasta
                   ).grid(row=2, column=4, padx=(0,4))
 
         # ── PREVIEW DE PAGAMENTOS ──
         tk.Label(parent, text="📋 Pagamentos que serão incluídos no arquivo:",
-                 font=("Segoe UI",9,"bold"), fg=text, bg=bg
+                 font=("Segoe UI",9,"bold"), fg="#f8fafc", bg="#020617"
                  ).pack(anchor="w", padx=20, pady=(4,2))
 
         cols = ("Tipo","Fornecedor/Beneficiário","CNPJ","Vencimento",
                 "Valor","Empresa","Código Barras / Chave")
-        self._cnab_tree = ttk.Treeview(parent, columns=cols,
-                                        show="headings", height=10)
+        self._cnab_tree = ttk.Treeview(parent, style="DS.Treeview", columns=cols,
+                                        show="headings", height=12)
         largs = [80,200,130,90,100,70,220]
         for c, w in zip(cols, largs):
             self._cnab_tree.heading(c, text=c)
@@ -2350,21 +2967,21 @@ class AbaContasPagarMixin:
         self._cnab_tree.configure(yscrollcommand=sb.set)
 
         # Rodapé
-        rod = tk.Frame(parent, bg=surface, pady=6, padx=14)
+        rod = tk.Frame(parent, bg="#0a0f1e", pady=6, padx=14)
         rod.pack(fill="x", side="bottom")
 
         self._cnab_lbl_status = tk.Label(rod, text="",
                                           font=("Segoe UI",9,"bold"),
-                                          fg=muted, bg=surface)
+                                          fg="#94a3b8", bg="#0a0f1e")
         self._cnab_lbl_status.pack(side="left")
 
         tk.Button(rod, text="📄 GERAR CNAB 240",
-                  font=("Segoe UI",10,"bold"), bg="#7c3aed", fg="white",
+                  font=("Segoe UI",10,"bold"), bg=accent, fg="white",
                   relief="flat", bd=0, padx=18, pady=7, cursor="hand2",
                   command=self._cnab_gerar).pack(side="right", padx=(6,0))
 
-        tk.Button(rod, text="🔍 Carregar preview",
-                  font=("Segoe UI",9), bg="#1e293b", fg=accent,
+        tk.Button(rod, text="Carregar preview",
+                  font=("Segoe UI",9), bg="#0a0f1e", fg="#f8fafc",
                   relief="flat", bd=0, padx=12, pady=7, cursor="hand2",
                   command=self._cnab_carregar_preview).pack(side="right")
 
@@ -2573,11 +3190,11 @@ class AbaContasPagarMixin:
                 arquivos_gerados.append(nome_arq)
             else:
                 self._cnab_lbl_status.config(
-                    text=f"❌ Erro {emp}: {resultado}", fg="#f87171")
+                    text=f"Erro {emp}: {resultado}", fg="#dc2626")
                 return
 
         if arquivos_gerados:
-            msg = f"✅ Gerado: {', '.join(arquivos_gerados)}"
+            msg = f"Gerado: {', '.join(arquivos_gerados)}"
             self._cnab_lbl_status.config(text=msg, fg="#4ade80")
             # Abre a pasta
             try:
@@ -2588,29 +3205,29 @@ class AbaContasPagarMixin:
     def _cap_build_alertas(self, parent, bg, surface, accent, green, yellow, text, muted):
         """Constrói a interface da central de alertas de vencimentos."""
         
-        frm_topo = tk.Frame(parent, bg=bg, pady=15)
+        frm_topo = tk.Frame(parent, bg="#020617", pady=15)
         frm_topo.pack(fill="x", padx=20)
         
         tk.Label(frm_topo, text="🔔 Central de Alertas e Vencimentos",
-                 font=("Segoe UI",16,"bold"), fg=accent, bg=bg
+                 font=("Segoe UI",16,"bold"), fg="#f8fafc", bg="#020617"
                  ).pack(side="left")
         
         tk.Button(frm_topo, text="🔄 Atualizar Alertas",
-                  font=("Segoe UI",11,"bold"), bg="#1e293b", fg=accent,
+                  font=("Segoe UI",11,"bold"), bg="#0a0f1e", fg="#f8fafc",
                   relief="flat", bd=0, padx=15, pady=6, cursor="hand2",
                   command=self._cap_carregar_alertas).pack(side="right")
 
         # Container para os cards de resumo
-        frm_resumo = tk.Frame(parent, bg=bg)
+        frm_resumo = tk.Frame(parent, bg="#020617")
         frm_resumo.pack(fill="x", padx=20, pady=10)
         
         def card(parent, title, color):
-            f = tk.Frame(parent, bg=surface, highlightbackground=color, highlightthickness=2, padx=20, pady=15)
+            f = tk.Frame(parent, bg="#0a0f1e", highlightbackground=color, highlightthickness=2, padx=20, pady=15)
             f.pack(side="left", padx=(0,20), expand=True, fill="both")
-            tk.Label(f, text=title, fg=text, bg=surface, font=("Segoe UI",10,"bold")).pack(anchor="w")
-            v = tk.Label(f, text="R$ 0,00", fg=color, bg=surface, font=("Segoe UI",16,"bold"))
+            tk.Label(f, text=title, fg="#f8fafc", bg="#0a0f1e", font=("Segoe UI",10,"bold")).pack(anchor="w")
+            v = tk.Label(f, text="R$ 0,00", fg=color, bg="#0a0f1e", font=("Segoe UI",16,"bold"))
             v.pack(anchor="w", pady=(4,0))
-            n = tk.Label(f, text="0 itens", fg="#94a3b8", bg=surface, font=("Segoe UI",9))
+            n = tk.Label(f, text="0 itens", fg="#94a3b8", bg="#0a0f1e", font=("Segoe UI",9))
             n.pack(anchor="w")
             return v, n
 
@@ -2620,11 +3237,11 @@ class AbaContasPagarMixin:
 
         # Tabela de alertas detalhados
         tk.Label(parent, text="📋 Detalhamento de Pendências:",
-                 font=("Segoe UI",11,"bold"), fg=text, bg=bg
+                 font=("Segoe UI",11,"bold"), fg="#f8fafc", bg="#020617"
                  ).pack(anchor="w", padx=20, pady=(20,8))
 
         cols = ("Vencimento","Natureza","Fornecedor/Imposto","Descrição","Valor","Empresa","Nº TX")
-        self._alerta_tree = ttk.Treeview(parent, columns=cols, show="headings", height=15)
+        self._alerta_tree = ttk.Treeview(parent, style="DS.Treeview", columns=cols, show="headings", height=15)
         largs = [100,100,200,250,120,80,120]
         for c, w in zip(cols, largs):
             self._alerta_tree.heading(c, text=c)
@@ -2641,10 +3258,10 @@ class AbaContasPagarMixin:
         sb.pack(side="left", fill="y", pady=(0,15), padx=(0,20))
 
         # Ação rápida
-        rod = tk.Frame(parent, bg=surface, pady=10, padx=16)
+        rod = tk.Frame(parent, bg="#0a0f1e", pady=10, padx=16)
         rod.pack(fill="x", side="bottom")
         tk.Button(rod, text="✅ Marcar Selecionados como PAGO",
-                  font=("Segoe UI",11,"bold"), bg="#059669", fg="white",
+                  font=("Segoe UI",11,"bold"), bg="#7c3aed", fg="white",
                   relief="flat", bd=0, padx=20, pady=8, cursor="hand2",
                   command=lambda: self._cap_mudar_status_alerta("PAGA")).pack(side="right")
 

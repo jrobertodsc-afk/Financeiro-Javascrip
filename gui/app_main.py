@@ -26,16 +26,21 @@ from utils.formatters import *
 from database import *
 from cnab_generator import *
 
+from gui.design_system import COLORS, FONTS, SPACING, RADIUS, apply_treeview_style
+from gui.sidebar import Sidebar
+from gui.components import StatCard, ActionButton, SectionHeader
+
 from gui.mixins.aba_robo import AbaRoboMixin
 from gui.mixins.aba_busca import AbaBuscaMixin
 from gui.mixins.aba_extrato import AbaExtratoMixin
 from gui.mixins.aba_contas_pagar import AbaContasPagarMixin
 from gui.mixins.aba_recebiveis import AbaRecebiveisMixin
 from gui.mixins.aba_autorizacao import AbaAutorizacaoMixin
-from gui.mixins.aba_historico_status import AbaHistStatusMixin
-from gui.mixins.aba_historico_fluxo import AbaHistFluxoMixin
 from gui.mixins.aba_restituicoes import AbaRestituicoesMixin
+from gui.mixins.aba_manual import AbaManualMixin
 from gui.mixins.utils_mixin import AppUtilsMixin
+from gui.mixins.aba_analytics import AbaAnalyticsMixin
+
 
 class ComSystemApp(
     ctk.CTk,
@@ -45,161 +50,271 @@ class ComSystemApp(
     AbaContasPagarMixin,
     AbaRecebiveisMixin,
     AbaAutorizacaoMixin,
-    AbaHistStatusMixin,
-    AbaHistFluxoMixin,
     AbaRestituicoesMixin,
+    AbaManualMixin,
+    AbaAnalyticsMixin,
     AppUtilsMixin
 ):
     def __init__(self):
         super().__init__()
-        
-        # ── CONFIGURAÇÕES BÁSICAS ──
-        self.root = self # Compatibilidade com mixins antigos
+
+        # ── Compatibilidade com mixins antigos ────────────────────────────────
+        self.root = self
+
+        # Mantém colors dict legado para mixins que ainda o referenciam
+        self.colors = {
+            "bg":          COLORS["bg"],
+            "surface":     COLORS["surface"],
+            "card":        COLORS["card"],
+            "border":      COLORS["border"],
+            "accent":      COLORS["accent"],
+            "accent_glow": COLORS["accent_glow"],
+            "text":        COLORS["text"],
+            "muted":       COLORS["muted"],
+            "error":       COLORS["error"],
+            "warning":     COLORS["warning"],
+        }
+
+        # ── Janela principal ──────────────────────────────────────────────────
         self.title("Com System Dashboard")
-        self.geometry("1280x850")
-        self.configure(fg_color="#000000")
-        self.state('zoomed')
-        
+        self.geometry("1400x900")
+        self.configure(fg_color=COLORS["bg"])
+        self.state("zoomed")
+
+        # ── Estado global ─────────────────────────────────────────────────────
         self.rodando = False
         self._log_historico = []
         self._resultados_busca = []
-        
-        # Paleta de Cores
-        self.colors = {
-            "bg": "#000000",
-            "surface": "#111111",
-            "card": "#1A1A1A",
-            "border": "#222222",
-            "accent": "#CCFF00", # Lime Green Principal
-            "accent_glow": "#E0FF33",
-            "text": "#FFFFFF",
-            "muted": "#525252",
-            "error": "#FF3333",
-            "warning": "#FFCC00"
-        }
-        
+
+        # ── Construção da UI ──────────────────────────────────────────────────
         self._build_ui()
-        
+
         # Garante pastas de operação em background após o render inicial
         self.after(1000, ensure_directories)
 
+    # ══════════════════════════════════════════════════════════════════════════
+    # ── BUILD UI PRINCIPAL ────────────────────────────────────────────────────
+    # ══════════════════════════════════════════════════════════════════════════
+
     def _build_ui(self):
-        # ── ESTILO GLOBAL (TTK) ──
+        # Estilo TTK global
         style = ttk.Style()
-        style.theme_use("default")
-        style.configure("Treeview", 
-                        background=self.colors["bg"], 
-                        foreground=self.colors["text"], 
-                        fieldbackground=self.colors["bg"], 
-                        rowheight=35,
-                        borderwidth=0,
-                        font=("Segoe UI", 10))
-        style.configure("Treeview.Heading", 
-                        background=self.colors["surface"], 
-                        foreground=self.colors["accent"], 
-                        relief="flat",
-                        font=("Segoe UI", 10, "bold"))
-        style.map("Treeview", background=[("selected", self.colors["border"])])
+        apply_treeview_style(style)
 
-        # ── HEADER (Barra Superior) ──
-        self.header = ctk.CTkFrame(self, fg_color=self.colors["bg"], height=80, corner_radius=0)
-        self.header.pack(fill="x", side="top")
-        
-        # Logo e Título
-        logo_frame = ctk.CTkFrame(self.header, fg_color=self.colors["accent"], width=45, height=45, corner_radius=8)
-        logo_frame.pack_propagate(False)
-        logo_frame.pack(side="left", padx=(30, 15), pady=15)
-        ctk.CTkLabel(logo_frame, text="CS", font=("Segoe UI", 14, "bold"), text_color="#000000").pack(expand=True)
-        
-        brand_f = ctk.CTkFrame(self.header, fg_color="transparent")
-        brand_f.pack(side="left", pady=15)
-        ctk.CTkLabel(brand_f, text="Com", font=("Segoe UI", 24, "bold"), text_color=self.colors["text"]).pack(side="left")
-        ctk.CTkLabel(brand_f, text=" System", font=("Segoe UI", 24, "bold"), text_color=self.colors["accent"]).pack(side="left")
-        
-        # Status Operacional (Direita)
-        status_f = ctk.CTkFrame(self.header, fg_color="transparent")
-        status_f.pack(side="right", padx=30)
-        
-        self.status_dot = ctk.CTkFrame(status_f, width=10, height=10, corner_radius=5, fg_color=self.colors["accent"])
-        self.status_dot.pack(side="left", padx=(0, 10))
-        ctk.CTkLabel(status_f, text="SYSTEM STATUS: OPERATIONAL", font=("Segoe UI", 10, "bold"), text_color=self.colors["accent"]).pack(side="left")
+        # ── Header ────────────────────────────────────────────────────────────
+        self._build_header()
 
-        # ── NAVEGAÇÃO (TABVIEW) ──
-        # Customização para parecer abas de vidro
-        self.tabview = ctk.CTkTabview(
-            self, 
-            fg_color="transparent",
-            segmented_button_fg_color=self.colors["surface"],
-            segmented_button_selected_color=self.colors["accent"],
-            segmented_button_selected_hover_color=self.colors["accent_glow"],
-            segmented_button_unselected_color=self.colors["card"],
-            segmented_button_unselected_hover_color=self.colors["border"],
-            text_color="#FFFFFF" # Texto branco para todas as abas (funciona bem no Lima e no Cinza)
-        )
-        self.tabview.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+        # ── Separador header/conteúdo ─────────────────────────────────────────
+        ctk.CTkFrame(self, fg_color=COLORS["border"], height=1).pack(fill="x")
 
-        # Configuração comum para todas as builds de abas
-        aba_args = (
-            self.colors["bg"], 
-            self.colors["surface"], 
-            self.colors["border"], 
-            self.colors["accent"], 
-            self.colors["accent"], 
-            self.colors["warning"], 
-            self.colors["text"], 
-            self.colors["muted"]
-        )
+        # ── Corpo principal (sidebar + conteúdo) ──────────────────────────────
+        self._body = ctk.CTkFrame(self, fg_color="transparent")
+        self._body.pack(fill="both", expand=True)
+        self._body.grid_rowconfigure(0, weight=1)
+        # Removido grid_columnconfigure(1, weight=1) que esticava o separador
 
-        # ── MONTAGEM DAS ABAS (Lazy Loading) ──
+        # ── Configuração das abas ─────────────────────────────────────────────
         self.tab_configs = {
-            "Dashboard": self._build_aba_robo,
-            "Buscar": self._build_aba_busca,
-            "Fluxo": self._build_aba_extrato,
-            "Logs": self._build_aba_historico_status,
-            "Histórico": self._build_aba_historico_fluxo,
-            "Cartões": self._build_aba_recebiveis,
-            "Autorização": self._build_aba_autorizacao,
-            "Manual": self._build_aba_manual,
+            "Organizador":    self._build_aba_robo,
+            "Buscar":         self._build_aba_busca,
+            "Fluxo":          self._build_aba_extrato,
+            
             "Contas a Pagar": self._build_aba_contas_pagar,
-            "Restituições": self._build_aba_restituicoes,
+            "Lançamento Manual": self._build_aba_manual,
+            "Adiantamentos":  self._build_solo_adiantamentos,
+            "Fornecedores":   self._build_solo_fornecedores,
+            "Autorização":    self._build_aba_autorizacao,
+            "Cartões":        self._build_aba_recebiveis,
+            "Restituições":   self._build_aba_restituicoes,
+            
+            "Analytics":      self._build_aba_analytics,
         }
-        
-        self.tabs_built = set()
-        self.aba_args = aba_args
+        self.tabs_built   = set()
+        self._tab_frames  = {}   # tab_name → CTkFrame (container)
+        self._active_tab  = None
 
-        # Cria os containers das abas, mas não constrói o conteúdo ainda
-        for name in self.tab_configs.keys():
-            self.tabview.add(name)
+        # Args legados passados para os mixins antigos
+        self.aba_args = (
+            COLORS["bg"], COLORS["surface"], COLORS["border"],
+            COLORS["accent"], COLORS["accent"], COLORS["warning"],
+            COLORS["text"], COLORS["muted"],
+        )
 
-        # Constrói apenas a primeira aba (Dashboard) imediatamente
-        self._build_tab("Dashboard")
-        
-        # Configura o evento de troca de aba para construir as outras sob demanda
-        self.tabview.configure(command=self._on_tab_change)
+        # ── Sidebar ───────────────────────────────────────────────────────────
+        self._sidebar = Sidebar(
+            self._body,
+            tabs=[], # Now hardcoded inside sidebar.py
+            on_navigate=self._navigate_to
+        )
+        self._sidebar.grid(row=0, column=0, sticky="ns")
 
-    def _build_tab(self, name):
-        if name in self.tabs_built: return
-        
-        tab_frame = self.tabview.tab(name)
-        build_func = self.tab_configs[name]
-        
-        # Mostra um "Carregando..." temporário se não for a primeira
-        if name != "Dashboard":
-            loading = ctk.CTkLabel(tab_frame, text=f"Carregando {name}...", font=("Segoe UI", 12))
-            loading.pack(expand=True)
-            self.update_idletasks()
-            loading.destroy()
+        # Separador sidebar/conteúdo
+        ctk.CTkFrame(self._body, fg_color=COLORS["border"],
+                     width=1).grid(row=0, column=1, sticky="ns")
 
-        build_func(tab_frame, *self.aba_args)
-        self.tabs_built.add(name)
+        # ── Área de conteúdo ──────────────────────────────────────────────────
+        self._content_area = ctk.CTkFrame(self._body, fg_color=COLORS["bg"],
+                                           corner_radius=0)
+        self._content_area.grid(row=0, column=2, sticky="nsew")
+        self._body.grid_columnconfigure(2, weight=1)
 
-    def _on_tab_change(self):
-        selected_tab = self.tabview.get()
-        self._build_tab(selected_tab)
+        # Cria os frames container para cada aba (vazios por ora)
+        for name in self.tab_configs:
+            frame = ctk.CTkFrame(self._content_area, fg_color=COLORS["bg"],
+                                  corner_radius=0)
+            frame.place(relx=0, rely=0, relwidth=1, relheight=1)
+            frame.lower()  # Esconde todos inicialmente
+            self._tab_frames[name] = frame
 
-    def _build_aba_manual(self, parent, *args):
-        # Placeholder para a aba manual
-        ctk.CTkLabel(parent, text="Módulo Manual em Desenvolvimento", font=("Segoe UI", 16)).pack(expand=True)
+        # Navega para o Organizador imediatamente
+        self._navigate_to("Organizador", animate=False)
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # ── HEADER ────────────────────────────────────────────────────────────────
+    # ══════════════════════════════════════════════════════════════════════════
+
+    def _build_header(self):
+        self.header = ctk.CTkFrame(self, fg_color=COLORS["surface"],
+                                    height=58, corner_radius=0)
+        self.header.pack(fill="x", side="top")
+        self.header.pack_propagate(False)
+
+        # Esquerda: breadcrumb / título da aba ativa
+        left = ctk.CTkFrame(self.header, fg_color="transparent")
+        left.pack(side="left", padx=SPACING["xl"], fill="y")
+
+        lbl_system = ctk.CTkLabel(left, text="Com System", font=FONTS["h4"],
+                                   text_color=COLORS["muted"])
+        lbl_system.pack(side="left", anchor="center")
+
+        ctk.CTkLabel(left, text="  /  ", font=FONTS["body"],
+                     text_color=COLORS["border_light"]).pack(side="left", anchor="center")
+
+        self._breadcrumb_lbl = ctk.CTkLabel(left, text="Dashboard",
+                                             font=FONTS["h4"],
+                                             text_color=COLORS["accent"])
+        self._breadcrumb_lbl.pack(side="left", anchor="center")
+
+        # Direita: status + relógio
+        right = ctk.CTkFrame(self.header, fg_color="transparent")
+        right.pack(side="right", padx=SPACING["xl"], fill="y")
+
+        # Status dot animado
+        self._status_canvas = tk.Canvas(right, width=10, height=10,
+                                         bg=COLORS["surface"], highlightthickness=0)
+        self._status_canvas.pack(side="left", padx=(0, 6), anchor="center")
+        self._status_dot = self._status_canvas.create_oval(
+            1, 1, 9, 9, fill=COLORS["accent"], outline=""
+        )
+
+        ctk.CTkLabel(right, text="OPERATIONAL", font=FONTS["label"],
+                     text_color=COLORS["accent"]).pack(side="left",
+                                                        padx=(0, SPACING["lg"]),
+                                                        anchor="center")
+
+        # Separador
+        ctk.CTkFrame(right, fg_color=COLORS["border"], width=1,
+                     height=24).pack(side="left", padx=SPACING["md"])
+
+        # Relógio
+        self._clock_lbl = ctk.CTkLabel(right, text="--:--:--",
+                                        font=FONTS["mono"],
+                                        text_color=COLORS["muted"])
+        self._clock_lbl.pack(side="left", padx=SPACING["md"], anchor="center")
+
+        # Inicia animações do header
+        self._update_clock()
+        self._pulse_status_dot()
+
+    def _update_clock(self):
+        self._clock_lbl.configure(text=datetime.now().strftime("%H:%M:%S"))
+        self.after(1000, self._update_clock)
+
+    def _pulse_status_dot(self):
+        """Animação de pulse no status dot (tamanho oscila)."""
+        sizes = [(1, 1, 9, 9), (2, 2, 8, 8), (1, 1, 9, 9)]
+        self._pulse_step = getattr(self, "_pulse_step", 0)
+        coords = sizes[self._pulse_step % len(sizes)]
+        self._status_canvas.coords(self._status_dot, *coords)
+        self._pulse_step += 1
+        self.after(800, self._pulse_status_dot)
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # ── NAVEGAÇÃO ─────────────────────────────────────────────────────────────
+    # ══════════════════════════════════════════════════════════════════════════
+
+    def _navigate_to(self, tab_name: str, animate: bool = True):
+        """Navega para a aba indicada, construindo-a se necessário."""
+        if tab_name == self._active_tab:
+            return
+
+        # Lazy build
+        if tab_name not in self.tabs_built:
+            self._build_tab(tab_name)
+
+        # Transição: oculta atual, exibe nova
+        if self._active_tab and self._active_tab in self._tab_frames:
+            self._tab_frames[self._active_tab].lower()
+
+        self._tab_frames[tab_name].lift()
+        self._active_tab = tab_name
+
+        # Atualiza breadcrumb e sidebar
+        self._breadcrumb_lbl.configure(text=tab_name)
+        self._sidebar.set_active(tab_name)
+
+        # Fade suave (opcional, 150ms)
+        if animate:
+            self._fade_in(self._tab_frames[tab_name])
+
+    def _fade_in(self, frame, step: int = 0):
+        """Efeito de fade-in via atributo de alpha — compatível com CTk."""
+        # CustomTkinter não suporta alpha por frame, mas podemos simular
+        # com uma sequência de updates visuais rápida
+        pass
+
+    def _build_solo_adiantamentos(self, parent, *args):
+        self._cap_build_adiantamentos(
+            parent,
+            self.aba_args[0],  # bg
+            self.aba_args[1],  # surface
+            self.aba_args[3],  # accent
+            self.aba_args[4],  # green (accent)
+            self.aba_args[5],  # yellow (warning)
+            self.aba_args[6],  # text
+            self.aba_args[7]   # muted
+        )
+
+    def _build_solo_fornecedores(self, parent, *args):
+        self._cap_build_fornecedores(
+            parent,
+            self.aba_args[0],  # bg
+            self.aba_args[1],  # surface
+            self.aba_args[3],  # accent
+            self.aba_args[4],  # green (accent)
+            self.aba_args[5],  # yellow (warning)
+            self.aba_args[6],  # text
+            self.aba_args[7]   # muted
+        )
+
+    def _build_tab(self, tab_name: str):
+        """Constrói o conteúdo de uma aba no seu frame container."""
+        if tab_name in self.tabs_built:
+            return
+
+        frame = self._tab_frames[tab_name]
+        build_func = self.tab_configs[tab_name]
+
+        # Indicador de carregamento
+        spinner_lbl = ctk.CTkLabel(frame, text=f"⟳  Carregando {tab_name}...",
+                                    font=FONTS["h3"], text_color=COLORS["muted"])
+        spinner_lbl.place(relx=0.5, rely=0.5, anchor="center")
+        self.update_idletasks()
+        spinner_lbl.destroy()
+
+        build_func(frame, *self.aba_args)
+        self.tabs_built.add(tab_name)
+
 
 if __name__ == "__main__":
     app = ComSystemApp()

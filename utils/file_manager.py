@@ -16,8 +16,16 @@ import shutil
 import time
 import glob
 from datetime import datetime, timedelta
+import pypdf
 from typing import Callable, Optional
 
+from utils.data_processing import (
+    _parse_valor, 
+    _aplicar_mascara_valor, 
+    calcular_periodo_sugerido, 
+    auto_classificar,
+    extrair_info_comprovante
+)
 from config import (
     PASTA_ENTRADA,
     PASTA_SAIDA,
@@ -144,12 +152,66 @@ _CATEGORIAS_REGEX = [
     (re.compile(r'\bTRANSF', re.I),       "TRANSFERENCIA"),
 ]
 
-
 def _inferir_categoria(nome_arquivo: str) -> str:
     for regex, cat in _CATEGORIAS_REGEX:
         if regex.search(nome_arquivo):
             return cat
     return "A CLASSIFICAR"
+
+
+def _extrair_texto_pdf(caminho_pdf: str) -> str:
+    """Extrai o texto da primeira página de um PDF."""
+    try:
+        reader = pypdf.PdfReader(caminho_pdf)
+        if len(reader.pages) > 0:
+            return reader.pages[0].extract_text() or ""
+    except Exception:
+        pass
+    return ""
+
+
+def _separar_pdf_lote(caminho_pdf: str, log_fn: Optional[Callable] = None) -> list[str]:
+    """
+    Verifica se o PDF possui múltiplas páginas e as separa se necessário.
+    Retorna uma lista com os caminhos dos arquivos gerados.
+    """
+    try:
+        if log_fn:
+            log_fn(f"🔍 Analisando arquivo: {os.path.basename(caminho_pdf)}")
+            
+        reader = pypdf.PdfReader(caminho_pdf)
+        num_paginas = len(reader.pages)
+        
+        if log_fn:
+            log_fn(f"📊 Páginas encontradas: {num_paginas}")
+
+        if num_paginas <= 1:
+            return [caminho_pdf]
+
+        if log_fn:
+            log_fn(f"📄 PDF multipágina detectado. Separando lote em {num_paginas} arquivos...")
+
+        base_dir = os.path.dirname(caminho_pdf)
+        nome_base = os.path.splitext(os.path.basename(caminho_pdf))[0]
+        # Pasta temporária para o split
+        temp_dir = os.path.join(base_dir, f"SPLIT_{int(time.time())}")
+        os.makedirs(temp_dir, exist_ok=True)
+
+        arquivos_gerados = []
+        for i in range(num_paginas):
+            writer = pypdf.PdfWriter()
+            writer.add_page(reader.pages[i])
+            nome_pg = f"{nome_base}_pg{i+1:03d}.pdf"
+            output_path = os.path.join(temp_dir, nome_pg)
+            with open(output_path, "wb") as f:
+                writer.write(f)
+            arquivos_gerados.append(output_path)
+
+        return arquivos_gerados
+    except Exception as e:
+        if log_fn:
+            log_fn(f"⚠️ Erro ao separar PDF: {e}")
+        return [caminho_pdf]
 
 
 def _inferir_empresa(nome_arquivo: str) -> str:
@@ -287,6 +349,7 @@ def organizar_arquivos(
 
     processados = 0
     duplicados  = 0
+    itens_processados = []
 
     for nome in pdfs:
         caminho = os.path.join(PASTA_ENTRADA, nome)
@@ -309,11 +372,98 @@ def organizar_arquivos(
                     pass
                 continue
 
-        resultado = mover_para_saida(caminho, log_fn=log_fn, espelhar=True)
-        if resultado:
-            processados += 1
-        if atualizar_stats:
-            atualizar_stats(processados, duplicados)
+        # ── LEITURA INTELIGENTE (NOVO) ──
+        # 1. Tenta separar se for lote
+        arquivos_para_processar = _separar_pdf_lote(caminho, log_fn)
+        
+        for arq_path in arquivos_para_processar:
+            # 2. Extrai texto e tenta identificar
+            texto_pdf = _extrair_texto_pdf(arq_path)
+            
+            if log_fn and not texto_pdf:
+                log_fn(f"⚠️ Atenção: Nenhum texto extraído de {os.path.basename(arq_path)}")
+                
+            info = extrair_info_comprovante(texto_pdf)
+            
+            nome_original = os.path.basename(arq_path)
+            
+            # Combina informação do conteúdo com informação do nome do arquivo (Fallback)
+            empresa_final = info["empresa"]
+            if empresa_final == "A Classificar":
+                empresa_final = _inferir_empresa(nome_original)
+            
+            categoria_final = info["categoria"]
+            if categoria_final == "A CLASSIFICAR":
+                categoria_final = _inferir_categoria(nome_original)
+
+            if log_fn:
+                if empresa_final != "A Classificar":
+                    log_fn(f"🧠 Identificado: {empresa_final} | {info['tipo']} | R${info['valor']:.2f}")
+                else:
+                    log_fn(f"⚠️ Não identificado: {nome_original}")
+            
+            # Se identificou algo útil, define data de referência
+            data_ref = None
+            if info["data"]:
+                try:
+                    data_ref = datetime.strptime(info["data"], "%d/%m/%Y")
+                except: pass
+            
+            # 3. Monta nome inteligente se possível
+            nome_para_mover = nome_original
+            if info["valor"] > 0 and info["data"]:
+                data_iso = data_ref.strftime("%Y-%m-%d") if data_ref else info["data"].replace("/","-")
+                prefixo = f"PAG_{empresa_final}"
+                if info["tipo"] != "COMPROVANTE":
+                    prefixo += f"_{info['tipo']}"
+                if info["detalhes"]:
+                    # Limpa detalhes para o nome do arquivo
+                    det_limpo = re.sub(r'[^A-Z0-9]', '_', info["detalhes"].upper())
+                    prefixo += f"_{det_limpo}"
+                
+                nome_para_mover = f"{prefixo}_{data_iso}_R${info['valor']:.2f}.pdf"
+                nome_para_mover = _normalizar(nome_para_mover)
+                if not nome_para_mover.lower().endswith(".pdf"): nome_para_mover += ".pdf"
+                
+                # Para evitar conflitos de nomes iguais em arquivos diferentes na mesma pasta temp
+                # Renomeia o arquivo físico antes de mover
+                novo_caminho = os.path.join(os.path.dirname(arq_path), nome_para_mover)
+                try:
+                    if os.path.exists(novo_caminho) and arq_path != novo_caminho:
+                        os.remove(novo_caminho)
+                    os.rename(arq_path, novo_caminho)
+                    arq_path = novo_caminho
+                except Exception as e:
+                    if log_fn: log_fn(f"⚠️ Erro ao renomear: {e}")
+
+            resultado = mover_para_saida(
+                arq_path, 
+                data_ref=data_ref, 
+                empresa=None if empresa_final == "A Classificar" else empresa_final, 
+                categoria=None if categoria_final == "A CLASSIFICAR" else categoria_final, 
+                log_fn=log_fn, 
+                espelhar=True
+            )
+            
+            if resultado:
+                processados += 1
+                itens_processados.append({
+                    "nome": os.path.basename(resultado),
+                    "empresa": empresa_final,
+                    "categoria": categoria_final,
+                    "valor": info["valor"],
+                    "data": info["data"],
+                    "caminho": resultado
+                })
+            if atualizar_stats:
+                atualizar_stats(processados, duplicados)
+
+        # Se era um lote, remove o arquivo original após processar as páginas
+        if len(arquivos_para_processar) > 1 or arquivos_para_processar[0] != caminho:
+            try:
+                os.remove(caminho)
+                # Tenta remover pasta temporária se estiver vazia (opcional)
+            except: pass
 
         # Pequena pausa para não sobrecarregar o servidor
         time.sleep(0.05)
@@ -324,7 +474,11 @@ def organizar_arquivos(
     if log_fn:
         log_fn(f"\n✅ Concluído: {processados} processados, {duplicados} duplicados.")
 
-    return processados
+    return {
+        "total": processados,
+        "duplicados": duplicados,
+        "itens": itens_processados
+    }
 
 
 # ==============================================================================

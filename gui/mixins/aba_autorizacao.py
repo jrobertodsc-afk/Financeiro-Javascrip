@@ -231,7 +231,7 @@ class AbaAutorizacaoMixin:
 
         # ── TREEVIEW ──
         cols = ("Favorecido", "CNPJ", "Tipo", "Data", "Valor", "Responsável", "Categoria", "Empresa")
-        self._aut_tree = ttk.Treeview(parent, columns=cols, show="headings", height=20)
+        self._aut_tree = ttk.Treeview(parent, style="DS.Treeview", columns=cols, show="headings", height=20)
         larguras = [280, 140, 120, 85, 100, 140, 200, 80]
         for col, w in zip(cols, larguras):
             self._aut_tree.heading(col, text=col, command=lambda c=col: self._aut_ordenar(c))

@@ -30,8 +30,9 @@ except ImportError:
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Pasta de TRABALHO do robô — PDFs de entrada e logs são gerados aqui
-# Equivalente ao Desktop/FINANCEIRO (pasta raiz de operação do dia a dia)
-PASTA_ATUAL = r"C:\Users\Roberto\Desktop\FINANCEIRO"
+# Agora dinâmico: Funciona em qualquer computador (Windows)
+DESKTOP_PATH = os.path.join(os.path.expanduser("~"), "Desktop")
+PASTA_ATUAL = os.path.join(DESKTOP_PATH, "FINANCEIRO")
 
 # Pasta de ENTRADA — PDFs brutos colocados para o robô processar
 PASTA_ENTRADA = os.path.join(PASTA_ATUAL, "ENTRADA")
@@ -581,5 +582,10 @@ DE_PARA_FILIAL = {
     "LALUA": "LALUA MATRIZ",
     "SOLAR": "SOLAR MATRIZ",
 }
+
+# --- SUPABASE (DATABASE CLOUD) ---
+SUPABASE_URL = "https://vuqhboxlgrnxviwlypal.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1cWhib3hsZ3JueHZpd2x5cGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMTQwMjksImV4cCI6MjA5Mjg5MDAyOX0.vpSyHSvgj0ErvYEE64gk5BimOqJy5drz8C5IEvK80xQ"
+USE_SUPABASE = True
 
 

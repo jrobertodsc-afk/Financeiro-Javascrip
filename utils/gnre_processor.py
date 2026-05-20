@@ -35,8 +35,8 @@ def extrair_dados_basicos(pdf_path):
         reader = pypdf.PdfReader(pdf_path)
         text = reader.pages[0].extract_text()
         
-        # Busca Valor (ex: R$ 544,22)
-        match_valor = re.search(r"Valor.*?R\$\s*([\d\.,]+)", text)
+        # Busca Valor (ex: R$ 544,22 ou valor do pagamento R$ 926,48)
+        match_valor = re.search(r"(?:Valor|valor do pagamento).*?R\$\s*([\d\.,]+)", text, re.IGNORECASE)
         valor = 0.0
         if match_valor:
             val_str = match_valor.group(1).replace(".", "").replace(",", ".")

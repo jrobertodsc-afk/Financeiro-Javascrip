@@ -136,7 +136,7 @@ class AbaRoboMixin:
 
         # Inicia monitoramento e carregamento de dados com delay
         self.after(200, self._initial_load)
-        self._log("🏢 System initialized. Ready for operation.")
+        self._log("🚀 ComSystem v2.1 (Deep Intelligence) Initialized.")
 
     def _initial_load(self):
         """Carregamento inicial de dados após o render da UI."""
@@ -218,10 +218,55 @@ class AbaRoboMixin:
             self._log(f"❌ Critical Error: {e}")
             self.after(0, self._finalizar, 0)
 
-    def _finalizar(self, total):
+    def _finalizar(self, resultado):
         self.rodando = False
         self.btn_rodar.configure(text="▶  START SESSION", state="normal")
         self.lbl_entrada.configure(text=str(self._contar_pdfs()))
+        
+        # Envio automático de relatório se houve processamento
+        if isinstance(resultado, dict) and resultado.get("itens"):
+            threading.Thread(target=self._enviar_relatorio_sessao, args=(resultado["itens"],), daemon=True).start()
+
+    def _enviar_relatorio_sessao(self, itens):
+        try:
+            from config import EMAIL_DESTINO_EXTRATO, EMAIL_DESTINO_DP
+            data_hoje = datetime.now().strftime("%d/%m/%Y")
+            
+            # 1. Separar itens RH vs Outros
+            itens_rh = [i for i in itens if str(i.get('categoria', '')).startswith("RH")]
+            itens_outros = [i for i in itens if i not in itens_rh]
+            
+            # 2. Envio para o DP (Se houver itens RH)
+            if itens_rh:
+                assunto_dp = f"📋 Comprovantes RH - Processados em {data_hoje}"
+                corpo_dp = f"Olá DP,\n\nForam processados {len(itens_rh)} novos comprovantes de RH hoje:\n\n"
+                anexos_dp = []
+                
+                for i in itens_rh:
+                    corpo_dp += f"• [{i['empresa']}] {i['nome']} | R$ {i['valor']:.2f} ({i['categoria']})\n"
+                    # Se o caminho completo estiver disponível, adicionamos como anexo
+                    if i.get('caminho') and os.path.exists(i['caminho']):
+                        anexos_dp.append(i['caminho'])
+                
+                enviar_email(EMAIL_DESTINO_DP, assunto_dp, corpo_dp, anexos=anexos_dp)
+                self._log(f"📧 Relatório DP enviado para {EMAIL_DESTINO_DP} ({len(itens_rh)} itens)")
+
+            # 3. Envio para o Financeiro (Resumo Geral)
+            if itens_outros:
+                total_outros = sum(i['valor'] for i in itens_outros)
+                assunto_fin = f"📊 Resumo de Organização - {data_hoje}"
+                corpo_fin = f"O robô organizou {len(itens_outros)} comprovantes financeiros:\n\n"
+                corpo_fin += f"💰 Valor Total: R$ {total_outros:,.2f}\n"
+                corpo_fin += "--------------------------------------------------\n\n"
+                
+                for i in itens_outros:
+                    corpo_fin += f"• [{i['empresa']}] {i['nome']} | R$ {i['valor']:.2f}\n"
+                
+                enviar_email(EMAIL_DESTINO_EXTRATO, assunto_fin, corpo_fin)
+                self._log(f"📧 Resumo Financeiro enviado para {EMAIL_DESTINO_EXTRATO}")
+                
+        except Exception as e:
+            self._log(f"⚠️ Falha ao enviar e-mails de relatório: {e}")
 
     def _atualizar_stats(self, proc, dupl):
         # Esta função é chamada pelo file_manager
