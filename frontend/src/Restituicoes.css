@@ -1,0 +1,55 @@
+.restit-container {
+  padding: 32px;
+}
+
+.restit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.restit-header h2 {
+  font-size: 24px;
+  color: var(--accent-color);
+  margin-bottom: 4px;
+}
+
+.restit-resumo {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.restit-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.restit-table thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.restit-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+
+.restit-table tbody tr:hover {
+  background-color: rgba(251, 191, 36, 0.04);
+}
+
+.restit-table td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  vertical-align: middle;
+}

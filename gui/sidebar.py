@@ -16,9 +16,9 @@ ANIM_STEPS          = 8
 ANIM_INTERVAL       = 15
 
 # Definição das Abas Principais e Sub-abas em Cascata
-MAIN_TABS = ["Organizador", "Buscar", "Financeiro", "Fluxo", "Analytics"]
+MAIN_TABS = ["Cockpit", "Organizador", "Buscar", "Financeiro", "Fluxo", "Analytics"]
 SUB_TABS = {
-    "Financeiro": ["Contas a Pagar", "Lançamento Manual", "Adiantamentos", "Fornecedores", "Autorização", "Cartões", "Restituições"]
+    "Financeiro": ["Contas a Pagar", "Lançamento Manual", "Adiantamentos", "Fornecedores", "Autorização", "Restituições"]
 }
 
 class Sidebar(ctk.CTkFrame):
@@ -248,26 +248,10 @@ class Sidebar(ctk.CTkFrame):
 
     def _toggle_collapse(self):
         self._expanded = not self._expanded
-        self._anim_target = SIDEBAR_W_EXPANDED if self._expanded else SIDEBAR_W_COLLAPSED
+        target = SIDEBAR_W_EXPANDED if self._expanded else SIDEBAR_W_COLLAPSED
         self._toggle_btn.configure(text="☰" if self._expanded else "▶")
-        self._animate_width()
-
-    def _animate_width(self):
-        current = self.winfo_width()
-        target  = self._anim_target
-        diff    = target - current
-
-        if abs(diff) < 4:
-            self.configure(width=target)
-            self._update_labels_visibility()
-            return
-
-        step = diff // ANIM_STEPS
-        if step == 0:
-            step = 1 if diff > 0 else -1
-
-        self.configure(width=current + step)
-        self.after(ANIM_INTERVAL, self._animate_width)
+        self.configure(width=target)
+        self._update_labels_visibility()
 
     def _update_labels_visibility(self):
         if self._expanded:

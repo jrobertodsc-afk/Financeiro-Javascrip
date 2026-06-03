@@ -14,7 +14,7 @@ import zipfile
 import tempfile
 import smtplib
 
-from config import *
+import config
 from utils.data_processing import *
 from utils.ocr_utils import *
 from utils.email_service import *
@@ -23,38 +23,25 @@ from utils.integrations_utils import *
 from utils.extratos_processor import *
 from utils.dashboard_service import *
 from utils.formatters import *
-from database import *
+from services.database import *
 from cnab_generator import *
-
 from gui.design_system import COLORS, FONTS, SPACING, RADIUS, apply_treeview_style
 from gui.sidebar import Sidebar
 from gui.components import StatCard, ActionButton, SectionHeader
 
-from gui.mixins.aba_robo import AbaRoboMixin
-from gui.mixins.aba_busca import AbaBuscaMixin
-from gui.mixins.aba_extrato import AbaExtratoMixin
-from gui.mixins.aba_contas_pagar import AbaContasPagarMixin
-from gui.mixins.aba_recebiveis import AbaRecebiveisMixin
-from gui.mixins.aba_autorizacao import AbaAutorizacaoMixin
-from gui.mixins.aba_restituicoes import AbaRestituicoesMixin
-from gui.mixins.aba_manual import AbaManualMixin
+from gui.tabs.aba_robo import AbaRobo
+from gui.tabs.aba_busca import AbaBusca
+from gui.tabs.aba_extrato import AbaExtrato
+from gui.tabs.aba_contas_pagar import AbaContasPagar
+from gui.tabs.aba_recebiveis import AbaRecebiveis
+from gui.tabs.aba_autorizacao import AbaAutorizacao
+from gui.tabs.aba_restituicoes import AbaRestituicoes
+from gui.tabs.aba_manual import AbaManual
 from gui.mixins.utils_mixin import AppUtilsMixin
-from gui.mixins.aba_analytics import AbaAnalyticsMixin
+from gui.tabs.aba_analytics import AbaAnalytics
 
 
-class ComSystemApp(
-    ctk.CTk,
-    AbaRoboMixin,
-    AbaBuscaMixin,
-    AbaExtratoMixin,
-    AbaContasPagarMixin,
-    AbaRecebiveisMixin,
-    AbaAutorizacaoMixin,
-    AbaRestituicoesMixin,
-    AbaManualMixin,
-    AbaAnalyticsMixin,
-    AppUtilsMixin
-):
+class ComSystemApp(ctk.CTk, AppUtilsMixin):
     def __init__(self):
         super().__init__()
 
@@ -77,7 +64,8 @@ class ComSystemApp(
 
         # ── Janela principal ──────────────────────────────────────────────────
         self.title("Com System Dashboard")
-        self.geometry("1400x900")
+        self.geometry("1200x720")
+        self.minsize(1000, 600)
         self.configure(fg_color=COLORS["bg"])
         self.state("zoomed")
 
@@ -90,7 +78,10 @@ class ComSystemApp(
         self._build_ui()
 
         # Garante pastas de operação em background após o render inicial
-        self.after(1000, ensure_directories)
+        self.after(1000, config.ensure_directories)
+        
+        # Inicia a fila de logs (lê da thread global do logger e renderiza na GUI)
+        self.after(100, self._process_log_queue)
 
     # ══════════════════════════════════════════════════════════════════════════
     # ── BUILD UI PRINCIPAL ────────────────────────────────────────────────────
@@ -114,23 +105,25 @@ class ComSystemApp(
         # Removido grid_columnconfigure(1, weight=1) que esticava o separador
 
         # ── Configuração das abas ─────────────────────────────────────────────
+        from gui.tabs.aba_cockpit import AbaCockpit
         self.tab_configs = {
-            "Organizador":    self._build_aba_robo,
-            "Buscar":         self._build_aba_busca,
-            "Fluxo":          self._build_aba_extrato,
+            "Cockpit":        AbaCockpit,
+            "Organizador":    AbaRobo,
+            "Buscar":         AbaBusca,
+            "Fluxo":          AbaExtrato,
             
-            "Contas a Pagar": self._build_aba_contas_pagar,
-            "Lançamento Manual": self._build_aba_manual,
+            "Contas a Pagar": AbaContasPagar,
+            "Lançamento Manual": AbaManual,
             "Adiantamentos":  self._build_solo_adiantamentos,
             "Fornecedores":   self._build_solo_fornecedores,
-            "Autorização":    self._build_aba_autorizacao,
-            "Cartões":        self._build_aba_recebiveis,
-            "Restituições":   self._build_aba_restituicoes,
+            "Autorização":    AbaAutorizacao,
+            "Restituições":   AbaRestituicoes,
             
-            "Analytics":      self._build_aba_analytics,
+            "Analytics":      AbaAnalytics,
         }
         self.tabs_built   = set()
         self._tab_frames  = {}   # tab_name → CTkFrame (container)
+        self._tab_instances = {} # tab_name -> class instance
         self._active_tab  = None
 
         # Args legados passados para os mixins antigos
@@ -274,7 +267,8 @@ class ComSystemApp(
         pass
 
     def _build_solo_adiantamentos(self, parent, *args):
-        self._cap_build_adiantamentos(
+        tab = AbaContasPagar(self)
+        tab._cap_build_adiantamentos(
             parent,
             self.aba_args[0],  # bg
             self.aba_args[1],  # surface
@@ -286,7 +280,8 @@ class ComSystemApp(
         )
 
     def _build_solo_fornecedores(self, parent, *args):
-        self._cap_build_fornecedores(
+        tab = AbaContasPagar(self)
+        tab._cap_build_fornecedores(
             parent,
             self.aba_args[0],  # bg
             self.aba_args[1],  # surface
@@ -303,7 +298,7 @@ class ComSystemApp(
             return
 
         frame = self._tab_frames[tab_name]
-        build_func = self.tab_configs[tab_name]
+        handler = self.tab_configs[tab_name]
 
         # Indicador de carregamento
         spinner_lbl = ctk.CTkLabel(frame, text=f"⟳  Carregando {tab_name}...",
@@ -312,7 +307,15 @@ class ComSystemApp(
         self.update_idletasks()
         spinner_lbl.destroy()
 
-        build_func(frame, *self.aba_args)
+        if isinstance(handler, type):
+            # It's a class
+            tab_instance = handler(self)
+            self._tab_instances[tab_name] = tab_instance
+            tab_instance.build(frame, *self.aba_args)
+        else:
+            # It's a method
+            handler(frame, *self.aba_args)
+
         self.tabs_built.add(tab_name)
 
 

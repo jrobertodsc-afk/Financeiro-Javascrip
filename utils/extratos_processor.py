@@ -2,6 +2,7 @@ import os
 import xlrd
 from datetime import datetime
 from utils.data_processing import auto_classificar
+from services.logger_service import logger
 
 def ler_extrato_pdf(caminho):
     """Stub para leitura de extrato PDF."""
@@ -17,7 +18,7 @@ def ler_itau_pagamentos(caminho):
         workbook = xlrd.open_workbook(caminho)
         sheet = workbook.sheet_by_index(0)
     except Exception as e:
-        print(f"Erro ao abrir XLS: {e}")
+        logger.error(f"Erro ao abrir XLS: {e}")
         return []
 
     pagamentos = []
@@ -62,16 +63,22 @@ def ler_itau_pagamentos(caminho):
                     data_obj = datetime.strptime(data_str, "%d/%m/%Y")
                 except: pass
 
-            resp, cat = auto_classificar(nome, valor, cnpj)
-
-            pagamentos.append({
+            resp, cat, desc = auto_classificar(nome, valor, cnpj)
+            
+            dic = {
                 "nome": nome, "cnpj": cnpj, "tipo": tipo, "data": data_str,
                 "data_obj": data_obj, "valor": valor,
                 "status": str(row[6]).strip() if len(row) > 6 else "Aprovada",
                 "responsavel": resp, "categoria": cat, "empresa": empresa_detectada,
                 "observacao": f"Importado de {os.path.basename(caminho)}",
                 "manual": False
-            })
+            }
+            dic["responsavel"] = resp
+            dic["categoria"] = cat
+            if desc:
+                dic["descricao"] = desc
+
+            pagamentos.append(dic)
         except: continue
 
     return pagamentos

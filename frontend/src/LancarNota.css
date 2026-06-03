@@ -1,0 +1,362 @@
+.lancar-container {
+  padding: 32px;
+  max-width: 1000px;
+}
+
+.lancar-header h2 {
+  font-size: 24px;
+  color: var(--accent-color);
+  margin-bottom: 8px;
+}
+
+.sefaz-box {
+  background-color: rgba(99, 102, 241, 0.05);
+  border: 1px dashed var(--accent-color);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 24px 0;
+}
+
+.sefaz-box label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.sefaz-input-row {
+  display: flex;
+  gap: 16px;
+}
+
+.sefaz-input-row input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-family: monospace;
+}
+
+.btn-sefaz {
+  background-color: var(--surface-raised);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+  padding: 0 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-sefaz:hover:not(:disabled) {
+  background-color: var(--border-light);
+}
+
+.btn-sefaz:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sefaz-message {
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.sefaz-message.success { color: var(--success); }
+.sefaz-message.error { color: var(--warning); }
+
+.nota-form {
+  margin-top: 32px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group.span-2 {
+  grid-column: span 2;
+}
+
+.form-group.span-3 {
+  grid-column: span 3;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.form-group input, .form-group select {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.form-footer {
+  margin-top: 32px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-salvar {
+  background-color: var(--accent-color);
+  color: #fff;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-salvar:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+.btn-salvar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* NOVOS ESTILOS - DASHBOARD DE VALORES */
+.valores-dashboard {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.valor-card {
+  flex: 1;
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.valor-card span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.valor-card h3 {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.valor-card.bruto {
+  background-color: var(--surface-raised);
+}
+.valor-card.bruto h3 {
+  color: var(--text-primary);
+}
+
+.valor-card.retido {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+.valor-card.retido h3 {
+  color: var(--error);
+}
+
+.valor-card.liquido {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--success);
+}
+.valor-card.liquido h3 {
+  color: var(--success);
+}
+
+/* RATEIOS */
+.rateio-section {
+  margin-top: 24px;
+  padding: 24px;
+  background-color: var(--surface-raised);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.rateio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.rateio-header label {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.rateio-warning {
+  color: var(--warning);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.rateio-success {
+  color: var(--success);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.rateio-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.rateio-row input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.rateio-row .money-input {
+  max-width: 150px;
+  text-align: right;
+  font-family: monospace;
+}
+
+.btn-remove {
+  padding: 0 16px;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.btn-remove:hover {
+  background-color: var(--error);
+  color: #fff;
+}
+
+.btn-add-item {
+  margin-top: 8px;
+  padding: 10px 16px;
+  background-color: transparent;
+  color: var(--accent-color);
+  border: 1px dashed var(--accent-color);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-add-item:hover {
+  background-color: rgba(99, 102, 241, 0.1);
+}
+
+/* IMPOSTOS RETIDOS */
+.impostos-section {
+  margin-top: 24px;
+  padding: 24px;
+  background-color: var(--surface-raised);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.impostos-title {
+  display: block;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.impostos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.imposto-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: var(--bg-color);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.imposto-label {
+  font-weight: bold;
+  width: 50px;
+  color: var(--text-primary);
+}
+
+.imposto-row input[type="text"],
+.imposto-row input[type="date"] {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.imposto-row input:disabled {
+  opacity: 0.5;
+  background-color: transparent;
+  border-color: transparent;
+  cursor: not-allowed;
+}
+
+.imposto-input-sm {
+  width: 60px;
+  text-align: right;
+}
+
+.imposto-input-md {
+  width: 90px;
+  text-align: right;
+  font-family: monospace;
+}
+
+.imposto-input-lg {
+  flex: 1;
+}
+
+.text-right {
+  text-align: right;
+}

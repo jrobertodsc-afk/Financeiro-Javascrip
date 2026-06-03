@@ -1,0 +1,604 @@
+{
+    "38.462.298/0001-24": [
+        "ADM/FINANCEIRO",
+        "12202 - Salários - Meis/PJ"
+    ],
+    "03.165.536/0001-55": [
+        "COMPRAS",
+        "21707 - Material Gráfico"
+    ],
+    "36.193.540/0001-86": [
+        "MARKETING",
+        "21703 - Lookbook"
+    ],
+    "41.258.802/0001-83": [
+        "ADM/FINANCEIRO",
+        "12200 - Salários"
+    ],
+    "50.942.841/0001-96": [
+        "MARKETING",
+        "21703 - Lookbook"
+    ],
+    "51.313.763/0001-23": [
+        "MARKETING",
+        "21703 - Lookbook"
+    ],
+    "52.244.938/0001-50": [
+        "COMPRAS",
+        "12102 - Aviamentos"
+    ],
+    "60.662.136/0001-99": [
+        "ADM/FINANCEIRO",
+        "12202 - Salários - Meis/PJ"
+    ],
+    "62.336.608/0001-49": [
+        "ADM/FINANCEIRO",
+        "12202 - Salários"
+    ],
+    "64.082.848/0001-90": [
+        "GERENTE LOJA",
+        "21707 - Material Gráfico"
+    ],
+    "23.827.668/0001-02": [
+        "ADM/FINANCEIRO",
+        "21102 - Condominio"
+    ],
+    "33.583.036/0001-02": [
+        "ADM/FINANCEIRO",
+        "21116 - Sindicato E Associcoes"
+    ],
+    "01.397.927/0001-70": [
+        "ADM/FINANCEIRO",
+        "21101 - Aluguel"
+    ],
+    "61.009.520/0001-50": [
+        "SUPRIMENTOS",
+        "22206 - Embalagens (Sacolas, Envelopes e Papel Seda)"
+    ],
+    "44.926.364/0001-72": [
+        "ADM/FINANCEIRO",
+        "21101 - Aluguel"
+    ],
+    "61.573.796/0001-66": [
+        "ADM/FINANCEIRO",
+        "21109 - Seguros Loja/Imóvel",
+        "SEGURO LOJA BARRA"
+    ],
+    "32.346.596/0001-72": [
+        "ADM/FINANCEIRO",
+        "12200 - Salários"
+    ],
+    "19.161.341/0001-77": [
+        "ADM/FINANCEIRO",
+        "21116 - Sindicato E Associcoes"
+    ],
+    "05.480.257/0001-01": [
+        "COMPRAS",
+        "12102 - Aviamentos"
+    ],
+    "48.740.351/0001-65": [
+        "ADM/FINANCEIRO",
+        "12112 - Frete/Transporte - Produção"
+    ],
+    "00.360.305/0001-04": [
+        "ADM/FINANCEIRO",
+        "12207 - Rescisão / FGTS"
+    ],
+    "29.221.576/0001-60": [
+        "ADM/FINANCEIRO",
+        "12203 - Transportes"
+    ],
+    "47.201.850/0001-11": [
+        "COMPRAS",
+        "12102 - Aviamentos",
+        "AVIAMENTOS"
+    ],
+    "15.139.629/0001-94": [
+        "ADM/FINANCEIRO",
+        "21104 - Energia Eletrica"
+    ],
+    "08.883.683/0001-84": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "16.188.955/0001-54": [
+        "ADM/FINANCEIRO",
+        "21101 - Aluguel"
+    ],
+    "10.420.899/0001-55": [
+        "ADM/FINANCEIRO",
+        "21102 - Condominio"
+    ],
+    "54.259.756/0001-89": [
+        "ADM/FINANCEIRO",
+        "21102 - Condominio"
+    ],
+    "31.872.549/0001-08": [
+        "ADM/FINANCEIRO",
+        "12203 - Transportes"
+    ],
+    "32.726.717/0001-01": [
+        "ADM/FINANCEIRO",
+        "21102 - Condominio",
+        "CONDOMINIO SDB"
+    ],
+    "22.267.284/0001-10": [
+        "ADM/FINANCEIRO",
+        "12203 - Transportes"
+    ],
+    "83.310.441/0001-17": [
+        "ADM/FINANCEIRO",
+        "21116 - Sindicato E Associcoes"
+    ],
+    "60.507.500/0001-46": [
+        "MARKETING",
+        "21705 - Relac com o Cliente - Ações Clientes"
+    ],
+    "00.955.829/0001-48": [
+        "SUPRIMENTOS",
+        "12106 - Sacolas"
+    ],
+    "47.738.604/0001-01": [
+        "COMPRAS",
+        "12102 - Aviamentos"
+    ],
+    "14.406.482/0001-99": [
+        "ADM/FINANCEIRO",
+        "21112 - Servicos Contabeis"
+    ],
+    "22.014.850/0001-81": [
+        "COMPRAS",
+        "12105 - Produtos Para Revenda"
+    ],
+    "34.028.316/0001-03": [
+        "ADM/FINANCEIRO",
+        "22201 - Entregas On-line"
+    ],
+    "27.080.571/0001-30": [
+        "GERENTE ONLINE",
+        "22309 - GNRE",
+        ""
+    ],
+    "47.379.714/0001-16": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "02.384.871/0001-81": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "14.796.606/0001-90": [
+        "PLANEJAMENTO",
+        "21701 - Desp. Operacionais/Facebook/Email"
+    ],
+    "10.465.955/0001-78": [
+        "COMPRAS",
+        "12112 - Frete/Transporte - Produção"
+    ],
+    "40.883.098/0001-97": [
+        "ADM/FINANCEIRO",
+        "12202 - Salários - Meis/PJ"
+    ],
+    "33.815.420/0001-85": [
+        "MARKETING",
+        "21703 - Lookbook"
+    ],
+    "11.498.408/0001-51": [
+        "PLANEJAMENTO",
+        "21701 - Desp. Operacionais/Facebook/Email"
+    ],
+    "13.727.240/0001-34": [
+        "COMPRAS",
+        "12112 - Frete/Transporte - Produção"
+    ],
+    "15.243.447/0001-69": [
+        "MARKETING",
+        "21703 - Lookbook"
+    ],
+    "43.182.349/0001-02": [
+        "MARKETING",
+        "21801 - Endomarketing"
+    ],
+    "33.988.601/0001-03": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "00.930.402/0001-95": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "43.284.638/0001-04": [
+        "MARKETING",
+        "21705 - Relac com o Cliente - Ações Clientes"
+    ],
+    "06.990.590/0001-23": [
+        "GERENTE ONLINE",
+        "12109 - Prestação de Serviço - Corte",
+        "PATROCINADO"
+    ],
+    "82.645.862/0001-36": [
+        "ADM/FINANCEIRO",
+        "12107 - Etiquetas roupas/Acessorios"
+    ],
+    "27.914.259/0001-02": [
+        "SUPRIMENTOS",
+        "21206 - Material de Limpeza"
+    ],
+    "22.761.991/0001-68": [
+        "ADM/FINANCEIRO",
+        "21114 - Telefonia Fixa/Internet"
+    ],
+    "45.251.219/0001-00": [
+        "MARKETING",
+        "21703 - Lookbook"
+    ],
+    "10.820.791/0001-50": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "25.912.503/0001-64": [
+        "ADM/FINANCEIRO",
+        "21120 - Sistemas e Softwares"
+    ],
+    "37.134.249/0001-08": [
+        "MARKETING",
+        "21702 - Editorial para Campanha"
+    ],
+    "08.772.214/0001-98": [
+        "ADM/FINANCEIRO",
+        "21114 - Telefonia Fixa/Internet"
+    ],
+    "26.937.210/0001-02": [
+        "LOGISTICA",
+        "21304 - Manutenção - Moto/Carro"
+    ],
+    "55.952.885/0001-10": [
+        "ADM/FINANCEIRO",
+        "21801 - Endomarketing"
+    ],
+    "48.542.702/0001-23": [
+        "SUPRIMENTOS",
+        "21706 - Visual Merchandising"
+    ],
+    "10.436.619/0003-69": [
+        "ADM/FINANCEIRO",
+        "TRANSFERENCIA"
+    ],
+    "38.265.141/0001-09": [
+        "ADM/FINANCEIRO",
+        "21101 - Aluguel",
+        "ALUGUEL ATELIE"
+    ],
+    "16.906.199/0001-51": [
+        "COMPRAS",
+        "12102 - Aviamentos",
+        "AVIAMENTOS"
+    ],
+    "09.411.448/0001-72": [
+        "COMPRAS",
+        "12112 - Frete/Transporte - Produção"
+    ],
+    "25.694.899/0001-10": [
+        "SUPRIMENTOS",
+        "21209 - Uso e Consumo Lojas (Copos)"
+    ],
+    "05.140.762/0001-07": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "48.204.195/0001-18": [
+        "ADM/FINANCEIRO",
+        "12200 - Salários"
+    ],
+    "61.721.785/0001-86": [
+        "MARKETING",
+        "21703 - Lookbook"
+    ],
+    "10.474.553/0001-30": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "73.186.116/0001-30": [
+        "GERENTE ONLINE",
+        "21120 - Sistemas e Softwares"
+    ],
+    "07.225.209/0001-00": [
+        "ADM/FINANCEIRO",
+        "12101 - Tecidos"
+    ],
+    "39.664.088/0001-81": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "35.654.917/0001-94": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "15.089.323/0001-70": [
+        "COMPRAS",
+        "22201 - Entregas On-line"
+    ],
+    "29.469.420/0001-01": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "42.154.687/0001-60": [
+        "ADM/FINANCEIRO",
+        "12101 - Tecidos"
+    ],
+    "14.955.141/0001-72": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "12.202.612/0001-46": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "35.616.849/0001-79": [
+        "ADM/FINANCEIRO",
+        "21707 - Material Gráfico"
+    ],
+    "18.191.228/0001-71": [
+        "GERENTE ONLINE",
+        "21120 - Sistemas e Softwares"
+    ],
+    "00.822.602/0001-24": [
+        "COMPRAS",
+        "12107 - Etiquetas roupas/Acessorios"
+    ],
+    "05.278.412/0001-01": [
+        "ADM/FINANCEIRO",
+        "22410 - Investimento - Reformas"
+    ],
+    "55.343.764/0001-71": [
+        "GERENTE LOJA",
+        "21801 - Endomarketing"
+    ],
+    "27.657.581/0001-95": [
+        "COMPRAS",
+        "12104 - Produtos Para Revenda"
+    ],
+    "37.967.052/0001-41": [
+        "PLANEJAMENTO",
+        "21701 - Desp. Operacionais/Facebook/Email"
+    ],
+    "23.414.602/0001-90": [
+        "ADM/FINANCEIRO",
+        "21113 - Consultorias e Auditorias"
+    ],
+    "47.292.795/0001-12": [
+        "ADM/FINANCEIRO",
+        "12209 - Exames Clínicos (Dem/Adm/Per)"
+    ],
+    "14.014.761/0001-07": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "80.446.990/0001-25": [
+        "COMPRAS",
+        "12102 - Aviamentos"
+    ],
+    "90.400.888/0001-42": [
+        "ADM/FINANCEIRO",
+        "CARTÃO DE CREDITO",
+        "CARTÃO SANTANDER"
+    ],
+    "15.239.478/0001-46": [
+        "ADM/FINANCEIRO",
+        "21117 - Sindicato E Associcoes"
+    ],
+    "32.700.213/0001-12": [
+        "ADM/FINANCEIRO",
+        "21116 - Sindicato E Associcoes"
+    ],
+    "04.316.357/0001-34": [
+        "COMPRAS",
+        "12104 - Produtos Para Revenda"
+    ],
+    "26.607.445/0001-28": [
+        "ADM/FINANCEIRO",
+        "TRANSFERENCIA"
+    ],
+    "30.777.576/0001-20": [
+        "COMPRAS",
+        "21707 - Material Gráfico"
+    ],
+    "21.933.166/0001-30": [
+        "PLANEJAMENTO",
+        "21120 - Sistemas e Softwares"
+    ],
+    "48.618.124/0001-61": [
+        "ADM/FINANCEIRO",
+        "21113 - Consultorias e Auditorias",
+        "MANSALIDADE SEGURANÇA DO TRABALHO"
+    ],
+    "38.764.395/0001-71": [
+        "SUPRIMENTOS",
+        "12107 - Etiquetas roupas/Acessorios"
+    ],
+    "73.939.449/0001-93": [
+        "GERENTE ONLINE",
+        "22201 - Entregas On-line",
+        "ENTREGAS ONLINE"
+    ],
+    "43.248.764/0001-03": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "05.003.162/0001-05": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "17.490.828/0001-78": [
+        "COMPRAS",
+        "12102 - Aviamentos",
+        "AVIAMENTOS"
+    ],
+    "47.866.934/0001-74": [
+        "ADM/FINANCEIRO",
+        "12204 - Alimentação"
+    ],
+    "03.506.307/0001-57": [
+        "LOGISTICA",
+        "21301 - Combustíveis Motoboy"
+    ],
+    "02.421.421/0001-11": [
+        "ADM/FINANCEIRO",
+        "21114 - Telefonia Fixa/Internet"
+    ],
+    "11.247.476/0001-48": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "22.972.620/0001-25": [
+        "ADM/FINANCEIRO",
+        "21501 - Manutenção - Predial"
+    ],
+    "29.709.951/0001-16": [
+        "COMPRAS",
+        "21202 - Dedetização"
+    ],
+    "12.803.527/0001-33": [
+        "GERENTE ONLINE",
+        "21120 - Sistemas e Softwares"
+    ],
+    "02.535.864/0007-29": [
+        "ADM/FINANCEIRO",
+        "22201 - Entregas On-line"
+    ],
+    "46.407.843/0001-08": [
+        "ADM/FINANCEIRO",
+        "12202 - Salários - Meis/PJ"
+    ],
+    "23.904.297/0001-15": [
+        "PRODUCAO",
+        "12111 - Faccionista - Mão de Obra"
+    ],
+    "34.350.031/0001-94": [
+        "ADM/FINANCEIRO",
+        "12202 - Salários - Meis/PJ"
+    ],
+    "07.014.198/0003-73": [
+        "SUPRIMENTOS",
+        "21204 - Material de Escritório"
+    ],
+    "85.236.743/0001-18": [
+        "ADM/FINANCEIRO",
+        "21120 - Sistemas e Softwares"
+    ],
+    "27.004.715/0001-79": [
+        "ADM/FINANCEIRO",
+        "12203 - Salários - Meis/PJ"
+    ],
+    "34.600.339/0001-03": [
+        "COMPRAS",
+        "12104 - Produtos Para Revenda"
+    ],
+    "34.600.339/0001-40": [
+        "COMPRAS",
+        "12104 - Produtos Para Revenda"
+    ],
+    "54.517.628/0001-98": [
+        "ADM/FINANCEIRO",
+        "21120 - Sistemas e Softwares",
+        "MANESALIDADE MICROVIX"
+    ],
+    "05.231.614/0001-06": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "46.390.771/0001-33": [
+        "PRODUCAO",
+        "12111 - Faccionista - Mão de Obra"
+    ],
+    "61.083.952/0001-00": [
+        "COMPRAS",
+        "12102 - Aviamentos"
+    ],
+    "***.666.465-**": [
+        "MARKETING",
+        "21703 - Lookbook"
+    ],
+    "***.208.315-**": [
+        "PRODUCAO",
+        "12111 - Faccionista - Mão de Obra",
+        "FACCIONISTA"
+    ],
+    "***.144.215-**": [
+        "PRODUCAO",
+        "12111 - Faccionista - Mão de Obra"
+    ],
+    "***.511.455-**": [
+        "PRODUCAO",
+        "12111 - Faccionista - Mão de Obra"
+    ],
+    "***.850.015-**": [
+        "PRODUCAO",
+        "12111 - Faccionista - Mão de Obra",
+        "FACCIONISTA"
+    ],
+    "***.381.965-**": [
+        "MARKETING",
+        "21703 - Lookbook"
+    ],
+    "03.475.822/0001-17": [
+        "COMPRAS",
+        "12101 - Tecidos",
+        "TECIDOS"
+    ],
+    "***.795.135-**": [
+        "PRODUCAO",
+        "22207 - Ações Comerciais",
+        "BOLSAS COLLAB PAN"
+    ],
+    "***.368.505-**": [
+        "PRODUCAO",
+        "12113 - Faccionista - Confecção de Pilotos",
+        "PEÇA PILOTO"
+    ],
+    "045.190.015-44": [
+        "GERENTE LOJA",
+        "12208 - Domingos e Feriados Trabalhados",
+        "DOMINGO TRABALHADO"
+    ],
+    "866.455.315-75": [
+        "GERENTE LOJA",
+        "12208 - Domingos e Feriados Trabalhados",
+        "DOMINGO TRABALHADO"
+    ],
+    "027.016.385-93": [
+        "GERENTE LOJA",
+        "12208 - Domingos e Feriados Trabalhados",
+        "DOMINGO TRABALHADO"
+    ],
+    "***.660.944-**": [
+        "MARKETING",
+        "21705 - Relacionamento com o Cliente",
+        "CANECAS MELHORES CLIENTES"
+    ],
+    "-": [
+        "GERENTE ONLINE",
+        "22309 - GNRE",
+        "GNRE"
+    ],
+    "25.021.356/0001-32": [
+        "GERENTE ONLINE",
+        "12109 - Prestação de Serviço - Corte",
+        "PATROCINADO"
+    ],
+    "857.961.475-95": [
+        "GERENTE LOJA",
+        "12208 - Domingos e Feriados Trabalhados",
+        "DOMINGO TRABALHADO"
+    ],
+    "025.360.455-95": [
+        "GERENTE LOJA",
+        "12208 - Domingos e Feriados Trabalhados",
+        "DOMINGO TRABALHADO"
+    ],
+    "27.717.817/0001-31": [
+        "GERENTE ONLINE",
+        "22201 - Entregas On-line",
+        "REPASSE"
+    ]
+}

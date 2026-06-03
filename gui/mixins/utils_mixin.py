@@ -13,7 +13,7 @@ import zipfile
 import tempfile
 import smtplib
 
-from config import *
+import config
 from utils.data_processing import *
 from utils.ocr_utils import *
 from utils.email_service import *
@@ -22,16 +22,14 @@ from utils.integrations_utils import *
 from utils.extratos_processor import *
 from utils.dashboard_service import *
 from utils.formatters import *
-from database import *
+from services.database import *
 from cnab_generator import *
-
-
 class AppUtilsMixin:
 
     def _stat_card(self, parent, label, value, color):
         # Agora usando cores dinâmicas passadas pelo app ou preto profundo por padrão
         bg_card = "#111111" # Superfície ultra escura
-        frame = tk.Frame(parent, bg=bg_card, padx=20, pady=12, highlightbackground="#222222", highlightthickness=1)
+        frame = tk.Frame(parent, bg=bg_card, padx=20, pady=12, highlightbackground="#141414", highlightthickness=1)
         frame.pack(side="left", expand=True, fill="x", padx=(0, 10))
         tk.Label(frame, text=label, font=("Segoe UI", 8, "bold"), fg="#525252", bg=bg_card).pack(anchor="w")
         lbl = tk.Label(frame, text=value, font=("Segoe UI", 26, "bold"), fg=color, bg=bg_card)
@@ -40,37 +38,60 @@ class AppUtilsMixin:
 
 
     def _contar_pdfs(self):
-        if not os.path.exists(PASTA_ENTRADA): return 0
+        if not os.path.exists(config.PASTA_ENTRADA): return 0
         count = 0
-        for root, _, files in os.walk(PASTA_ENTRADA):
+        for root, _, files in os.walk(config.PASTA_ENTRADA):
             if "SAIDA_ORGANIZADA" in root: continue
             count += sum(1 for f in files if f.lower().endswith('.pdf'))
         return count
 
 
     def _log(self, msg):
-        if not hasattr(self, 'log_area'): return
-        self.log_area.config(state="normal")
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        tag = "info"
-        if "❌" in msg or "Erro" in msg: tag = "error"
-        elif "✅" in msg: tag = "success"
-        elif "⚠️" in msg: tag = "warning"
-        
-        linha = f"[{timestamp}] {msg}"
-        self.log_area.insert("end", linha + "\n", tag)
-        self.log_area.tag_configure("info", foreground="#888888")
-        self.log_area.tag_configure("success", foreground="#a3e635")
-        self.log_area.tag_configure("error", foreground="#f87171")
-        self.log_area.tag_configure("warning", foreground="#fbbf24")
-        self.log_area.see("end")
-        self.log_area.config(state="disabled")
-        self.root.update_idletasks()
+        from services.logger_service import logger
+        # Redireciona mensagens da GUI para o logger global
+        logger.info(msg)
+
+    def _process_log_queue(self):
+        from services.logger_service import gui_log_queue
+        import queue
+        from datetime import datetime
+
+        if hasattr(self, 'log_area'):
+            try:
+                while True:
+                    level, msg = gui_log_queue.get_nowait()
+                    self.log_area.config(state="normal")
+                    timestamp = datetime.now().strftime("%H:%M:%S")
+                    
+                    tag = "info"
+                    if level in ("ERROR", "CRITICAL") or "❌" in msg or "Erro" in msg:
+                        tag = "error"
+                    elif level == "WARNING" or "⚠️" in msg:
+                        tag = "warning"
+                    elif "✅" in msg:
+                        tag = "success"
+                        
+                    linha = f"[{timestamp}] {msg}"
+                    self.log_area.insert("end", linha + "\n", tag)
+                    
+                    self.log_area.tag_configure("info", foreground="#141414")
+                    self.log_area.tag_configure("success", foreground="#ffffff")
+                    self.log_area.tag_configure("error", foreground="#a1a1aa")
+                    self.log_area.tag_configure("warning", foreground="#ffffff")
+                    
+                    self.log_area.see("end")
+                    self.log_area.config(state="disabled")
+            except queue.Empty:
+                pass
+                
+        # Reagenda para processar a fila a cada 100ms se for a GUI principal
+        if hasattr(self, 'after'):
+            self.after(100, self._process_log_queue)
 
 
     def _check_server_health(self):
         """Verifica se o servidor (Y:\) está acessível."""
-        return os.path.exists(PASTA_SERVIDOR)
+        return os.path.exists(config.PASTA_SERVIDOR)
 
 
     def _status_light(self, parent, label):
@@ -82,7 +103,7 @@ class AppUtilsMixin:
         canvas.pack(side="left", padx=(0, 5))
         light = canvas.create_oval(2, 2, 10, 10, fill="#525252") # Cinza inicial
         
-        tk.Label(frame, text=label, font=("Segoe UI", 7, "bold"), fg="#888888", bg=parent["bg"]).pack(side="left")
+        tk.Label(frame, text=label, font=("Segoe UI", 7, "bold"), fg="#141414", bg=parent["bg"]).pack(side="left")
         return canvas, light
 
 

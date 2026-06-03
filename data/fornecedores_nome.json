@@ -1,0 +1,498 @@
+{
+    "LINX SIST": [
+        "ADM/FINANCEIRO",
+        "21120 - Sistemas e Softwares"
+    ],
+    "CONSORCIO NACIGUAT": [
+        "ADM/FINANCEIRO",
+        "21101 - Aluguel"
+    ],
+    "TEX COURIER": [
+        "GERENTE ONLINE",
+        "22201 - Entregas On-line"
+    ],
+    "MULTIPLIKE": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "TEXTIL FAVERO": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "MENEGOTTI TEXTIL": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "CRZ COM E REPRES": [
+        "COMPRAS",
+        "12102 - Aviamentos"
+    ],
+    "GOOGLE BRASIL": [
+        "PLANEJAMENTO",
+        "21701 - Desp. Operacionais/Facebook/Email"
+    ],
+    "TICKET SERVICOS": [
+        "ADM/FINANCEIRO",
+        "12204 - Alimentação"
+    ],
+    "TICKET SOLUCOES": [
+        "LOGISTICA",
+        "21301 - Combustíveis Motoboy"
+    ],
+    "HACO ETIQUETAS": [
+        "ADM/FINANCEIRO",
+        "12107 - Etiquetas roupas/Acessorios"
+    ],
+    "EXCIM IMP E EXP": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "MICROPOST": [
+        "GERENTE ONLINE",
+        "21120 - Sistemas e Softwares"
+    ],
+    "ECOBOTOES": [
+        "COMPRAS",
+        "12105 - Produtos Para Revenda"
+    ],
+    "ALAMEDA VERT": [
+        "ADM/FINANCEIRO",
+        "21101 - Aluguel"
+    ],
+    "COMP ELE EST DA BA": [
+        "ADM/FINANCEIRO",
+        "21104 - Energia Eletrica"
+    ],
+    "COMPANHIA DE ELETRICIDADE": [
+        "ADM/FINANCEIRO",
+        "21104 - Energia Eletrica"
+    ],
+    "COELB": [
+        "ADM/FINANCEIRO",
+        "21104 - Energia Eletrica"
+    ],
+    "EMBASA": [
+        "ADM/FINANCEIRO",
+        "21103 - Agua E Esgotos"
+    ],
+    "SEND4": [
+        "GERENTE ONLINE",
+        "21120 - Sistemas e Softwares"
+    ],
+    "FORMATO TRANSPORTES": [
+        "COMPRAS",
+        "12112 - Frete/Transporte - Produção"
+    ],
+    "O S S CREDITOS": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "THALIA AVIAMENTOS": [
+        "COMPRAS",
+        "12102 - Aviamentos"
+    ],
+    "ITS TELECOMUNICACOES": [
+        "ADM/FINANCEIRO",
+        "21114 - Telefonia Fixa/Internet"
+    ],
+    "HUP TELECOM": [
+        "ADM/FINANCEIRO",
+        "21114 - Telefonia Fixa/Internet"
+    ],
+    "TIM S/A": [
+        "ADM/FINANCEIRO",
+        "21114 - Telefonia Fixa/Internet"
+    ],
+    "TIM CELULAR": [
+        "ADM/FINANCEIRO",
+        "21114 - Telefonia Fixa/Internet"
+    ],
+    "CLARO S.A": [
+        "ADM/FINANCEIRO",
+        "21114 - Telefonia Fixa/Internet"
+    ],
+    "CLARO": [
+        "ADM/FINANCEIRO",
+        "21114 - Telefonia Fixa/Internet"
+    ],
+    "SEFAZ BAHIA": [
+        "ADM/FINANCEIRO",
+        "22301 - ICMS (Parc paseo)"
+    ],
+    "SEFAZ": [
+        "ADM/FINANCEIRO",
+        "22309 - GNRE"
+    ],
+    "GNRE": [
+        "ADM/FINANCEIRO",
+        "22309 - GNRE"
+    ],
+    "RECEITA FED": [
+        "ADM/FINANCEIRO",
+        "12205 - IRRF - Imposto de Renda"
+    ],
+    "DAS-SIMPLES": [
+        "ADM/FINANCEIRO",
+        "22308 - Simples Nacional"
+    ],
+    "SIMPLES NACIONAL": [
+        "ADM/FINANCEIRO",
+        "22308 - Simples Nacional"
+    ],
+    "DARF": [
+        "ADM/FINANCEIRO",
+        "12205 - IRRF - Imposto de Renda"
+    ],
+    "FLOWBIZ": [
+        "PLANEJAMENTO",
+        "21701 - Desp. Operacionais/Facebook/Email"
+    ],
+    "FACEBOOK": [
+        "PLANEJAMENTO",
+        "21701 - Desp. Operacionais/Facebook/Email"
+    ],
+    "RG MARK": [
+        "PLANEJAMENTO",
+        "21701 - Desp. Operacionais/Facebook/Email"
+    ],
+    "SINDICOF": [
+        "ADM/FINANCEIRO",
+        "21116 - Sindicato E Associcoes"
+    ],
+    "SANCRIS LINHAS": [
+        "COMPRAS",
+        "12102 - Aviamentos"
+    ],
+    "MS OPEN FUNDO": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "MS MULTI FUNDO": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "ASSOCIACAO DOS LOJISTAS": [
+        "ADM/FINANCEIRO",
+        "21116 - Sindicato E Associcoes"
+    ],
+    "SINDICATO DOS EMPREGADOS": [
+        "ADM/FINANCEIRO",
+        "21117 - Sindicato E Associcoes"
+    ],
+    "ABIV": [
+        "ADM/FINANCEIRO",
+        "21116 - Sindicato E Associcoes"
+    ],
+    "SOLAR SERV": [
+        "ADM/FINANCEIRO",
+        "TRANSFERENCIA"
+    ],
+    "SOLAR SERVIÇOS": [
+        "ADM/FINANCEIRO",
+        "TRANSFERENCIA"
+    ],
+    "IGLU LOC": [
+        "MARKETING",
+        "21703 - Lookbook"
+    ],
+    "ALLIANZ SEGUROS": [
+        "ADM/FINANCEIRO",
+        "21109 - Seguros Loja/Imóvel"
+    ],
+    "BRASIL BOTOES": [
+        "COMPRAS",
+        "12102 - Aviamentos"
+    ],
+    "CENTRAL VT SERVICOS": [
+        "ADM/FINANCEIRO",
+        "12203 - Transportes"
+    ],
+    "CONSORCIO SALVADOR TRANSCARD": [
+        "ADM/FINANCEIRO",
+        "12203 - Transportes"
+    ],
+    "CONSORCIO METROPASSE": [
+        "ADM/FINANCEIRO",
+        "12203 - Transportes"
+    ],
+    "DMF SERVICOS": [
+        "ADM/FINANCEIRO",
+        "21112 - Servicos Contabeis"
+    ],
+    "SHOPPING ALAMEDA VERT": [
+        "ADM/FINANCEIRO",
+        "21102 - Condominio"
+    ],
+    "CONDOMINIO SHOPPING": [
+        "ADM/FINANCEIRO",
+        "21102 - Condominio"
+    ],
+    "CONDOMINIO PASEO": [
+        "ADM/FINANCEIRO",
+        "21102 - Condominio"
+    ],
+    "M LEITAO": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "CONCEPT TXTL": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "CAIXA ECONOMICA FEDERAL": [
+        "ADM/FINANCEIRO",
+        "12207 - Rescisão / FGTS"
+    ],
+    "CEF MATRIZ": [
+        "ADM/FINANCEIRO",
+        "RH - FGTS"
+    ],
+    "SPOT METRICS": [
+        "PLANEJAMENTO",
+        "21120 - Sistemas e Softwares"
+    ],
+    "SOCIALCRED": [
+        "COMPRAS",
+        "12104 - Produtos Para Revenda"
+    ],
+    "COMERCIAL DE ZIPERES": [
+        "COMPRAS",
+        "12102 - Aviamentos"
+    ],
+    "MT LOG SOLUCOES": [
+        "COMPRAS",
+        "22201 - Entregas On-line"
+    ],
+    "TEXTIL SUICA": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "LAPA PATRIMONIAL": [
+        "ADM/FINANCEIRO",
+        "21101 - Aluguel"
+    ],
+    "ABR PLANEJAMENTO": [
+        "ADM/FINANCEIRO",
+        "21101 - Aluguel"
+    ],
+    "INNOVATIV INDUSTRIA": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "GALVANOTECNICA": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "GIMENEZ JACOB": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "V.L.O TEXTIL": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "VNDA SERVICOS": [
+        "GERENTE ONLINE",
+        "21120 - Sistemas e Softwares"
+    ],
+    "VNDA SERVIÇOS": [
+        "GERENTE ONLINE",
+        "21120 - Sistemas e Softwares"
+    ],
+    "VR BENEFICIOS": [
+        "ADM/FINANCEIRO",
+        "22201 - Entregas On-line"
+    ],
+    "RIOMED": [
+        "ADM/FINANCEIRO",
+        "12209 - Exames Clínicos (Dem/Adm/Per)"
+    ],
+    "SST MAIS": [
+        "ADM/FINANCEIRO",
+        "21113 - Consultorias e Auditorias"
+    ],
+    "BEM MAIS GESTORA": [
+        "ADM/FINANCEIRO",
+        "21116 - Sindicato E Associcoes"
+    ],
+    "INTEGRADO SISTEMAS": [
+        "ADM/FINANCEIRO",
+        "21120 - Sistemas e Softwares"
+    ],
+    "SANTANDER NEGOCIOS": [
+        "ADM/FINANCEIRO",
+        "21120 - Sistemas e Softwares"
+    ],
+    "EMPRESA BRASILEIRA DE CORREIOS": [
+        "ADM/FINANCEIRO",
+        "22201 - Entregas On-line"
+    ],
+    "BRASPRESS": [
+        "ADM/FINANCEIRO",
+        "12112 - Frete/Transporte - Produção"
+    ],
+    "LUCAS FIGUEIREDO": [
+        "SUPRIMENTOS",
+        "21209 - Uso e Consumo Lojas (Copos)"
+    ],
+    "VALTER VANDERLEI": [
+        "ADM/FINANCEIRO",
+        "21501 - Manutenção - Predial"
+    ],
+    "CORK COMERCIO": [
+        "MARKETING",
+        "21705 - Relac com o Cliente - Ações Clientes"
+    ],
+    "MARGO CONFEITARIA": [
+        "MARKETING",
+        "21705 - Relac com o Cliente - Ações Clientes"
+    ],
+    "JIREH BRINDES": [
+        "ADM/FINANCEIRO",
+        "21801 - Endomarketing"
+    ],
+    "GABRIELA REGIS": [
+        "MARKETING",
+        "21801 - Endomarketing"
+    ],
+    "PJBANK": [
+        "GERENTE ONLINE",
+        "21120 - Sistemas e Softwares"
+    ],
+    "AUDACES": [
+        "ADM/FINANCEIRO",
+        "21120 - Sistemas e Softwares"
+    ],
+    "PREF MUN SALVADOR": [
+        "ADM/FINANCEIRO",
+        "21902 - Taxas Municipais"
+    ],
+    "IPTU": [
+        "ADM/FINANCEIRO",
+        "21901 - IPTU"
+    ],
+    "JAC SERVICOS": [
+        "LOGISTICA",
+        "21304 - Manutenção - Moto/Carro"
+    ],
+    "L3E COMERCIO": [
+        "SUPRIMENTOS",
+        "21706 - Visual Merchandising"
+    ],
+    "ATACADAO DO PAPEL": [
+        "SUPRIMENTOS",
+        "21204 - Material de Escritório"
+    ],
+    "CROMAGRAFYC": [
+        "SUPRIMENTOS",
+        "12106 - Sacolas"
+    ],
+    "HIGIFORTE": [
+        "SUPRIMENTOS",
+        "21206 - Material de Limpeza"
+    ],
+    "SUPRILINX": [
+        "SUPRIMENTOS",
+        "12107 - Etiquetas roupas/Acessorios"
+    ],
+    "AG ANTECIPA": [
+        "SUPRIMENTOS",
+        "22206 - Embalagens (Sacolas, Envelopes e Papel Seda)"
+    ],
+    "LOLA FEITO": [
+        "COMPRAS",
+        "12104 - Produtos Para Revenda"
+    ],
+    "LITORAL COMERCIO EXTERIOR": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "ROYAL BLUE": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "LDB LOGISTICA": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "LDB TRANSPORTES": [
+        "COMPRAS",
+        "12112 - Frete/Transporte - Produção"
+    ],
+    "ESTAMPARIA SALETE": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "RELIC OPTICAL": [
+        "COMPRAS",
+        "12104 - Produtos Para Revenda"
+    ],
+    "PLOTAG PAPEIS": [
+        "COMPRAS",
+        "12107 - Etiquetas roupas/Acessorios"
+    ],
+    "SOUL PRINT": [
+        "COMPRAS",
+        "21707 - Material Gráfico"
+    ],
+    "3D SERVICOS GRAFICOS": [
+        "COMPRAS",
+        "21707 - Material Gráfico"
+    ],
+    "PIRES PINHEIRO": [
+        "ADM/FINANCEIRO",
+        "21707 - Material Gráfico"
+    ],
+    "VICTORIA DE CASTRO": [
+        "COMPRAS",
+        "21202 - Dedetização"
+    ],
+    "PUBLISILK": [
+        "ADM/FINANCEIRO",
+        "22410 - Investimento - Reformas"
+    ],
+    "40 GRAUS BA": [
+        "MARKETING",
+        "21703 - Lookbook"
+    ],
+    "MCL PUBLICIDADE": [
+        "MARKETING",
+        "21703 - Lookbook"
+    ],
+    "IONARA ARGOLO": [
+        "MARKETING",
+        "21702 - Editorial para Campanha"
+    ],
+    "FUNDACAO MUSEU": [
+        "MARKETING",
+        "21703 - Lookbook"
+    ],
+    "QZ COMERCIO": [
+        "GERENTE LOJA",
+        "21801 - Endomarketing"
+    ],
+    "MILE MONEY": [
+        "COMPRAS",
+        "12101 - Tecidos"
+    ],
+    "KAIQUE RAMOS": [
+        "ADM/FINANCEIRO",
+        "21505 - Manutenção - Refrigeração/Ar-condicionado"
+    ],
+    "NAESON GOMES": [
+        "ADM/FINANCEIRO",
+        "21502 - Manutenção - Elétrica"
+    ],
+    "EDUARDO NASCIMENTO": [
+        "ADM/FINANCEIRO",
+        "21501 - Manutenção - Predial"
+    ],
+    "CASA FERRO": [
+        "COMPRAS",
+        "12102 - Aviamentos"
+    ],
+    "FELICITY INDUSTRIA": [
+        "COMPRAS",
+        "12112 - Frete/Transporte - Produção"
+    ]
+}

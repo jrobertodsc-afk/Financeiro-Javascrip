@@ -1,0 +1,588 @@
+{
+    "cnpj_mappings": {
+        "***.319.075-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FAACIONISTA"
+        },
+        "05.899.292/0001-60": {
+            "responsavel": "MARKETING",
+            "categoria": "21703 - Lookbook",
+            "empresa": "LALUA",
+            "observacao": "MODELO - YASMIN CUNHA - SHOOTING"
+        },
+        "38.032.681/0001-42": {
+            "responsavel": "MARKETING",
+            "categoria": "21704 - Marketing de Influência - Influencers",
+            "empresa": "LALUA",
+            "observacao": "DIGITAL INFLUENCER"
+        },
+        "***.208.315-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "***.207.148-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "***.838.935-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "***.892.775-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "***.144.215-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "85.236.743/0001-18": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21120 - Sistemas e Softwares",
+            "empresa": "LALUA",
+            "observacao": "SISTEMA PLOTTER"
+        },
+        "02.384.871/0001-81": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "49.418.890/0001-45": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "29.469.420/0001-01": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "16.845.496/0001-34": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "11.247.476/0001-48": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "27.914.259/0001-02": {
+            "responsavel": "SUPRIMENTOS",
+            "categoria": "21206 - Material de Limpeza",
+            "empresa": "LALUA",
+            "observacao": "MATERIAL DE LIMPEZA"
+        },
+        "***.229.485-**": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21502 - Manutenção - Elétrica",
+            "empresa": "LALUA",
+            "observacao": "SERVIÇOS ELETRICOS"
+        },
+        "35.616.849/0001-79": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21111 - Serviços Advocatícios",
+            "empresa": "LALUA",
+            "observacao": "SERVIÇOS ADVOCATICIOS"
+        },
+        "00.822.602/0001-24": {
+            "responsavel": "SUPRIMENTOS",
+            "categoria": "11201 - Produção - Cadista/Corte/Expedição/Modelagem/Pilotagem",
+            "empresa": "LALUA",
+            "observacao": "PAPEL DA PLOTTER"
+        },
+        "27.717.817/0001-31": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "21120 - Sistemas e Softwares",
+            "empresa": "LALUA",
+            "observacao": "MENSALIDADE AFTERSALES"
+        },
+        "26.607.445/0001-28": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "TRANSFERENCIA",
+            "empresa": "LALUA",
+            "observacao": "TRANSFERENCIA"
+        },
+        "100.127.035-59": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "12208 - Domingos e Feriados Trabalhados",
+            "empresa": "LALUA",
+            "observacao": "DOMINGO TRABALHADO 24/05/2026"
+        },
+        "002.894.095-43": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "12208 - Domingos e Feriados Trabalhados",
+            "empresa": "LALUA",
+            "observacao": "DOMINGO TRABALHADO 24/05/2026"
+        },
+        "079.988.065-59": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "12208 - Domingos e Feriados Trabalhados",
+            "empresa": "LALUA",
+            "observacao": "DOMINGO TRABALHADO 24/05/2026"
+        },
+        "103.343.075-70": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "12208 - Domingos e Feriados Trabalhados",
+            "empresa": "LALUA",
+            "observacao": "DOMINGO TRABALHADO 24/05/2026"
+        },
+        "021.429.215-07": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "12208 - Domingos e Feriados Trabalhados",
+            "empresa": "LALUA",
+            "observacao": "DOMINGO TRABALHADO 24/05/2026"
+        },
+        "05.003.162/0001-05": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "12.202.612/0001-46": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "31.872.549/0001-08": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "12203 - Transportes",
+            "empresa": "LALUA",
+            "observacao": "VALE TRANSPORTE"
+        },
+        "***.906.665-**": {
+            "responsavel": "MARKETING",
+            "categoria": "21703 - Lookbook",
+            "empresa": "LALUA",
+            "observacao": "MODELO"
+        },
+        "82.645.862/0001-36": {
+            "responsavel": "COMPRAS",
+            "categoria": "12107 - Etiquetas roupas/Acessorios",
+            "empresa": "LALUA",
+            "observacao": "FITA PARA VESTIR A ALMA"
+        },
+        "47.866.934/0001-74": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "12204 - Alimentação",
+            "empresa": "LALUA",
+            "observacao": "ALIMENTAÇÃO"
+        },
+        "22.267.284/0001-10": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "12203 - Transportes",
+            "empresa": "LALUA",
+            "observacao": "VALE TRANSPORTE"
+        },
+        "***.660.944-**": {
+            "responsavel": "MARKETING",
+            "categoria": "21705 - Relacionamento com o Cliente",
+            "empresa": "LALUA",
+            "observacao": "CANECAS PARA MELHORES CLIENTES"
+        },
+        "14.014.761/0001-07": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "14.955.141/0001-72": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "***.381.965-**": {
+            "responsavel": "MARKETING",
+            "categoria": "21703 - Lookbook",
+            "empresa": "LALUA",
+            "observacao": "SHOOTING ALTO INVERNO"
+        },
+        "***.666.465-**": {
+            "responsavel": "MARKETING",
+            "categoria": "21703 - Lookbook",
+            "empresa": "LALUA",
+            "observacao": "FOTOGRAFO"
+        },
+        "07.397.758/0001-54": {
+            "responsavel": "SUPRIMENTOS",
+            "categoria": "21209 - Uso e Consumo Lojas",
+            "empresa": "LALUA",
+            "observacao": "PERFUME PARA AMBIENTE BOAH"
+        },
+        "***.215.965-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "02.295.294/0001-51": {
+            "responsavel": "COMPRAS",
+            "categoria": "12104 - Produtos Para Revenda",
+            "empresa": "LALUA",
+            "observacao": "CINTO  DALIA CAFE - ADALTA OFF WHITE"
+        },
+        "48.740.351/0001-65": {
+            "responsavel": "COMPRAS",
+            "categoria": "12102 - Aviamentos",
+            "empresa": "LALUA",
+            "observacao": "FRETE NF 19496 MIXMETAIS - PASSANTE TARTARUGA"
+        },
+        "09.411.448/0001-72": {
+            "responsavel": "COMPRAS",
+            "categoria": "12104 - Produtos Para Revenda",
+            "empresa": "LALUA",
+            "observacao": "FRETE NF 598  BARRAFREE -  CINTO OLGA CARAMELO"
+        },
+        "02.535.864/0007-29": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21120 - Sistemas e Softwares",
+            "empresa": "LALUA",
+            "observacao": "SISTEMA DE REGISTRO DE PONTO"
+        },
+        "10.474.553/0001-30": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "04.316.357/0001-34": {
+            "responsavel": "COMPRAS",
+            "categoria": "12104 - Produtos Para Revenda",
+            "empresa": "LALUA",
+            "observacao": "MAX T SHIRT LOLA"
+        },
+        "***.263.535-**": {
+            "responsavel": "COMPRAS",
+            "categoria": "12104 - Produtos Para Revenda",
+            "empresa": "LALUA",
+            "observacao": "BAG INTERIOR"
+        },
+        "51.942.092/0001-60": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "13.727.240/0001-34": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "NF - 334264 FIAÇÃO ALPINA - TECIDO"
+        },
+        "***.178.445-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "***.221.405-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "***.213.245-**": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21505 - Manutenção - Refrigeração/Ar-condicionado",
+            "empresa": "LALUA",
+            "observacao": "MANUTENÇÃO AR CONDIIONADO  LOJA"
+        }
+    },
+    "nome_mappings": {
+        "BARBARA NAIANA DOS REIS LARANJ": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FAACIONISTA"
+        },
+        "M & C PRODUCOES ARTISTICAS LTD": {
+            "responsavel": "MARKETING",
+            "categoria": "21703 - Lookbook",
+            "empresa": "LALUA",
+            "observacao": "MODELO - YASMIN CUNHA - SHOOTING"
+        },
+        "RECEITA FED-DARF NUMERADO-CB": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "22304 - PIS (8109)",
+            "empresa": "LALUA",
+            "observacao": "PIS"
+        },
+        "SEFAZ BAHIA-DAE": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "22303 - ICMS Antecipação Parcial",
+            "empresa": "LALUA",
+            "observacao": "ICMS ANTEC - PSEO"
+        },
+        "ALICE PRADO CARDOSO FERNANDES": {
+            "responsavel": "MARKETING",
+            "categoria": "21704 - Marketing de Influência - Influencers",
+            "empresa": "LALUA",
+            "observacao": "DIGITAL INFLUENCER"
+        },
+        "ANA CAROLINE MAGALHAES RAMOS": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "CLEUSA APARECIDA FERNANDES RIB": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "JULINALVA BORGES DA SILVA": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "MARIA HELENA DOS SANTOS ARAUJO": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "JUVANICE DA CONCEICAO SOUSA": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "AUDACES A INFO INDUSTRIAL LTDA": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21120 - Sistemas e Softwares",
+            "empresa": "LALUA",
+            "observacao": "SISTEMA PLOTTER"
+        },
+        "EXCIM IMPORTACAO E EXPORTACAO": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "FIACAO ALPINA LTDA": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "MULTIPLIKE FIDC": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "R TRADE C I LTDA": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "V.L.O TEXTIL COM IMP EXP LTDA": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "HIGIFORTE COMERCIO VAREJISTA D": {
+            "responsavel": "SUPRIMENTOS",
+            "categoria": "21206 - Material de Limpeza",
+            "empresa": "LALUA",
+            "observacao": "MATERIAL DE LIMPEZA"
+        },
+        "NAESON GOMES DA SILVA": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21502 - Manutenção - Elétrica",
+            "empresa": "LALUA",
+            "observacao": "SERVIÇOS ELETRICOS"
+        },
+        "PIRES PINHEIRO FREITAS CARVALH": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21111 - Serviços Advocatícios",
+            "empresa": "LALUA",
+            "observacao": "SERVIÇOS ADVOCATICIOS"
+        },
+        "PLOTAG PAPEIS SISTEMAS E SUPRI": {
+            "responsavel": "SUPRIMENTOS",
+            "categoria": "11201 - Produção - Cadista/Corte/Expedição/Modelagem/Pilotagem",
+            "empresa": "LALUA",
+            "observacao": "PAPEL DA PLOTTER"
+        },
+        "SEND4 STORE": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "21120 - Sistemas e Softwares",
+            "empresa": "LALUA",
+            "observacao": "MENSALIDADE AFTERSALES"
+        },
+        "SOLAR SERVICOS DE APOIO ADMINI": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "TRANSFERENCIA",
+            "empresa": "LALUA",
+            "observacao": "TRANSFERENCIA"
+        },
+        "MARIA EDUARDA SANTANA LOPES": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "12208 - Domingos e Feriados Trabalhados",
+            "empresa": "LALUA",
+            "observacao": "DOMINGO TRABALHADO 24/05/2026"
+        },
+        "FATIMA NEVES DE CARVALHO SANTO": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "12208 - Domingos e Feriados Trabalhados",
+            "empresa": "LALUA",
+            "observacao": "DOMINGO TRABALHADO 24/05/2026"
+        },
+        "ANA BEATRIZ DE MELO SANTOS": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "12208 - Domingos e Feriados Trabalhados",
+            "empresa": "LALUA",
+            "observacao": "DOMINGO TRABALHADO 24/05/2026"
+        },
+        "BIANCA DA SILVA FREITAS MUNIZ": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "12208 - Domingos e Feriados Trabalhados",
+            "empresa": "LALUA",
+            "observacao": "DOMINGO TRABALHADO 24/05/2026"
+        },
+        "WAILLYN VIEIRA TELES": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "12208 - Domingos e Feriados Trabalhados",
+            "empresa": "LALUA",
+            "observacao": "DOMINGO TRABALHADO 24/05/2026"
+        },
+        "TEXTIL SUICA LTDA": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "O S S CREDITOS S A": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "CONSORCIO METROPASSE": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "12203 - Transportes",
+            "empresa": "LALUA",
+            "observacao": "VALE TRANSPORTE"
+        },
+        "CAMILLA FIGUEREDO BASTOS": {
+            "responsavel": "MARKETING",
+            "categoria": "21703 - Lookbook",
+            "empresa": "LALUA",
+            "observacao": "MODELO"
+        },
+        "HACO ETIQUETAS LTDA": {
+            "responsavel": "COMPRAS",
+            "categoria": "12107 - Etiquetas roupas/Acessorios",
+            "empresa": "LALUA",
+            "observacao": "FITA PARA VESTIR A ALMA"
+        },
+        "TICKET SERVICOS SA": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "12204 - Alimentação",
+            "empresa": "LALUA",
+            "observacao": "ALIMENTAÇÃO"
+        },
+        "CONSORCIO SALVADOR TRANSCARD D": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "12203 - Transportes",
+            "empresa": "LALUA",
+            "observacao": "VALE TRANSPORTE"
+        },
+        "CAROLINA MORENA PIRES CUNHA VI": {
+            "responsavel": "MARKETING",
+            "categoria": "21705 - Relacionamento com o Cliente",
+            "empresa": "LALUA",
+            "observacao": "CANECAS PARA MELHORES CLIENTES"
+        },
+        "ROYAL BLUE COMERCIO, IMPORTACA": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "MULTIPLIKE SECURITIZADORA S.A.": {
+            "responsavel": "COMPRAS",
+            "categoria": "12101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "JULIA GARCEZ DE SENA SARMENTO": {
+            "responsavel": "MARKETING",
+            "categoria": "21703 - Lookbook",
+            "empresa": "LALUA",
+            "observacao": "SHOOTING ALTO INVERNO"
+        },
+        "PAULA CALINE DA SILVA OLIVEIRA": {
+            "responsavel": "MARKETING",
+            "categoria": "21703 - Lookbook",
+            "empresa": "LALUA",
+            "observacao": "FOTOGRAFO"
+        },
+        "SMELL IT INDUSTRIA E COMERCIO": {
+            "responsavel": "SUPRIMENTOS",
+            "categoria": "21209 - Uso e Consumo Lojas",
+            "empresa": "LALUA",
+            "observacao": "PERFUME PARA AMBIENTE BOAH"
+        },
+        "JOSIANE DE ARAUJO LIMA": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "BARRA FREE": {
+            "responsavel": "COMPRAS",
+            "categoria": "12104 - Produtos Para Revenda",
+            "empresa": "LALUA",
+            "observacao": "CINTO  DALIA CAFE - ADALTA OFF WHITE"
+        },
+        "PREF MUN LAURO DE FREITAS": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21901 - IPTU",
+            "empresa": "LALUA",
+            "observacao": "IPTU VILAS"
+        },
+        "BRASPRESS TRANSPORTES URGENTES": {
+            "responsavel": "COMPRAS",
+            "categoria": "12102 - Aviamentos",
+            "empresa": "LALUA",
+            "observacao": "FRETE NF 19496 MIXMETAIS - PASSANTE TARTARUGA"
+        },
+        "LDB TRANSPORTES DE CARGAS LTDA": {
+            "responsavel": "COMPRAS",
+            "categoria": "12104 - Produtos Para Revenda",
+            "empresa": "LALUA",
+            "observacao": "FRETE NF 598  BARRAFREE -  CINTO OLGA CARAMELO"
+        },
+        "VR BENEFICIOS E SERV PROC - FI": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21120 - Sistemas e Softwares",
+            "empresa": "LALUA",
+            "observacao": "SISTEMA DE REGISTRO DE PONTO"
+        }
+    }
+}

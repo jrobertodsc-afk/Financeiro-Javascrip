@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 import os
 from typing import Optional
+from services.logger_service import logger
 
 
 def extrair_texto_pdf(caminho: str, pagina: int = 0) -> str:
@@ -50,7 +51,7 @@ def extrair_texto_pdf(caminho: str, pagina: int = 0) -> str:
     except ImportError:
         pass
     except Exception as e:
-        print(f"[extrair_texto_pdf] fitz erro: {e}")
+        logger.error(f"[extrair_texto_pdf] fitz erro: {e}")
 
     # ── Tentativa 2: pypdf ────────────────────────────────────────────────────
     try:
@@ -72,7 +73,7 @@ def extrair_texto_pdf(caminho: str, pagina: int = 0) -> str:
     except ImportError:
         pass
     except Exception as e:
-        print(f"[extrair_texto_pdf] pypdf erro: {e}")
+        logger.error(f"[extrair_texto_pdf] pypdf erro: {e}")
 
     # ── Tentativa 3: PyPDF2 (legado) ──────────────────────────────────────────
     try:
@@ -126,7 +127,7 @@ def _ocr_com_tesseract(caminho: str, pagina: int = 0) -> str:
     except ImportError:
         return ""  # tesseract/fitz não disponível
     except Exception as e:
-        print(f"[_ocr_com_tesseract] Erro: {e}")
+        logger.error(f"[_ocr_com_tesseract] Erro: {e}")
         return ""
 
 
@@ -256,9 +257,11 @@ def processar_ocr_comprovante(caminho: str) -> dict:
     if result["favorecido"] and result["categoria"] == "A CLASSIFICAR":
         try:
             from utils.data_processing import auto_classificar
-            _, cat = auto_classificar(result["favorecido"], result["valor"])
+            _, cat, desc = auto_classificar(result["favorecido"], result["valor"])
             if cat and cat != "A CLASSIFICAR":
                 result["categoria"] = cat
+            if desc:
+                result["detalhes"] = desc
         except Exception:
             pass
 
@@ -333,5 +336,5 @@ def separar_pdf_paginas(caminho: str, pasta_destino: Optional[str] = None) -> li
             gerados.append(out_path)
         return gerados
     except Exception as e:
-        print(f"[separar_pdf_paginas] Erro: {e}")
+        logger.error(f"[separar_pdf_paginas] Erro: {e}")
         return [caminho]

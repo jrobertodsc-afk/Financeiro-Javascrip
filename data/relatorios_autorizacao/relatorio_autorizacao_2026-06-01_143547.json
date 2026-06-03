@@ -1,0 +1,52 @@
+{
+  "periodo_de": "28/05/2026",
+  "periodo_ate": "03/06/2026",
+  "dados": [
+    {
+      "nome": "MENEGOTTI TEXTIL LTDA",
+      "cnpj": "10.474.553/0001-30",
+      "tipo": "Boleto Itaú",
+      "data": "03/06/2026",
+      "data_obj": "2026-06-03T00:00:00",
+      "valor": 1980.06,
+      "status": "Pendente de autorização",
+      "responsavel": "COMPRAS",
+      "categoria": "12101 - Tecidos",
+      "empresa": "LALUA",
+      "observacao": "Importado de ConsultaPagamentos 3.xls",
+      "manual": false,
+      "descricao": "TECIDO"
+    },
+    {
+      "nome": "JACKFIL COM E IND DE TEC LTDA",
+      "cnpj": "51.942.092/0001-60",
+      "tipo": "Boleto Itaú",
+      "data": "03/06/2026",
+      "data_obj": "2026-06-03T00:00:00",
+      "valor": 101.47,
+      "status": "Pendente de autorização",
+      "responsavel": "COMPRAS",
+      "categoria": "12101 - Tecidos",
+      "empresa": "LALUA",
+      "observacao": "Importado de ConsultaPagamentos 3.xls",
+      "manual": false,
+      "descricao": "TECIDO"
+    },
+    {
+      "nome": "MULTIPLIKE SECURITIZADORA S.A.",
+      "cnpj": "14.955.141/0001-72",
+      "tipo": "Boleto Itaú",
+      "data": "03/06/2026",
+      "data_obj": "2026-06-03T00:00:00",
+      "valor": 3178.01,
+      "status": "Pendente de autorização",
+      "responsavel": "COMPRAS",
+      "categoria": "12101 - Tecidos",
+      "empresa": "LALUA",
+      "observacao": "Importado de ConsultaPagamentos 3.xls",
+      "manual": false,
+      "descricao": "TECIDO"
+    }
+  ],
+  "salvo_em": "2026-06-01T14:35:47.714704"
+}

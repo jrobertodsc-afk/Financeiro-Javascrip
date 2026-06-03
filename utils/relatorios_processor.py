@@ -33,7 +33,7 @@ def gerar_excel_pagamentos_autorizados(caminho_saida: str) -> tuple[bool, str]:
         )
 
     try:
-        from database import listar_pagamentos_autorizados
+        from services.database import listar_pagamentos_autorizados
     except ImportError as e:
         return False, f"Não foi possível importar o banco de dados: {e}"
 

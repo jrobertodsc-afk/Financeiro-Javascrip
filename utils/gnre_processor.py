@@ -57,7 +57,7 @@ def extrair_dados_basicos(pdf_path):
             "texto": text
         }
     except Exception as e:
-        print(f"Erro ao extrair dados de {pdf_path}: {e}")
+        logger.error(f"Erro ao extrair dados de {pdf_path}: {e}")
         return None
 
 def ler_relatorio_bancario(report_path):
@@ -90,7 +90,7 @@ def ler_relatorio_bancario(report_path):
                         })
         return pagamentos
     except Exception as e:
-        print(f"Erro ao ler relatório: {e}")
+        logger.error(f"Erro ao ler relatório: {e}")
         return []
 
 def processar_lote_gnre(pdf_lote, report_path, log_func):
@@ -131,6 +131,7 @@ def processar_lote_gnre(pdf_lote, report_path, log_func):
         import shutil
 import shutil
 from utils.xml_utils import ler_xml_nfe
+from services.logger_service import logger
 
 def extrair_dados_complexos_ai(pdf_path, prompt_extra):
     """

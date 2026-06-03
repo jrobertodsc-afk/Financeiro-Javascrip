@@ -48,50 +48,75 @@ def auto_classificar(nome_fornecedor, valor=0.0, cnpj=""):
     nome = nome_fornecedor.upper().strip()
     cnpj_clean = cnpj.strip()
 
+    # 0. Busca na Memória Aprendida (categorias_aprendidas.json)
+    import json
+    import os
+    try:
+        mem_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "categorias_aprendidas.json")
+        if os.path.exists(mem_path):
+            with open(mem_path, "r", encoding="utf-8") as f:
+                mem_data = json.load(f)
+                
+            if cnpj_clean and cnpj_clean in mem_data.get("cnpj_mappings", {}):
+                m = mem_data["cnpj_mappings"][cnpj_clean]
+                return m.get("responsavel", "ADM/FINANCEIRO"), m.get("categoria", "A CLASSIFICAR"), m.get("observacao", "")
+                
+            if nome in mem_data.get("nome_mappings", {}):
+                m = mem_data["nome_mappings"][nome]
+                return m.get("responsavel", "ADM/FINANCEIRO"), m.get("categoria", "A CLASSIFICAR"), m.get("observacao", "")
+    except Exception as e:
+        pass
+
     # 1. Busca por CNPJ exato na base de 266 fornecedores
     if cnpj_clean in DB_FORNECEDORES_CATEGORIA:
-        r, c = DB_FORNECEDORES_CATEGORIA[cnpj_clean]
+        vals = DB_FORNECEDORES_CATEGORIA[cnpj_clean]
+        r = vals[0] if len(vals) > 0 else "ADM/FINANCEIRO"
+        c = vals[1] if len(vals) > 1 else "A CLASSIFICAR"
+        desc = vals[2] if len(vals) > 2 else ""
         # Regra especial: GNRE sempre GERENTE ONLINE
         if "GNRE" in c.upper():
-            return "GERENTE ONLINE", c
-        return r, c
+            return "GERENTE ONLINE", c, desc
+        return r, c, desc
 
     # 2. Busca por Nome do Colaborador (RH)
     if nome in DB_COLABORADORES:
-        return "RH", "12201 - Salários"
+        return "RH", "12201 - Salários", ""
 
     # 3. Regra especial por nome (GNRE)
     if "GNRE" in nome:
-        return "GERENTE ONLINE", "22309 - GNRE"
+        return "GERENTE ONLINE", "22309 - GNRE", ""
 
     # 4. Busca por Nome do Fornecedor (Base DB_FORNECEDORES_NOME)
-    for chave_nome, (resp, cat) in DB_FORNECEDORES_NOME.items():
+    for chave_nome, vals in DB_FORNECEDORES_NOME.items():
         if chave_nome.upper() in nome:
-            return resp, cat
+            r = vals[0] if len(vals) > 0 else "ADM/FINANCEIRO"
+            c = vals[1] if len(vals) > 1 else "A CLASSIFICAR"
+            desc = vals[2] if len(vals) > 2 else ""
+            return r, c, desc
 
     # 4. Regras Genéricas de Categoria (Fallback)
     if any(x in nome for x in ["FGTS", "GRRF"]):
-        return "RH", "12205 - FGTS"
+        return "RH", "12205 - FGTS", ""
     if any(x in nome for x in ["INSS", "IRRF", "DARF", "GPS", "SIMPLES NACIONAL", "DAS", "PIS", "COFINS"]):
-        return "ADM/FINANCEIRO", "22308 - Simples Nacional"
+        return "ADM/FINANCEIRO", "22308 - Simples Nacional", ""
     if any(x in nome for x in ["SALARIO", "FOLHA", "PROVENTO", "FERIAS", "RESCISAO"]):
-        return "RH", "12201 - Salários"
+        return "RH", "12201 - Salários", ""
     if any(x in nome for x in ["ALUGUEL", "CONDOMINIO"]):
-        return "ADM/FINANCEIRO", "21101 - Aluguel"
+        return "ADM/FINANCEIRO", "21101 - Aluguel", ""
     if any(x in nome for x in ["ENERGIA", "COELBA", "AGUA", "EMBASA", "TELEFONE", "INTERNET"]):
-        return "ADM/FINANCEIRO", "21104 - Energia Eletrica"
+        return "ADM/FINANCEIRO", "21104 - Energia Eletrica", ""
     if any(x in nome for x in ["MARKETING", "FACEBOOK", "GOOGLE", "ADS", "INSTAGRAM"]):
-        return "MARKETING", "21701 - Comunicação/Mídia Digital"
+        return "MARKETING", "21701 - Comunicação/Mídia Digital", ""
     if any(x in nome for x in ["TRANSF", "PIX FILIAL", "MATRIZ"]):
-        return "ADM/FINANCEIRO", "TRANSFERENCIA"
+        return "ADM/FINANCEIRO", "TRANSFERENCIA", ""
     if any(x in nome for x in ["FRETE", "LOGISTICA", "TRANSPORTE"]):
-        return "LOGISTICA", "12112 - Frete/Transporte - Produção"
+        return "LOGISTICA", "12112 - Frete/Transporte - Produção", ""
 
     # Fornecedores (fallback por valor)
     if valor > 500:
-        return "ADM/FINANCEIRO", "12104 - Produtos Para Revenda"
+        return "ADM/FINANCEIRO", "12104 - Produtos Para Revenda", ""
 
-    return "ADM/FINANCEIRO", "A CLASSIFICAR"
+    return "ADM/FINANCEIRO", "A CLASSIFICAR", ""
 
 def extrair_info_comprovante(texto):
     """

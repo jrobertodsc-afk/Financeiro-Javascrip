@@ -1,0 +1,64 @@
+.previsoes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.previsoes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.previsoes-header h2 {
+  font-size: 24px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.inline-icon {
+  color: var(--info);
+}
+
+.mb-24 {
+  margin-bottom: 24px;
+}
+
+.text-info {
+  color: var(--info) !important;
+}
+
+.badge-info {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.actions-cell {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+}
+
+.btn-convert:hover {
+  background: var(--success-bg);
+  border-color: var(--success);
+  color: var(--success);
+}

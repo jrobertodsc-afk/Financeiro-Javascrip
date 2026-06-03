@@ -1,0 +1,10 @@
+[14:37:37] ERROR: Erro Supabase (listar fornecedores): [Errno 11001] getaddrinfo failed
+[17:09:28] ERROR: Erro Supabase (listar_pagamentos): [Errno 11001] getaddrinfo failed
+[17:09:40] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:09:40] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:09:40] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:09:40] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[17:09:40] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[17:09:40] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[17:09:40] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:09:40] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed

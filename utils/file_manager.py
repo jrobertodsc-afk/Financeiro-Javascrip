@@ -5,7 +5,7 @@ Responsável por:
   - Organizar PDFs de comprovantes da pasta ENTRADA → SAIDA_ORGANIZADA
   - Espelhar comprovantes no servidor (Y:\\...)
   - Fazer backup local dos comprovantes
-  - Rotação automática de logs (remove arquivos mais antigos que LOG_RETENCAO_DIAS)
+  - Rotação automática de logs (remove arquivos mais antigos que config.LOG_RETENCAO_DIAS)
 """
 
 from __future__ import annotations
@@ -19,22 +19,8 @@ from datetime import datetime, timedelta
 import pypdf
 from typing import Callable, Optional
 
-from utils.data_processing import (
-    _parse_valor, 
-    _aplicar_mascara_valor, 
-    calcular_periodo_sugerido, 
-    auto_classificar,
-    extrair_info_comprovante
-)
-from config import (
-    PASTA_ENTRADA,
-    PASTA_SAIDA,
-    PASTA_ATUAL,
-    PASTA_LOGS,
-    PASTA_SERVIDOR,
-    PASTA_BACKUP_PDF,
-    LOG_RETENCAO_DIAS,
-)
+from utils.data_processing import *
+import config
 
 
 # ==============================================================================
@@ -73,13 +59,13 @@ def _copiar_seguro(origem: str, destino: str, log_fn: Optional[Callable] = None)
 
 def limpar_logs_antigos(log_fn: Optional[Callable] = None) -> int:
     """
-    Remove arquivos de log com mais de LOG_RETENCAO_DIAS dias da PASTA_LOGS.
+    Remove arquivos de log com mais de config.LOG_RETENCAO_DIAS dias da config.PASTA_LOGS.
     Retorna o número de arquivos removidos.
     """
-    limite = datetime.now() - timedelta(days=LOG_RETENCAO_DIAS)
+    limite = datetime.now() - timedelta(days=config.LOG_RETENCAO_DIAS)
     removidos = 0
 
-    padrao = os.path.join(PASTA_LOGS, "log_*.txt")
+    padrao = os.path.join(config.PASTA_LOGS, "log_*.txt")
     for caminho in glob.glob(padrao):
         try:
             mtime = datetime.fromtimestamp(os.path.getmtime(caminho))
@@ -92,7 +78,7 @@ def limpar_logs_antigos(log_fn: Optional[Callable] = None) -> int:
 
     if removidos and log_fn:
         log_fn(f"🧹 Rotação de logs: {removidos} arquivo(s) removido(s) "
-               f"(mais antigos que {LOG_RETENCAO_DIAS} dias)")
+               f"(mais antigos que {config.LOG_RETENCAO_DIAS} dias)")
     return removidos
 
 
@@ -107,20 +93,20 @@ def _espelhar_pdf(
 ) -> None:
     """
     Copia um PDF gerado para:
-      1. Servidor: PASTA_SERVIDOR / caminho_relativo
-      2. Backup local: PASTA_BACKUP_PDF / caminho_relativo
+      1. Servidor: config.PASTA_SERVIDOR / caminho_relativo
+      2. Backup local: config.PASTA_BACKUP_PDF / caminho_relativo
 
     `caminho_relativo` deve ser o sub-caminho a partir da raiz de saída,
     ex: "LALUA/2026/04_Abril/23_Dia/FORNECEDORES/boleto_fulano.pdf"
     """
     # ── Cópia para servidor ──────────────────────────────────────────────────
-    destino_srv = os.path.join(PASTA_SERVIDOR, caminho_relativo)
+    destino_srv = os.path.join(config.PASTA_SERVIDOR, caminho_relativo)
     ok_srv = _copiar_seguro(caminho_origem, destino_srv, log_fn)
     if ok_srv and log_fn:
         log_fn(f"☁️  Servidor: {os.path.basename(caminho_origem)} → salvo")
 
     # ── Backup local ─────────────────────────────────────────────────────────
-    destino_bkp = os.path.join(PASTA_BACKUP_PDF, caminho_relativo)
+    destino_bkp = os.path.join(config.PASTA_BACKUP_PDF, caminho_relativo)
     ok_bkp = _copiar_seguro(caminho_origem, destino_bkp, log_fn)
     if ok_bkp and log_fn:
         log_fn(f"💾 Backup local: {os.path.basename(caminho_origem)} → salvo")
@@ -226,10 +212,10 @@ def _destino_organizado(
     categoria: Optional[str] = None,
 ) -> tuple[str, str]:
     """
-    Calcula o caminho de destino dentro de PASTA_SAIDA para um PDF.
+    Calcula o caminho de destino dentro de config.PASTA_SAIDA para um PDF.
 
     Retorna (caminho_absoluto, caminho_relativo).
-    Estrutura: PASTA_SAIDA / {empresa} / {ano} / {mês} / {dia}_Dia / {categoria} / arquivo.pdf
+    Estrutura: config.PASTA_SAIDA / {empresa} / {ano} / {mês} / {dia}_Dia / {categoria} / arquivo.pdf
     """
     dt = data_ref or datetime.now()
     empresa_dir  = _normalizar(empresa  or _inferir_empresa(nome_arquivo))
@@ -247,7 +233,7 @@ def _destino_organizado(
     else:
         relativo = os.path.join(empresa_dir, ano_dir, mes_dir, dia_dir, cat_dir, nome_arquivo)
 
-    absoluto = os.path.join(PASTA_SAIDA, relativo)
+    absoluto = os.path.join(config.PASTA_SAIDA, relativo)
     return absoluto, relativo
 
 
@@ -302,7 +288,7 @@ def copiar_pdf_para_servidor(
 ) -> bool:
     """
     Copia um PDF (já gerado em qualquer pasta) para o servidor e backup local.
-    Use esta função para PDFs gerados diretamente em PASTA_ATUAL (relatórios,
+    Use esta função para PDFs gerados diretamente em config.PASTA_ATUAL (relatórios,
     transferências, etc.) que não passam pelo fluxo de organização.
 
     Se `caminho_relativo` for None, usa apenas o nome do arquivo como sub-pasta
@@ -330,15 +316,15 @@ def organizar_arquivos(
     atualizar_stats: Optional[Callable] = None,
 ) -> int:
     """
-    Processa todos os PDFs em PASTA_ENTRADA:
-      1. Move cada PDF para a estrutura organizada em PASTA_SAIDA
+    Processa todos os PDFs em config.PASTA_ENTRADA:
+      1. Move cada PDF para a estrutura organizada em config.PASTA_SAIDA
       2. Espelha no servidor (Y:\\...) e no backup local
       3. Executa rotação de logs ao final
 
     Retorna o total de arquivos processados com sucesso.
     """
     pdfs = [
-        f for f in os.listdir(PASTA_ENTRADA)
+        f for f in os.listdir(config.PASTA_ENTRADA)
         if f.lower().endswith(".pdf")
     ]
 
@@ -352,11 +338,11 @@ def organizar_arquivos(
     itens_processados = []
 
     for nome in pdfs:
-        caminho = os.path.join(PASTA_ENTRADA, nome)
+        caminho = os.path.join(config.PASTA_ENTRADA, nome)
 
         # Detecta possível duplicata pelo nome (arquivo já na saída)
         _, destino_rel = _destino_organizado(nome)
-        destino_abs = os.path.join(PASTA_SAIDA, destino_rel)
+        destino_abs = os.path.join(config.PASTA_SAIDA, destino_rel)
         if os.path.exists(destino_abs):
             # Verifica por tamanho
             if os.path.getsize(caminho) == os.path.getsize(destino_abs):
@@ -486,8 +472,8 @@ def organizar_arquivos(
 # ==============================================================================
 
 def contar_pdfs_entrada() -> int:
-    """Retorna quantos PDFs estão aguardando na PASTA_ENTRADA."""
+    """Retorna quantos PDFs estão aguardando na config.PASTA_ENTRADA."""
     try:
-        return sum(1 for f in os.listdir(PASTA_ENTRADA) if f.lower().endswith(".pdf"))
+        return sum(1 for f in os.listdir(config.PASTA_ENTRADA) if f.lower().endswith(".pdf"))
     except Exception:
         return 0

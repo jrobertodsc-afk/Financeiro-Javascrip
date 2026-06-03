@@ -1,0 +1,282 @@
+[10:09:40] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:09:43] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:09:46] ERROR: Erro Supabase (listar_pagamentos): [Errno 11001] getaddrinfo failed
+[10:09:47] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:09:49] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:11:33] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:11:33] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:11:33] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:11:33] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:11:33] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:11:33] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:11:33] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:11:33] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:14:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:14:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:14:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:14:01] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:14:01] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:14:01] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:14:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:14:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:31:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:31:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:31:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:31:01] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:31:01] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:31:01] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:31:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:31:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:48:53] ERROR: Exceção Não Tratada:
+Traceback (most recent call last):
+  File "D:\ROBO\main.py", line 2, in <module>
+    from gui.app_main import ComSystemApp
+  File "D:\ROBO\gui\app_main.py", line 35, in <module>
+    from gui.tabs.aba_contas_pagar import AbaContasPagar
+  File "D:\ROBO\gui\tabs\aba_contas_pagar.py", line 1419
+    b1c = tk.LabelFrame(frm, text="  Itens da Nota / Serviço  ", bg="#0a0f1e",
+                       ^
+SyntaxError: '(' was never closed
+[10:49:37] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:49:37] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:49:52] ERROR: Erro Supabase (listar_pagamentos): [Errno 11001] getaddrinfo failed
+[10:49:53] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:49:53] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:50:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:50:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:50:56] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:50:56] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:50:57] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:50:57] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:51:09] ERROR: Erro Supabase (listar_pagamentos): [Errno 11001] getaddrinfo failed
+[10:51:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:51:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:51:13] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:51:13] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:53:55] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:53:55] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:53:55] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:53:55] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:53:55] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:53:55] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:53:55] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:53:55] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:56:45] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:56:45] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:56:45] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:56:45] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:56:45] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:56:45] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[10:56:45] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[10:56:45] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:07:14] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:07:14] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:07:14] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:07:14] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[11:07:14] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[11:07:14] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[11:07:14] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:07:14] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:13:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:13:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:13:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:13:11] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[11:13:11] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[11:13:11] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[11:13:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:13:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:19:40] ERROR: Exceção Não Tratada:
+Traceback (most recent call last):
+  File "D:\ROBO\main.py", line 2, in <module>
+    from gui.app_main import ComSystemApp
+  File "D:\ROBO\gui\app_main.py", line 35, in <module>
+    from gui.tabs.aba_contas_pagar import AbaContasPagar
+  File "D:\ROBO\gui\tabs\aba_contas_pagar.py", line 355
+    tb = ctk.CTkFrame(parent, fg_color="transparent")
+IndentationError: unexpected indent
+[11:21:05] ERROR: Erro Supabase (listar_pagamentos): [Errno 11001] getaddrinfo failed
+[11:25:32] ERROR: Erro Supabase (listar_pagamentos): [Errno 11001] getaddrinfo failed
+[11:43:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:43:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:43:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:43:54] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[11:43:54] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[11:43:54] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[11:43:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:43:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:44:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:44:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[11:56:41] ERROR: Erro Supabase (listar_pagamentos): [Errno 11001] getaddrinfo failed
+[12:00:12] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[12:00:12] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[12:00:13] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[12:00:13] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[12:00:13] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[12:00:13] ERROR: Erro Supabase (listar adiantamentos): [Errno 11001] getaddrinfo failed
+[12:00:13] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[12:00:13] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[13:41:15] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[13:41:15] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[13:57:16] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[13:57:16] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[13:57:20] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[13:57:20] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[13:59:51] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[13:59:51] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:21:34] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:21:34] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:21:41] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:21:41] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:21:48] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:21:48] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:21:49] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:21:49] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:21:50] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:21:50] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:21:51] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:21:51] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:28:37] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:28:37] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:31:58] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:31:58] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:32:03] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:32:03] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:32:06] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:32:06] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:32:07] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:32:07] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:32:13] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[14:32:13] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:26:37] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:26:37] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:26:59] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:26:59] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:10] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:10] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:13] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:13] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:14] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:14] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:14] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:14] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:18] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:18] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:20] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:20] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:36] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:27:36] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:41:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:41:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:41:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[15:41:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[16:15:21] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[16:15:21] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[16:17:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[16:17:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[16:19:33] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[16:19:33] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[16:31:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[16:31:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[16:35:36] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[16:35:36] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[16:43:51] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[16:43:51] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:25:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:25:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:25:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:25:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:25:14] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:25:14] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:26:15] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:26:15] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:26:48] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:26:48] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:28:52] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:28:52] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:29:16] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:29:16] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:30:20] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:30:20] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:33:38] ERROR: Erro Supabase (salvar_nota): [Errno 11001] getaddrinfo failed
+[17:46:56] ERROR: Erro Supabase (salvar_nota): [Errno 11001] getaddrinfo failed
+[17:47:20] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:47:20] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:48:55] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:48:55] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:49:03] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:49:03] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:49:05] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:49:05] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:49:05] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:49:05] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:49:10] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:49:10] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:49:24] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:49:24] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:49:41] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:50:25] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:50:25] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:50:36] ERROR: Erro Supabase (atualizar_status): [Errno 11001] getaddrinfo failed
+[17:50:36] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:50:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:54:14] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:54:14] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:55:32] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:56:00] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:56:07] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:56:07] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:59:06] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:59:06] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:59:59] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[17:59:59] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:00:01] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:00:01] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:01:25] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:01:31] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:01:31] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:01:33] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:01:33] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:01:36] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:01:36] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:01:44] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:01:44] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:01:55] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:01:55] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:02:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:02:01] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:02:02] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:02:02] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:02:33] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:02:33] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:02:35] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:02:35] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:02:37] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:02:37] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:03:36] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:03:36] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:03:42] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:03:42] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:03:44] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:03:44] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:03:45] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:03:45] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:05:11] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:05:29] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:05:29] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:05:32] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:05:32] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:05:33] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:05:33] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:05:38] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:05:38] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:05:44] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:05:44] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:05:45] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:05:45] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:07:12] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:07:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:07:54] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:07:56] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:07:56] ERROR: Erro Supabase (listar_notas): [Errno 11001] getaddrinfo failed
+[18:07:57] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed
+[18:07:57] ERROR: Erro Supabase (get_nota_completa): [Errno 11001] getaddrinfo failed

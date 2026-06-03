@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 import os
+from services.logger_service import logger
 
 def _get_text(node, tag, default=""):
     """Busca o texto de uma tag ignorando namespaces."""
@@ -103,5 +104,5 @@ def ler_xml_nfe(caminho_xml):
             "caminho_arquivo": caminho_xml
         }
     except Exception as e:
-        print(f"Erro ao ler XML {caminho_xml}: {e}")
+        logger.error(f"Erro ao ler XML {caminho_xml}: {e}")
         return None

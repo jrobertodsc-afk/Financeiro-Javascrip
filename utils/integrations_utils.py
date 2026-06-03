@@ -18,6 +18,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from typing import Callable, Optional
+from services.logger_service import logger
 
 # ── LEITURA DO EXTRATO ITAÚ (PDF) ────────────────────────────────────────────
 
@@ -48,7 +49,7 @@ def ler_extrato_pdf(caminho_pdf: str) -> tuple[dict, str]:
         for page in reader.pages:
             texto_total += (page.extract_text() or "") + "\n"
     except Exception as e:
-        print(f"[ler_extrato_pdf] Erro ao ler PDF: {e}")
+        logger.error(f"[ler_extrato_pdf] Erro ao ler PDF: {e}")
         return {}, periodo
 
     # ── Detecta período do extrato ────────────────────────────────────────────
@@ -215,7 +216,7 @@ def ler_getnet_excel(caminho_xlsx: str) -> list[dict]:
     try:
         import openpyxl
     except ImportError:
-        print("[ler_getnet_excel] openpyxl não instalado. Execute: pip install openpyxl")
+        logger.info("[ler_getnet_excel] openpyxl não instalado. Execute: pip install openpyxl")
         return []
 
     transacoes = []
@@ -302,7 +303,7 @@ def ler_getnet_excel(caminho_xlsx: str) -> list[dict]:
         wb.close()
 
     except Exception as e:
-        print(f"[ler_getnet_excel] Erro ao ler {caminho_xlsx}: {e}")
+        logger.error(f"[ler_getnet_excel] Erro ao ler {caminho_xlsx}: {e}")
 
     return transacoes
 
@@ -418,7 +419,7 @@ def ler_itau_pagamentos(caminho_xlsx: str) -> list[dict]:
         wb.close()
 
     except Exception as e:
-        print(f"[ler_itau_pagamentos] Erro: {e}")
+        logger.error(f"[ler_itau_pagamentos] Erro: {e}")
 
     return pagamentos
 
@@ -485,7 +486,7 @@ def ler_itau_folha(caminho_xlsx: str) -> list[dict]:
         wb.close()
 
     except Exception as e:
-        print(f"[ler_itau_folha] Erro: {e}")
+        logger.error(f"[ler_itau_folha] Erro: {e}")
 
     return colaboradores
 
@@ -622,7 +623,7 @@ def buscar_fornecedor_por_nome(nome: str) -> dict | None:
         return None
 
     try:
-        from database import buscar_fornecedor_por_cnpj
+        from services.database import buscar_fornecedor_por_cnpj
         from config import USE_SUPABASE
 
         nome_upper = nome.strip().upper()
@@ -630,7 +631,7 @@ def buscar_fornecedor_por_nome(nome: str) -> dict | None:
         # Tenta via Supabase primeiro
         if USE_SUPABASE:
             try:
-                from database import supabase
+                from services.database import supabase
                 if supabase:
                     res = (
                         supabase.table("fornecedores")
@@ -659,7 +660,7 @@ def buscar_fornecedor_por_nome(nome: str) -> dict | None:
         return dict(row) if row else None
 
     except Exception as e:
-        print(f"[buscar_fornecedor_por_nome] Erro: {e}")
+        logger.error(f"[buscar_fornecedor_por_nome] Erro: {e}")
         return None
 
 

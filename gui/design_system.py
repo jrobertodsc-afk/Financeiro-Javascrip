@@ -1,3 +1,4 @@
+from services.logger_service import logger
 """
 design_system.py — Design System centralizado do Com System.
 
@@ -153,20 +154,27 @@ SVG_ICONS = {
         <circle cx="12" cy="12" r="3"/>
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>""",
+
+    "pie": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M21.21 15.89A10 10 0 1 1 8 2.83M22 12A10 10 0 0 0 12 2v10z"/>
+    </svg>""",
 }
 
-# Mapa de aba → ícone
 TAB_ICONS = {
     "Organizador":  "dashboard",
     "Dashboard":    "dashboard",
     "Buscar":       "search",
+    "Financeiro":   "bills",
     "Fluxo":        "flow",
     "Cartões":      "cards",
     "Autorização":  "auth",
-    "Manual":       "edit",
+    "Lançamento Manual": "manual",
+    "Manual":       "manual",
     "Contas a Pagar": "bills",
     "Restituições": "refund",
-    "Analytics":    "pie"
+    "Analytics":    "pie",
+    "Fornecedores": "history",
+    "Adiantamentos": "flow"
 }
 
 # ==============================================================================
@@ -215,7 +223,7 @@ def _svg_to_ctk_image(svg_string: str, size: int = 20, color: str = "#CCFF00"):
         
         return ctk.CTkImage(light_image=image, dark_image=image, size=(size, size))
     except Exception as e:
-        print(f"Erro SVG: {e}")
+        logger.error(f"Erro SVG: {e}")
         return None
 
 
@@ -223,7 +231,8 @@ def get_icon(name: str, size: int = 18, color: str = None) -> object:
     """Retorna um CTkImage para o ícone ou None se não disponível."""
     if color is None:
         color = COLORS["muted"]
-    svg = SVG_ICONS.get(name)
+    svg_name = TAB_ICONS.get(name, name)
+    svg = SVG_ICONS.get(svg_name)
     if not svg:
         return None
     return _svg_to_ctk_image(svg, size, color)
@@ -311,4 +320,96 @@ def apply_hover_animation(widget, color_base: str, color_hover: str, steps: int 
     # Vincula os eventos (Enter = forward, Leave = backward)
     widget.bind("<Enter>", lambda e: animate(forward=True, step=1), add="+")
     widget.bind("<Leave>", lambda e: animate(forward=False, step=1), add="+")
+
+# ==============================================================================
+# ── UI COMPONENT HELPERS ────────────────────────────────────────────────────────
+# ==============================================================================
+import customtkinter as ctk
+import tkinter as tk
+
+def create_card(parent, **kw):
+    """Cria um Card padrão."""
+    defaults = {
+        "fg_color": COLORS["card"],
+        "corner_radius": 8,
+        "border_width": 1,
+        "border_color": COLORS["border"]
+    }
+    defaults.update(kw)
+    return ctk.CTkFrame(parent, **defaults)
+
+def create_label(parent, text, type="body", **kw):
+    """Cria um Label padrão do Design System."""
+    font = FONTS.get(type, FONTS["body"])
+    color = COLORS.get("text", "#f8fafc")
+    if type == "muted":
+        color = COLORS["muted"]
+    elif type == "h1" or type == "h2" or type == "h3" or type == "h4":
+        color = COLORS["text"]
+    
+    defaults = {
+        "text_color": color,
+        "font": font
+    }
+    defaults.update(kw)
+    
+    # Se for em um frame do tkinter normal, usar tk.Label para evitar problemas com fundos do ctk
+    is_pure_tk = isinstance(parent, tk.Frame) and not isinstance(parent, ctk.CTkFrame)
+    if is_pure_tk or isinstance(parent, tk.LabelFrame):
+        try:
+            bg = parent.cget("bg") if parent.cget("bg") else COLORS["bg"]
+        except:
+            bg = COLORS["bg"]
+        return tk.Label(parent, text=text, fg=defaults["text_color"], bg=bg, font=font)
+    
+    return ctk.CTkLabel(parent, text=text, **defaults)
+
+def create_input(parent, w=200, **kw):
+    """Cria um campo de texto estilizado (antigo ent())."""
+    defaults = {
+        "width": w,
+        "height": 32,
+        "font": FONTS["body"],
+        "fg_color": COLORS["border"],
+        "border_color": COLORS["border_light"],
+        "border_width": 1,
+        "text_color": COLORS["text"]
+    }
+    defaults.update(kw)
+    return ctk.CTkEntry(parent, **defaults)
+
+def create_combo(parent, w=200, **kw):
+    """Cria um Dropdown estilizado."""
+    defaults = {
+        "width": w,
+        "height": 32,
+        "font": FONTS["body"],
+        "fg_color": COLORS["border"],
+        "border_color": COLORS["border_light"],
+        "button_color": COLORS["border_light"],
+        "text_color": COLORS["text"]
+    }
+    defaults.update(kw)
+    return ctk.CTkComboBox(parent, **defaults)
+
+def create_btn(parent, text, style="primary", **kw):
+    """Cria um Botão estilizado."""
+    colors = {
+        "primary": {"fg_color": COLORS["accent"], "hover_color": COLORS["accent_dim"], "text_color": COLORS["text_inv"]},
+        "success": {"fg_color": COLORS["success"], "hover_color": "#059669", "text_color": "#ffffff"},
+        "secondary": {"fg_color": COLORS["border_light"], "hover_color": "#475569", "text_color": "#ffffff"},
+        "danger": {"fg_color": COLORS["error"], "hover_color": "#b91c1c", "text_color": "#ffffff"}
+    }
+    
+    c = colors.get(style, colors["primary"])
+    
+    defaults = {
+        "font": FONTS["label"],
+        "fg_color": c["fg_color"],
+        "hover_color": c["hover_color"],
+        "text_color": c["text_color"],
+        "corner_radius": 6
+    }
+    defaults.update(kw)
+    return ctk.CTkButton(parent, text=text, height=32, **defaults)
 
