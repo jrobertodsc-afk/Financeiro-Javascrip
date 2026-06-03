@@ -152,3 +152,90 @@
 .btn-cancel:hover {
   background-color: rgba(239, 68, 68, 0.25);
 }
+
+/* Batch Payment Floating Bar */
+.floating-batch-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 24px;
+  border-radius: 16px;
+  background: rgba(30, 41, 59, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.2);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translate(-50%, 40px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.batch-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.batch-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.batch-total {
+  font-size: 16px;
+  color: #fff;
+}
+
+.batch-total strong {
+  color: var(--accent-color);
+  font-size: 18px;
+}
+
+.btn-batch-baixa {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-batch-baixa:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+}
+
+/* Selected Row Style */
+tr.row-selected {
+  background-color: rgba(99, 102, 241, 0.1) !important;
+  border-left: 3px solid var(--accent-color);
+}
+
+/* Modal Date Override */
+.date-modal {
+  max-width: 450px !important;
+  padding: 32px !important;
+}
+
+.date-modal h3 {
+  margin-top: 0;
+  color: var(--accent-color);
+  margin-bottom: 12px;
+}
+
+.date-modal p {
+  color: var(--text-muted);
+  font-size: 14px;
+}

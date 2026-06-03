@@ -5,6 +5,17 @@ export default function Pagamentos({ onEditNota, onViewNota }) {
   const [notas, setNotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [empresaFiltro, setEmpresaFiltro] = useState('');
+  const [termoBusca, setTermoBusca] = useState('');
+  
+  // Seleção múltipla
+  const [selectedIds, setSelectedIds] = useState([]);
+  
+  // Modal de Data de Pagamento
+  const [modalDataAberto, setModalDataAberto] = useState(false);
+  const [dataPagamento, setDataPagamento] = useState(new Date().toISOString().split('T')[0]);
+  const [baixaType, setBaixaType] = useState(null); // 'individual' ou 'lote'
+  const [notaAtualId, setNotaAtualId] = useState(null);
+  const [fornecedorAtual, setFornecedorAtual] = useState('');
 
   const fetchNotas = async () => {
     setLoading(true);
@@ -18,6 +29,7 @@ export default function Pagamentos({ onEditNota, onViewNota }) {
       const json = await res.json();
       if (json.success) {
         setNotas(json.notas);
+        setSelectedIds([]); // Limpa a seleção ao recarregar
       }
     } catch (err) {
       console.error("Erro ao buscar notas", err);
@@ -29,21 +41,44 @@ export default function Pagamentos({ onEditNota, onViewNota }) {
     fetchNotas();
   }, [empresaFiltro]);
 
-  const darBaixa = async (id, fornecedor) => {
-    const confirmar = window.confirm(`Confirmar BAIXA / PAGAMENTO para ${fornecedor}?`);
-    if (!confirmar) return;
+  const openBaixaModal = (id, fornecedor) => {
+    setBaixaType('individual');
+    setNotaAtualId(id);
+    setFornecedorAtual(fornecedor);
+    setDataPagamento(new Date().toISOString().split('T')[0]); // Hoje por padrão
+    setModalDataAberto(true);
+  };
 
+  const openBaixaLoteModal = () => {
+    setBaixaType('lote');
+    setDataPagamento(new Date().toISOString().split('T')[0]);
+    setModalDataAberto(true);
+  };
+
+  const confirmarBaixa = async () => {
+    setModalDataAberto(false);
+    
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const res = await fetch(`${API_URL}/api/notas/dar_baixa`, {
+      let url = '';
+      let body = {};
+
+      if (baixaType === 'individual') {
+        url = `${API_URL}/api/notas/dar_baixa`;
+        body = { id: notaAtualId, novo_status: 'PAGO', data_pagamento: dataPagamento };
+      } else {
+        url = `${API_URL}/api/notas/dar_baixa_lote`;
+        body = { ids: selectedIds, novo_status: 'PAGO', data_pagamento: dataPagamento };
+      }
+
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, novo_status: 'PAGO' })
+        body: JSON.stringify(body)
       });
       const json = await res.json();
       
       if (json.success) {
-        // Remover a nota da lista ou recarregar
         fetchNotas();
       } else {
         alert("Erro ao dar baixa: " + json.error);
@@ -81,6 +116,35 @@ export default function Pagamentos({ onEditNota, onViewNota }) {
     return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
+  const notasFiltradas = notas.filter(n => {
+    if (!termoBusca) return true;
+    const termo = termoBusca.toLowerCase();
+    const fornecedor = (n.fornecedor || '').toLowerCase();
+    const descricao = (n.descricao || '').toLowerCase();
+    const dataVenc = (n.dt_vencimento || '').toLowerCase();
+    return fornecedor.includes(termo) || descricao.includes(termo) || dataVenc.includes(termo);
+  });
+
+  const totalSelecionado = notasFiltradas
+    .filter(n => selectedIds.includes(n.id))
+    .reduce((acc, curr) => acc + Number(curr.valor_bruto || 0), 0);
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(notasFiltradas.map(n => n.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectRow = (id) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(i => i !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
   return (
     <div className="pagamentos-container glass-panel">
       <div className="pagamentos-header">
@@ -90,12 +154,27 @@ export default function Pagamentos({ onEditNota, onViewNota }) {
         </div>
         
         <div className="filtros">
-          <label>Filtrar por Empresa:</label>
-          <select value={empresaFiltro} onChange={e => setEmpresaFiltro(e.target.value)}>
-            <option value="">TODAS</option>
-            <option value="LALUA">LALUA</option>
-            <option value="SOLAR">SOLAR</option>
-          </select>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <label>Filtrar por Empresa:</label>
+            <select value={empresaFiltro} onChange={e => setEmpresaFiltro(e.target.value)}>
+              <option value="">TODAS</option>
+              <option value="LALUA">LALUA</option>
+              <option value="SOLAR">SOLAR</option>
+            </select>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <label>Buscar (Data, ISS...):</label>
+            <input 
+              type="text" 
+              placeholder="Digite para filtrar..." 
+              value={termoBusca} 
+              onChange={e => setTermoBusca(e.target.value)}
+              className="input-field"
+              style={{ width: '200px' }}
+            />
+          </div>
+
           <button onClick={fetchNotas} className="btn-refresh">🔄 Atualizar</button>
         </div>
       </div>
@@ -103,12 +182,20 @@ export default function Pagamentos({ onEditNota, onViewNota }) {
       <div className="table-responsive">
         {loading ? (
           <div className="loading-state">Carregando notas...</div>
-        ) : notas.length === 0 ? (
-          <div className="empty-state">Nenhum pagamento pendente encontrado. 🎉</div>
+        ) : notasFiltradas.length === 0 ? (
+          <div className="empty-state">Nenhum pagamento encontrado para este filtro. 🎉</div>
         ) : (
           <table className="pagamentos-table">
             <thead>
               <tr>
+                <th style={{ width: '40px', textAlign: 'center' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={notasFiltradas.length > 0 && selectedIds.length === notasFiltradas.length}
+                    onChange={handleSelectAll}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </th>
                 <th>Vencimento</th>
                 <th>Fornecedor</th>
                 <th>Empresa / Filial</th>
@@ -118,7 +205,7 @@ export default function Pagamentos({ onEditNota, onViewNota }) {
               </tr>
             </thead>
             <tbody>
-              {notas.map(nota => {
+              {notasFiltradas.map(nota => {
                 // Tentar verificar se está atrasada comparando com a data de hoje
                 const vencSplit = nota.dt_vencimento ? nota.dt_vencimento.split('/') : [];
                 let isAtrasada = false;
@@ -130,7 +217,15 @@ export default function Pagamentos({ onEditNota, onViewNota }) {
                 }
 
                 return (
-                  <tr key={nota.id}>
+                  <tr key={nota.id} className={selectedIds.includes(nota.id) ? 'row-selected' : ''}>
+                    <td style={{ textAlign: 'center' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedIds.includes(nota.id)}
+                        onChange={() => handleSelectRow(nota.id)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    </td>
                     <td>
                       <span className={`badge ${isAtrasada ? 'badge-danger' : 'badge-neutral'}`}>
                         {nota.dt_vencimento || '-'}
@@ -156,7 +251,7 @@ export default function Pagamentos({ onEditNota, onViewNota }) {
                       </button>
                       <button 
                         className="btn-baixa" 
-                        onClick={() => darBaixa(nota.id, nota.fornecedor)}
+                        onClick={() => openBaixaModal(nota.id, nota.fornecedor)}
                         title="Registrar Pagamento"
                       >
                         ✅ Dar Baixa
@@ -176,6 +271,46 @@ export default function Pagamentos({ onEditNota, onViewNota }) {
           </table>
         )}
       </div>
+
+      {selectedIds.length > 0 && (
+        <div className="floating-batch-bar glass-panel">
+          <div className="batch-info">
+            <span className="batch-count">{selectedIds.length} itens selecionados</span>
+            <span className="batch-total">Total: <strong>{formatMoney(totalSelecionado)}</strong></span>
+          </div>
+          <button className="btn-batch-baixa" onClick={openBaixaLoteModal}>
+            ✅ Dar Baixa em Lote
+          </button>
+        </div>
+      )}
+
+      {modalDataAberto && (
+        <div className="modal-overlay">
+          <div className="modal-content date-modal">
+            <h3>📅 Confirmar Pagamento</h3>
+            {baixaType === 'lote' ? (
+              <p>Dar baixa em <strong>{selectedIds.length} notas</strong> totalizando <strong>{formatMoney(totalSelecionado)}</strong>.</p>
+            ) : (
+              <p>Confirmar pagamento para <strong>{fornecedorAtual}</strong>?</p>
+            )}
+            
+            <div className="form-group" style={{ marginTop: '20px' }}>
+              <label>Data de Efetivação do Pagamento:</label>
+              <input 
+                type="date" 
+                value={dataPagamento} 
+                onChange={e => setDataPagamento(e.target.value)}
+                className="input-field"
+              />
+            </div>
+
+            <div className="modal-actions" style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button className="btn-cancelar" onClick={() => setModalDataAberto(false)}>Cancelar</button>
+              <button className="btn-save" onClick={confirmarBaixa}>Confirmar Baixa</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

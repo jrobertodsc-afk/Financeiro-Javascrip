@@ -4,21 +4,52 @@ import './Autorizacoes.css';
 import RelatorioModerno from './RelatorioModerno';
 
 const CATEGORIAS_PADRAO = [
-  "12101 - Tecidos", "12102 - Aviamentos", "12104 - Produtos Para Revenda",
-  "12111 - Faccionista - Mão de Obra", "12201 - Salários", "12203 - Transportes",
-  "12204 - Alimentação", "12205 - FGTS", "12208 - Domingos e Feriados Trabalhados",
-  "21101 - Aluguel", "21104 - Energia Eletrica", "21111 - Serviços Advocatícios",
-  "21120 - Sistemas e Softwares", "21206 - Material de Limpeza", "21209 - Uso e Consumo Lojas",
-  "21502 - Manutenção - Elétrica", "21701 - Comunicação/Mídia Digital", 
-  "21703 - Lookbook", "21704 - Marketing de Influência - Influencers",
-  "21705 - Relacionamento com o Cliente", "21901 - IPTU",
-  "22303 - ICMS Antecipação Parcial", "22304 - PIS (8109)", "22308 - Simples Nacional",
-  "22309 - GNRE", "TRANSFERENCIA", "A CLASSIFICAR"
+  "111 - Custo Fixo - Desenvolvimento de Produto (Estilo)", "112 - Custo Fixo - Produção/Atelier",
+  "21101 - Aluguel", "21102 - Condomínio", "21103 - Água E Esgoto", "21104 - Energia Elétrica",
+  "21105 - Ar Condicionado", "21106 - Fundo de Promoção/Reserva", "21107 - Reembolso de Despesas Operacionais (Transporte, Alimentação Etc)",
+  "21108 - Sindicato E Associacoes", "21109 - Seguros Loja/Imovel", "21110 - Gráficos Em Geral",
+  "21111 - Serviços Advocatícios", "21112 - Serviços Contábeis", "21113 - Consultorias e Auditorias",
+  "21114 - Telefonia Fixa/Internet", "21115 - Telefonia Móvel", "21117 - Seguro Geral",
+  "21118 - Correios, Cartórios E Periódicos", "21119 - Consulta SPC / Serasa", "21120 - Sistemas e Softwares",
+  "21121 - Domínios, Email e Site", "21201 - Copa e Cozinha", "21202 - Dedetização",
+  "21203 - Recarga de Extintores", "21204 - Material de Escritório", "21205 - Material de Informática (Recargas e Tonners)",
+  "21206 - Material de Limpeza", "21207 - Despesas com EPI", "21208 - Prestações de Serviços Operacionais",
+  "21209 - Uso e Consumo Lojas (Copos, Comandas Etc)", "21301 - Combustível e Motoboy", "21302 - Estacionamento/Pedágio",
+  "21303 - Licenciamento e Multas/IPVA Moto/Carro", "21304 - Manutenção - Moto/Carro", "21305 - Seguros - Moto/Carro",
+  "21306 - Táxi/Uber (100030*2 por mês)", "12202 - Salários - Meis/PJ", "21401 - Salários", "21402 - Salários - Sócio/PJ",
+  "21403 - Pró-labore", "21404 - Transportes", "21405 - Alimentação", "21406 - FGTS",
+  "21407 - INSS", "21408 - IRRF - Imposto de Renda PJ (Verificar %)", "21409 - Férias",
+  "21410 - Rescisão", "21411 - Multa de FGTS", "21412 - Domingos e Feriados Trabalhados",
+  "21413 - Cursos e Treinamentos", "21414 - Exames Clínicos (Dem/Adm/Ret)", "21415 - Despesas com Estágio",
+  "21416 - 13º salário", "21417 - Sindicatos", "21418 - Faltas", "21419 - Fardamento",
+  "21420 - ISS Substituto Tributario", "21501 - Manutenção - Predial", "21502 - Manutenção - Elétrica",
+  "21503 - Manutenção - Informática", "21504 - Manutenção - Máquinas e Equipamentos", "21505 - Manutenção - Refrigeração/Ar-condicionado",
+  "21506 - Manutenção - Mobiliário/Decoração", "21601 - Tarifas Bancárias", "21602 - Aluguel de Maquinetas",
+  "21603 - Taxa de Juros Cartões/Pix/Boletos", "21701 - Comunicação/Mídia Digital - Despesas Operacionais (Facebook/Insta...)", "21702 - Relacionamento com o Cliente - Ações (Distribuição de Mimos/Sorteios/Etc)",
+  "21703 - Marketing de Influência - Blogueiras/Influencers (Tons/Permutas)", "21704 - Lookbook (1 Por Ano)", "21705 - Editorial para Campanha (4 Por Ano)",
+  "21706 - Visual Merchandising - Decoração, Ambientação, Vitrines", "21707 - Material Gráfico", "21801 - Endomarketing",
+  "21901 - IPTU", "21902 - Taxas Municipais", "21903 - Taxas Estaduais", "31101 - Tecidos",
+  "31102 - Aviamentos", "31103 - Insumos Gerais (produção)", "31104 - Produtos Revenda",
+  "31105 - Embalagens", "31106 - Sacolas", "31107 - Etiquetas - Viagem/Acessórios",
+  "31108 - Lacres", "31109 - Prestação de Serviço - Corte", "31110 - Faccionista - Conserto",
+  "31111 - Faccionista - Mão de Obra", "31112 - Frete/Transporte - Produção", "31113 - Faccionista - Confecção de Pilotos",
+  "32101 - Bonificação / Premiação", "32102 - Comissões", "32201 - Entregas On-line",
+  "32202 - Entregas Atacado", "32203 - Plataforma de Vendas On-Line", "32204 - Devolução de Vendas",
+  "32205 - Aluguel Percentual", "32206 - Embalagens (Sacolas, Envelopes e Papel Seda)", "32207 - Ações Comerciais",
+  "32601 - Juros Cheque Especial / IOF", "32602 - Juros por Atraso de Pagamentos", "32701 - Contrato de Mutuo - Débito",
+  "33301 - ICMS", "33302 - ICMS Substituição Tributária", "33303 - ICMS Antecipacao Parcial",
+  "33304 - PIS (0620)", "33305 - COFINS (2172)", "33306 - IRPJ (2089)",
+  "33307 - CSLL (2372)", "33308 - Simples Nacional", "33309 - DARE",
+  "33401 - Investimento - Predial", "33402 - Investimento - Informática", "33403 - Investimento - Elétrica",
+  "33404 - Investimento - Máquinas e Equipamentos", "33405 - Investimento - Refrigeração/Ar-condicionado", "33406 - Investimento - Mobiliário/Decoração",
+  "33407 - Investimento - Consultorias e Prestações de Serviços", "33408 - Investimento - Marcas e Patentes", "33409 - Investimento - Novas Unidades (Custos com novas lojas Boah)",
+  "33410 - Investimento - Novas Unidades (Custos com novas lojas Solar)", "33501 - Retirada de Sócios",
+  "TRANSFERENCIA", "A CLASSIFICAR"
 ];
 
 const RESPONSAVEIS_PADRAO = [
   "ADM/FINANCEIRO", "COMPRAS", "GERENTE ONLINE", "LOGISTICA",
-  "MARKETING", "PRODUCAO", "RH", "SUPRIMENTOS"
+  "MARKETING", "PRODUCAO", "RH", "SUPRIMENTOS", "GERÊNCIA LOJA"
 ];
 
 export default function Autorizacoes() {

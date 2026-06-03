@@ -49,7 +49,7 @@ def get_cockpit():
     urgentes = []
     
     for r in notas:
-        if r["status"] in ("PAGA", "CANCELADA"):
+        if r.get("status", "") in ("PAGO", "PAGA", "CANCELADO", "CANCELADA"):
             continue
             
         try:
@@ -202,11 +202,26 @@ def api_notas_pendentes(empresa: Optional[str] = None):
 class BaixaPayload(BaseModel):
     id: int
     novo_status: str
+    data_pagamento: Optional[str] = None
+
+class BaixaLotePayload(BaseModel):
+    ids: list[int]
+    novo_status: str
+    data_pagamento: Optional[str] = None
 
 @app.post("/api/notas/dar_baixa")
 def api_notas_dar_baixa(payload: BaixaPayload):
     try:
-        atualizar_status_nota(payload.id, payload.novo_status)
+        atualizar_status_nota(payload.id, payload.novo_status, payload.data_pagamento)
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/notas/dar_baixa_lote")
+def api_notas_dar_baixa_lote(payload: BaixaLotePayload):
+    try:
+        for nota_id in payload.ids:
+            atualizar_status_nota(nota_id, payload.novo_status, payload.data_pagamento)
         return {"success": True}
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -260,13 +275,106 @@ async def api_importar_xml(files: list[UploadFile] = File(...)):
         try:
             content = await f.read()
             root = ET.fromstring(content)
-            # Namespace padrão da NFe
-            ns = {'nfe': 'http://www.portalfiscal.inf.br/nfe'}
             
-            # Tenta extrair dados básicos
-            emit = root.find('.//nfe:emit', ns)
-            ide = root.find('.//nfe:ide', ns)
-            total = root.find('.//nfe:ICMSTot', ns)
+            # Remove namespaces para facilitar a busca (NFe ou NFSe)
+            for elem in root.iter():
+                if '}' in elem.tag:
+                    elem.tag = elem.tag.split('}', 1)[1]
+            
+            # Verifica se é uma NFSe (pode ter várias na lista)
+            if root.tag == 'ConsultarNfseResposta' or root.find('.//CompNfse') is not None or root.tag == 'CompNfse':
+                comp_nfses = root.findall('.//CompNfse')
+                if not comp_nfses and root.tag == 'CompNfse':
+                    comp_nfses = [root]
+                
+                for comp in comp_nfses:
+                    inf = comp.find('.//InfNfse')
+                    if inf is None: continue
+                    
+                    num_nf = inf.findtext('Numero', '')
+                    
+                    dt_raw = inf.findtext('DataEmissao', '')
+                    dt_emissao = ""
+                    if dt_raw:
+                        parts = dt_raw[:10].split('-')
+                        if len(parts) == 3: dt_emissao = f"{parts[2]}/{parts[1]}/{parts[0]}"
+                    
+                    fornecedor = inf.findtext('.//PrestadorServico/IdentificacaoPrestador/RazaoSocial', '')
+                    if not fornecedor:
+                        fornecedor = inf.findtext('.//PrestadorServico/RazaoSocial', '')
+                        
+                    cnpj_emit = inf.findtext('.//PrestadorServico/IdentificacaoPrestador/Cnpj', '')
+                    
+                    valor_bruto = 0.0
+                    val_str = inf.findtext('.//Servico/Valores/ValorServicos', '0').replace(',', '.')
+                    try: valor_bruto = float(val_str)
+                    except: pass
+                    
+                    desc = inf.findtext('.//Servico/Discriminacao', '')
+                    if desc: desc = "NFSe - " + desc[:150].replace('\n', ' ')
+                    else: desc = f"NFSe Import - NF {num_nf}"
+                    
+                    impostos = []
+                    def get_imp(path, tipo):
+                        v = float(inf.findtext(path, '0').replace(',', '.'))
+                        if v > 0: impostos.append({"tipo": tipo, "valor": v})
+                        
+                    get_imp('.//Servico/Valores/ValorIr', 'IRRF')
+                    get_imp('.//Servico/Valores/ValorPis', 'PIS')
+                    get_imp('.//Servico/Valores/ValorCofins', 'COFINS')
+                    get_imp('.//Servico/Valores/ValorCsll', 'CSLL')
+                    get_imp('.//Servico/Valores/ValorInss', 'INSS')
+                    get_imp('.//Servico/Valores/ValorIssRetido', 'ISSQN')
+                    
+                    import time
+                    numero_tx_principal = f"TX{int(time.time()*100)}"
+                    
+                    dados = {
+                        "numero_tx": numero_tx_principal,
+                        "fornecedor": fornecedor,
+                        "cnpj": cnpj_emit,
+                        "numero_nf": num_nf,
+                        "dt_emissao": dt_emissao,
+                        "dt_vencimento": dt_emissao,
+                        "valor_bruto": valor_bruto,
+                        "descricao": desc,
+                        "empresa": "LALUA",
+                        "filial": "LALUA MATRIZ",
+                        "status": "PENDENTE",
+                        "is_previsao": 0,
+                        "impostos": list(impostos) # Cópia para usar na geração de guias depois do pop
+                    }
+                    
+                    salvar_nota(dados)
+                    
+                    # Gera as Guias (Notas) independentes para os impostos retidos
+                    for imp in impostos:
+                        dados_guia = {
+                            "numero_tx": f"TX{int(time.time()*1000)}_{imp['tipo']}",
+                            "fornecedor": f"GUIA {imp['tipo']} - {fornecedor[:40]}",
+                            "numero_nf": f"{num_nf}-{imp['tipo']}",
+                            "dt_emissao": dt_emissao,
+                            "dt_vencimento": dt_emissao,
+                            "valor_bruto": imp['valor'],
+                            "descricao": f"Retenção de {imp['tipo']} ref. NFSe {num_nf} - {fornecedor[:50]}",
+                            "categoria": "Impostos, Taxas e Contribuições",
+                            "natureza": "Despesa Fixa",
+                            "empresa": "LALUA",
+                            "filial": "LALUA MATRIZ",
+                            "status": "PENDENTE",
+                            "is_previsao": 0,
+                            "chave_ref": numero_tx_principal
+                        }
+                        salvar_nota(dados_guia)
+                    
+                    importados += 1
+                    resultados.append({"arquivo": f.filename, "ok": True, "mensagem": f"NFSe {num_nf} - {fornecedor[:20]} - R$ {valor_bruto:.2f}"})
+                continue # Vai para o próximo arquivo se for NFSe
+
+            # Se não for NFSe, tenta como NFe
+            emit = root.find('.//emit')
+            ide = root.find('.//ide')
+            total = root.find('.//ICMSTot')
             
             fornecedor = ""
             cnpj_emit = ""
@@ -275,14 +383,14 @@ async def api_importar_xml(files: list[UploadFile] = File(...)):
             dt_emissao = ""
             
             if emit is not None:
-                nome_el = emit.find('nfe:xNome', ns)
-                cnpj_el = emit.find('nfe:CNPJ', ns)
+                nome_el = emit.find('xNome')
+                cnpj_el = emit.find('CNPJ')
                 if nome_el is not None: fornecedor = nome_el.text
                 if cnpj_el is not None: cnpj_emit = cnpj_el.text
             
             if ide is not None:
-                nnf_el = ide.find('nfe:nNF', ns)
-                dt_el = ide.find('nfe:dhEmi', ns)
+                nnf_el = ide.find('nNF')
+                dt_el = ide.find('dhEmi')
                 if nnf_el is not None: num_nf = nnf_el.text
                 if dt_el is not None:
                     raw = dt_el.text[:10]  # 2024-01-15
@@ -291,7 +399,7 @@ async def api_importar_xml(files: list[UploadFile] = File(...)):
                         dt_emissao = f"{parts[2]}/{parts[1]}/{parts[0]}"
             
             if total is not None:
-                vnf_el = total.find('nfe:vNF', ns)
+                vnf_el = total.find('vNF')
                 if vnf_el is not None: valor_nf = float(vnf_el.text)
             
             dados = {
@@ -301,7 +409,7 @@ async def api_importar_xml(files: list[UploadFile] = File(...)):
                 "dt_emissao": dt_emissao,
                 "dt_vencimento": dt_emissao,  # Pode ser ajustado depois
                 "valor_bruto": valor_nf,
-                "descricao": f"XML Import - NF {num_nf}",
+                "descricao": f"XML Import - NFe {num_nf}",
                 "empresa": "LALUA",
                 "filial": "LALUA MATRIZ",
                 "status": "PENDENTE",
@@ -310,7 +418,7 @@ async def api_importar_xml(files: list[UploadFile] = File(...)):
             
             salvar_nota(dados)
             importados += 1
-            resultados.append({"arquivo": f.filename, "ok": True, "mensagem": f"NF {num_nf} - {fornecedor} - R$ {valor_nf:.2f}"})
+            resultados.append({"arquivo": f.filename, "ok": True, "mensagem": f"NFe {num_nf} - {fornecedor[:20]} - R$ {valor_nf:.2f}"})
         except Exception as e:
             resultados.append({"arquivo": f.filename, "ok": False, "mensagem": str(e)})
     

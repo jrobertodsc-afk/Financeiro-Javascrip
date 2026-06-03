@@ -442,6 +442,7 @@ def db_init():
         ("notas", "is_previsao", "INTEGER DEFAULT 0"),
         ("notas", "conciliada", "INTEGER DEFAULT 0"),
         ("notas", "filial", "TEXT DEFAULT ''"),
+        ("notas", "dt_pagamento", "TEXT DEFAULT ''"),
     ]
     for tabela, col, tipo in colunas_novas:
         try:
@@ -457,16 +458,23 @@ def _db_init(conn): pass
 # Exporta db_conn como alias
 def get_db(): return db_conn()
 
-def atualizar_status_nota(nota_id, status):
+def atualizar_status_nota(nota_id, status, data_pagamento=None):
     """Atualiza o status de uma nota no banco."""
+    update_data = {"status": status}
+    if data_pagamento:
+        update_data["dt_pagamento"] = data_pagamento
+
     if USE_SUPABASE:
         try:
-            supabase.table("notas").update({"status": status}).eq("id", nota_id).execute()
+            supabase.table("notas").update(update_data).eq("id", nota_id).execute()
             return
         except Exception as e:
             logger.error(f"Erro Supabase (atualizar_status): {e}")
     conn = _get_local_conn()
-    conn.execute("UPDATE notas SET status=? WHERE id=?", (status, nota_id))
+    if data_pagamento:
+        conn.execute("UPDATE notas SET status=?, dt_pagamento=? WHERE id=?", (status, data_pagamento, nota_id))
+    else:
+        conn.execute("UPDATE notas SET status=? WHERE id=?", (status, nota_id))
     conn.commit()
     conn.close()
 

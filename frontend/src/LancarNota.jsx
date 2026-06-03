@@ -363,6 +363,7 @@ export default function LancarNota({ editNotaId, onClearEdit }) {
           <option value="DIRETORIA" />
           <option value="MARKETING" />
           <option value="TI" />
+          <option value="GERÊNCIA LOJA" />
         </datalist>
 
         <h3 className="section-title">🏢 Dados Básicos</h3>
