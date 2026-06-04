@@ -39,14 +39,14 @@ from gui.tabs.aba_restituicoes import AbaRestituicoes
 from gui.tabs.aba_manual import AbaManual
 from gui.mixins.utils_mixin import AppUtilsMixin
 from gui.tabs.aba_analytics import AbaAnalytics
+from gui.base_app import BaseApp
+from gui.tabs.cockpit_tab import CockpitTab
+from gui.tabs.pagamentos_tab import PagamentosTab
 
 
-class ComSystemApp(ctk.CTk, AppUtilsMixin):
+class ComSystemApp(AppUtilsMixin, BaseApp):
     def __init__(self):
         super().__init__()
-
-        # ── Compatibilidade com mixins antigos ────────────────────────────────
-        self.root = self
 
         # Mantém colors dict legado para mixins que ainda o referenciam
         self.colors = {
@@ -61,13 +61,6 @@ class ComSystemApp(ctk.CTk, AppUtilsMixin):
             "error":       COLORS["error"],
             "warning":     COLORS["warning"],
         }
-
-        # ── Janela principal ──────────────────────────────────────────────────
-        self.title("Com System Dashboard")
-        self.geometry("1200x720")
-        self.minsize(1000, 600)
-        self.configure(fg_color=COLORS["bg"])
-        self.state("zoomed")
 
         # ── Estado global ─────────────────────────────────────────────────────
         self.rodando = False
@@ -107,7 +100,7 @@ class ComSystemApp(ctk.CTk, AppUtilsMixin):
         # ── Configuração das abas ─────────────────────────────────────────────
         from gui.tabs.aba_cockpit import AbaCockpit
         self.tab_configs = {
-            "Cockpit":        AbaCockpit,
+            "Cockpit":        self._build_cockpit,
             "Organizador":    AbaRobo,
             "Buscar":         AbaBusca,
             "Fluxo":          AbaExtrato,
@@ -120,6 +113,7 @@ class ComSystemApp(ctk.CTk, AppUtilsMixin):
             "Restituições":   AbaRestituicoes,
             
             "Analytics":      AbaAnalytics,
+            "Pagamentos":     self._build_pagamentos,
         }
         self.tabs_built   = set()
         self._tab_frames  = {}   # tab_name → CTkFrame (container)
@@ -259,6 +253,21 @@ class ComSystemApp(ctk.CTk, AppUtilsMixin):
         # Fade suave (opcional, 150ms)
         if animate:
             self._fade_in(self._tab_frames[tab_name])
+
+    def _build_pagamentos(self, parent, *args):
+        """Instancia e empacota PagamentosTab no container da aba."""
+        self.tab_pagamentos = PagamentosTab(parent)
+        self.tab_pagamentos.pack(fill="both", expand=True)
+
+    def _build_cockpit(self, parent, *args):
+        """Instancia e empacota CockpitTab no container da aba."""
+        self.tab_cockpit = CockpitTab(parent)
+        self.tab_cockpit.pack(fill="both", expand=True)
+
+    def refresh_cockpit(self):
+        """Delega refresh para CockpitTab se ela já foi construída."""
+        if hasattr(self, "tab_cockpit"):
+            self.tab_cockpit.refresh()
 
     def _fade_in(self, frame, step: int = 0):
         """Efeito de fade-in via atributo de alpha — compatível com CTk."""

@@ -11,9 +11,10 @@ import {
   ChevronRight,
   CalendarDays,
   ShieldAlert,
-  Menu
+  Menu,
+  PieChart
 } from 'lucide-react'
-import Cockpit from './Cockpit'
+import Semaforo from './Semaforo'
 import LancarNota from './LancarNota'
 import Pagamentos from './Pagamentos'
 import BuscaUniversal from './BuscaUniversal'
@@ -28,7 +29,7 @@ import NotaDetailsModal from './NotaDetailsModal'
 import './App.css'
 
 function App() {
-  const [activeTab, setActiveTab] = useState('Cockpit');
+  const [activeTab, setActiveTab] = useState('Dashboard');
   const [editNotaId, setEditNotaId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [viewNotaId, setViewNotaId] = useState(null);
@@ -44,13 +45,13 @@ function App() {
   };
 
   const tabs = [
-    { id: 'Cockpit', icon: LayoutDashboard, label: 'Cockpit' },
+    { id: 'Dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'Lançar Nota', icon: FilePlus2, label: 'Lançar Nota' },
     { id: 'Pagamentos Pendentes', icon: CreditCard, label: 'Pagamentos' },
     { id: 'Autorizações', icon: ShieldAlert, label: 'Autorizações' },
     { id: 'Busca Universal', icon: Search, label: 'Busca' },
     { id: 'Boletim de Caixa', icon: TrendingUp, label: 'Boletim' },
-    { id: 'Relatórios', icon: BookOpen, label: 'Relatórios' },
+    { id: 'Relatórios', icon: PieChart, label: 'Relatórios' },
     { id: 'Extrato Contábil', icon: BookOpen, label: 'Extrato' },
     { id: 'Previsões', icon: CalendarDays, label: 'Previsões' },
     { id: 'Importação Smart', icon: Zap, label: 'Importação' },
@@ -59,7 +60,7 @@ function App() {
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'Cockpit': return <Cockpit />;
+      case 'Dashboard': return <Semaforo />;
       case 'Lançar Nota': return <LancarNota editNotaId={editNotaId} onClearEdit={() => setEditNotaId(null)} />;
       case 'Pagamentos Pendentes': return <Pagamentos onEditNota={handleEditNota} onViewNota={handleViewNota} />;
       case 'Autorizações': return <Autorizacoes />;

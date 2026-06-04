@@ -14,7 +14,7 @@ app = FastAPI(title="Boah ERP API")
 # Habilitar CORS para o Frontend React
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Na produção, usar a URL do Vercel
+    allow_origins=["*"], # Na produ├º├úo, usar a URL do Vercel
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -132,13 +132,13 @@ def api_salvar_nota(payload: NotaPayload):
         dados["valor_bruto"] = round(valor_original - total_retido, 2)
         
         # 3. Salva a nota principal (com os rateios e itens vinculados a ela)
-        dados["impostos"] = impostos  # Apenas para registro histórico se o DB suportar
+        dados["impostos"] = impostos  # Apenas para registro hist├│rico se o DB suportar
         dados["parcelas"] = payload.parcelas
         dados["rateio"] = payload.rateio
         dados["itens"] = payload.itens
         
         numero_tx_principal = dados.get("numero_tx", "")
-        # A função salvar_nota retorna ou injeta o numero_tx
+        # A fun├º├úo salvar_nota retorna ou injeta o numero_tx
         import time
         if not numero_tx_principal:
             numero_tx_principal = f"TX{int(time.time()*100)}"
@@ -161,14 +161,14 @@ def api_salvar_nota(payload: NotaPayload):
                 "dt_emissao": dados.get("dt_emissao"),
                 "dt_vencimento": dt_venc_imp,
                 "valor_bruto": valor_imp,
-                "descricao": f"Retenção de {tipo_imp} referente NF {dados.get('numero_nf', '')} do fornecedor {dados.get('fornecedor', '')}",
-                "categoria": "Impostos, Taxas e Contribuições",
+                "descricao": f"Reten├º├úo de {tipo_imp} referente NF {dados.get('numero_nf', '')} do fornecedor {dados.get('fornecedor', '')}",
+                "categoria": "Impostos, Taxas e Contribui├º├Áes",
                 "natureza": "Despesa Fixa",
                 "empresa": dados.get("empresa", ""),
                 "filial": dados.get("filial", ""),
                 "status": "PENDENTE",
                 "is_previsao": dados.get("is_previsao", 0),
-                "chave_ref": numero_tx_principal # Link com a nota mãe
+                "chave_ref": numero_tx_principal # Link com a nota m├úe
             }
             salvar_nota(dados_guia)
             
@@ -186,7 +186,7 @@ def api_nota_detalhes(nota_id: int):
         nota = get_nota_completa(nota_id)
         if nota:
             return {"success": True, "nota": nota}
-        return {"success": False, "error": "Nota não encontrada"}
+        return {"success": False, "error": "Nota n├úo encontrada"}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -267,7 +267,7 @@ import xml.etree.ElementTree as ET
 
 @app.post("/api/importar/xml")
 async def api_importar_xml(files: list[UploadFile] = File(...)):
-    """Importa múltiplos XMLs de NFe, extrai dados e salva no banco."""
+    """Importa m├║ltiplos XMLs de NFe, extrai dados e salva no banco."""
     resultados = []
     importados = 0
     
@@ -281,7 +281,7 @@ async def api_importar_xml(files: list[UploadFile] = File(...)):
                 if '}' in elem.tag:
                     elem.tag = elem.tag.split('}', 1)[1]
             
-            # Verifica se é uma NFSe (pode ter várias na lista)
+            # Verifica se ├® uma NFSe (pode ter v├írias na lista)
             if root.tag == 'ConsultarNfseResposta' or root.find('.//CompNfse') is not None or root.tag == 'CompNfse':
                 comp_nfses = root.findall('.//CompNfse')
                 if not comp_nfses and root.tag == 'CompNfse':
@@ -342,7 +342,7 @@ async def api_importar_xml(files: list[UploadFile] = File(...)):
                         "filial": "LALUA MATRIZ",
                         "status": "PENDENTE",
                         "is_previsao": 0,
-                        "impostos": list(impostos) # Cópia para usar na geração de guias depois do pop
+                        "impostos": list(impostos) # C├│pia para usar na gera├º├úo de guias depois do pop
                     }
                     
                     salvar_nota(dados)
@@ -356,8 +356,8 @@ async def api_importar_xml(files: list[UploadFile] = File(...)):
                             "dt_emissao": dt_emissao,
                             "dt_vencimento": dt_emissao,
                             "valor_bruto": imp['valor'],
-                            "descricao": f"Retenção de {imp['tipo']} ref. NFSe {num_nf} - {fornecedor[:50]}",
-                            "categoria": "Impostos, Taxas e Contribuições",
+                            "descricao": f"Reten├º├úo de {imp['tipo']} ref. NFSe {num_nf} - {fornecedor[:50]}",
+                            "categoria": "Impostos, Taxas e Contribui├º├Áes",
                             "natureza": "Despesa Fixa",
                             "empresa": "LALUA",
                             "filial": "LALUA MATRIZ",
@@ -369,9 +369,9 @@ async def api_importar_xml(files: list[UploadFile] = File(...)):
                     
                     importados += 1
                     resultados.append({"arquivo": f.filename, "ok": True, "mensagem": f"NFSe {num_nf} - {fornecedor[:20]} - R$ {valor_bruto:.2f}"})
-                continue # Vai para o próximo arquivo se for NFSe
+                continue # Vai para o pr├│ximo arquivo se for NFSe
 
-            # Se não for NFSe, tenta como NFe
+            # Se n├úo for NFSe, tenta como NFe
             emit = root.find('.//emit')
             ide = root.find('.//ide')
             total = root.find('.//ICMSTot')
@@ -427,7 +427,7 @@ async def api_importar_xml(files: list[UploadFile] = File(...)):
 @app.get("/api/previsoes")
 def api_previsoes(empresa: Optional[str] = None):
     try:
-        # Busca todas as notas, filtra no Python as previsões (ou altera listar_notas depois)
+        # Busca todas as notas, filtra no Python as previs├Áes (ou altera listar_notas depois)
         notas = listar_notas(empresa=empresa)
         previsoes = [n for n in notas if n.get("is_previsao") == 1]
         return {"success": True, "previsoes": previsoes}
@@ -439,14 +439,14 @@ def api_relatorios_rateio(empresa: Optional[str] = None):
     try:
         # Pega todas as notas PAGAS ou PENDENTES para o relatorio
         notas = listar_notas(empresa=empresa)
-        # Fallback para sqlite direto para simplificar o agrupamento de rateio
-        import sqlite3
-        conn = sqlite3.connect("banco.db")
-        conn.row_factory = sqlite3.Row
+        # Fallback para sqlite usando a configuração correta
+        from services.database import _get_local_conn
+        conn = _get_local_conn()
+        conn.row_factory = __import__('sqlite3').Row
         cursor = conn.cursor()
         
         sql = """
-            SELECT r.centro_custo, SUM(r.valor) as total
+            SELECT r.categoria, SUM(r.valor) as total
             FROM nota_rateio r
             JOIN notas n ON r.nota_id = n.id
             WHERE 1=1
@@ -456,11 +456,11 @@ def api_relatorios_rateio(empresa: Optional[str] = None):
             sql += " AND n.empresa = ?"
             args.append(empresa)
             
-        sql += " GROUP BY r.centro_custo ORDER BY total DESC"
+        sql += " GROUP BY r.categoria ORDER BY total DESC"
         cursor.execute(sql, args)
         rows = cursor.fetchall()
         
-        resultado = [{"centro_custo": r["centro_custo"], "total": r["total"]} for r in rows]
+        resultado = [{"centro_custo": r["categoria"] or "Geral", "total": r["total"]} for r in rows]
         conn.close()
         
         return {"success": True, "rateio": resultado}
@@ -482,7 +482,7 @@ class PagamentosPayload(BaseModel):
 @app.post("/api/importar_itau")
 async def importar_itau(file: UploadFile = File(...)):
     if not file.filename.endswith(('.xls', '.xlsx')):
-        return {"error": "Formato inválido"}
+        return {"error": "Formato inv├ílido"}
     
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".xls") as tmp:
@@ -604,7 +604,279 @@ async def download_historico(filename: str):
             filename=filename,
             headers={"Access-Control-Expose-Headers": "Content-Disposition"}
         )
-    return {"error": "Arquivo não encontrado"}
+    return {"error": "Arquivo n├úo encontrado"}
 
 # Para rodar localmente de forma simples:
 # uvicorn backend.main:app --reload --port 8000
+@app.get("/api/vencimentos/semaforo")
+def api_semaforo(empresa=None):
+    notas = listar_notas(empresa=empresa)
+    hoje = datetime.strptime(datetime.now().strftime("%d/%m/%Y"), "%d/%m/%Y")
+    resultado = {"vencido": [], "hoje": [], "urgente": [], "proximo": []}
+    totais    = {"vencido": 0.0, "hoje": 0.0, "urgente": 0.0, "proximo": 0.0}
+    for n in notas:
+        if n.get("status") in ("PAGO", "PAGA", "CANCELADO", "CANCELADA"):
+            continue
+        try:
+            dt = datetime.strptime(n["dt_vencimento"], "%d/%m/%Y")
+        except Exception:
+            continue
+        val  = float(n.get("valor_bruto", 0) or 0)
+        diff = (dt - hoje).days
+        if diff < 0:
+            faixa = "vencido"
+        elif diff == 0:
+            faixa = "hoje"
+        elif diff <= 3:
+            faixa = "urgente"
+        elif diff <= 30:
+            faixa = "proximo"
+        else:
+            continue
+        n["dias_para_vencer"] = diff
+        n["faixa"] = faixa
+        resultado[faixa].append(n)
+        totais[faixa] += val
+    for faixa in resultado:
+        resultado[faixa].sort(key=lambda x: x["dias_para_vencer"])
+    return {
+        "success": True,
+        "notas": resultado,
+        "totais": {k: round(v, 2) for k, v in totais.items()},
+        "contagens": {k: len(v) for k, v in resultado.items()}
+    }
+
+
+@app.get("/api/notas/verificar_duplicidade")
+def api_verificar_duplicidade(cnpj: str, valor: float, mes: int, ano: int):
+    notas = listar_notas()
+    suspeitas = []
+    def nc(c):
+        return c.replace(".", "").replace("/", "").replace("-", "")
+    for n in notas:
+        if nc(n.get("cnpj", "")) != nc(cnpj):
+            continue
+        try:
+            dt = datetime.strptime(n["dt_emissao"], "%d/%m/%Y")
+            if dt.month != mes or dt.year != ano:
+                continue
+        except Exception:
+            continue
+        val_nota = float(n.get("valor_bruto", 0) or 0)
+        if val_nota == 0:
+            continue
+        diff_pct = abs(val_nota - valor) / valor
+        if diff_pct <= 0.02:
+            confianca = 1.0 if diff_pct == 0 else round(1.0 - (diff_pct / 0.02) * 0.2, 2)
+            n["confianca"] = confianca
+            suspeitas.append(n)
+    suspeitas.sort(key=lambda x: x["confianca"], reverse=True)
+    return {"success": True, "is_duplicata": len(suspeitas) > 0, "suspeitas": suspeitas}
+
+
+@app.post("/api/cnab/gerar")
+def api_gerar_cnab(banco: str = "ITAU"):
+    try:
+        from cnab_generator import gerar_remessa_notas
+        resultado = gerar_remessa_notas(banco=banco)
+        return {"success": True, **resultado}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+@app.post("/api/conciliacao/ofx")
+async def api_conciliacao_ofx(file: UploadFile = File(...)):
+    """Lê um arquivo OFX, extrai os débitos e faz o cruzamento com as notas pendentes."""
+    try:
+        import re
+        from services.database import _get_local_conn, USE_SUPABASE
+        content = await file.read()
+        text = content.decode("utf-8", errors="ignore")
+        
+        # Parse básico de OFX via regex (OFX usa tags SGML sem fechamento estrito às vezes)
+        transactions = []
+        blocks = re.split(r'<STMTTRN>', text, flags=re.IGNORECASE)[1:]
+        
+        for b in blocks:
+            b = b.split('</STMTTRN>')[0] if '</STMTTRN>' in b.upper() else b
+            
+            trnamt_m = re.search(r'<TRNAMT>([-\d\.]+)', b, re.IGNORECASE)
+            dtposted_m = re.search(r'<DTPOSTED>(\d{8})', b, re.IGNORECASE)
+            fitid_m = re.search(r'<FITID>([^<]+)', b, re.IGNORECASE)
+            memo_m = re.search(r'<MEMO>([^<\r\n]+)', b, re.IGNORECASE)
+            
+            if trnamt_m and dtposted_m:
+                amt = float(trnamt_m.group(1))
+                if amt < 0: # Apenas saídas de caixa (débitos)
+                    dt_raw = dtposted_m.group(1)
+                    dt_str = f"{dt_raw[6:8]}/{dt_raw[4:6]}/{dt_raw[0:4]}"
+                    transactions.append({
+                        "tx_id": fitid_m.group(1).strip() if fitid_m else "OFX",
+                        "tx_data": dt_str,
+                        "tx_valor": abs(amt),
+                        "tx_memo": memo_m.group(1).strip() if memo_m else ""
+                    })
+                    
+        # Buscar notas pendentes e aprovadas
+        conn = _get_local_conn()
+        notas = [dict(r) for r in conn.execute("SELECT * FROM notas WHERE status IN ('PENDENTE', 'APROVADA')").fetchall()]
+        
+        matched = []
+        unmatched = []
+        
+        for tx in transactions:
+            found_nota = None
+            for n in notas:
+                val = float(n.get("valor_bruto", 0) or 0)
+                # Aceita diferença de até 2 centavos
+                if abs(val - tx["tx_valor"]) <= 0.02:
+                    found_nota = n
+                    break
+                    
+            if found_nota:
+                if USE_SUPABASE:
+                    try:
+                        from supabase import create_client
+                        import config
+                        sb = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
+                        sb.table("notas").update({"status": "PAGO"}).eq("id", found_nota["id"]).execute()
+                    except Exception as sb_err:
+                        print(f"Aviso: Falha ao sincronizar com Supabase: {sb_err}")
+                
+                conn.execute("UPDATE notas SET status='PAGO' WHERE id=?", (found_nota["id"],))
+                notas.remove(found_nota) # Evita associar a mesma nota a duas transações do mesmo valor
+                
+                matched.append({
+                    "tx_id": tx["tx_id"],
+                    "tx_data": tx["tx_data"],
+                    "tx_valor": tx["tx_valor"],
+                    "nota_id": found_nota["id"],
+                    "nota_fornecedor": found_nota.get("fornecedor", "Desconhecido")
+                })
+            else:
+                unmatched.append(tx)
+                
+        conn.commit()
+        conn.close()
+        
+        return {
+            "success": True,
+            "matched": matched,
+            "unmatched": unmatched
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/relatorios/avancado")
+def api_relatorios_avancado(
+    dt_inicio: Optional[str] = None, 
+    dt_fim: Optional[str] = None, 
+    tipo_data: Optional[str] = "vencimento", 
+    status: Optional[str] = None, 
+    empresa: Optional[str] = None,
+    fornecedor: Optional[str] = None,
+    categoria: Optional[str] = None
+):
+    try:
+        from services.database import _get_local_conn, USE_SUPABASE
+        import config
+        from datetime import datetime
+        
+        # 1. Obter base de notas
+        notas = listar_notas(status=status, empresa=empresa)
+        
+        # 2. Filtrar localmente no python para suportar ambos os bancos e filtros complexos
+        filtradas = []
+        for n in notas:
+            # Filtro fornecedor
+            if fornecedor and fornecedor.lower() not in (n.get("fornecedor") or "").lower():
+                continue
+                
+            # Filtro categoria
+            if categoria and categoria.lower() not in (n.get("categoria") or "").lower():
+                continue
+                
+            # Filtro data
+            if dt_inicio and dt_fim:
+                data_campo = n.get("dt_vencimento") if tipo_data == "vencimento" else n.get("dt_emissao")
+                if data_campo:
+                    try:
+                        d_obj = datetime.strptime(data_campo, "%d/%m/%Y")
+                        d_ini = datetime.strptime(dt_inicio, "%Y-%m-%d")
+                        d_fim = datetime.strptime(dt_fim, "%Y-%m-%d")
+                        if not (d_ini <= d_obj <= d_fim):
+                            continue
+                    except:
+                        pass
+                        
+            filtradas.append(n)
+            
+        return {"success": True, "notas": filtradas}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/relatorios/tributos")
+def api_relatorios_tributos(
+    dt_inicio: Optional[str] = None, 
+    dt_fim: Optional[str] = None
+):
+    try:
+        from services.database import _get_local_conn, USE_SUPABASE, get_nota_completa
+        import config
+        from datetime import datetime
+        
+        notas = listar_notas()
+        
+        # Puxar todos os impostos de uma vez para não ter timeout dentro do loop
+        impostos_map = {}
+        if not USE_SUPABASE:
+            conn = _get_local_conn()
+            todos_impostos = [dict(r) for r in conn.execute("SELECT * FROM nota_impostos").fetchall()]
+            conn.close()
+        else:
+            try:
+                from supabase import create_client
+                supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
+                todos_impostos = supabase.table("nota_impostos").select("*").execute().data
+            except:
+                conn = _get_local_conn()
+                todos_impostos = [dict(r) for r in conn.execute("SELECT * FROM nota_impostos").fetchall()]
+                conn.close()
+                
+        for imp in todos_impostos:
+            impostos_map.setdefault(imp["nota_id"], []).append(imp)
+        
+        tributos_retorno = []
+        for n in notas:
+            # Filtrar data
+            if dt_inicio and dt_fim:
+                data_campo = n.get("dt_vencimento")
+                if data_campo:
+                    try:
+                        d_obj = datetime.strptime(data_campo, "%d/%m/%Y")
+                        d_ini = datetime.strptime(dt_inicio, "%Y-%m-%d")
+                        d_fim = datetime.strptime(dt_fim, "%Y-%m-%d")
+                        if not (d_ini <= d_obj <= d_fim):
+                            continue
+                    except:
+                        pass
+                        
+            impostos = impostos_map.get(n["id"], [])
+
+            for imp in impostos:
+                tributos_retorno.append({
+                    "nota_id": n["id"],
+                    "fornecedor_origem": n.get("fornecedor"),
+                    "numero_nf": n.get("numero_nf"),
+                    "dt_emissao": n.get("dt_emissao"),
+                    "dt_vencimento": n.get("dt_vencimento"),
+                    "imposto_tipo": imp.get("tipo"),
+                    "imposto_valor": imp.get("valor"),
+                    "imposto_vencimento": imp.get("dt_venc_imp") or n.get("dt_vencimento"),
+                    "status_pagamento": imp.get("status") or n.get("status")
+                })
+                
+        return {"success": True, "tributos": tributos_retorno}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+

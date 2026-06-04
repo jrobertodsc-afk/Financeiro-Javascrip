@@ -25,7 +25,7 @@
 
 .chart-card {
   padding: 24px;
-  min-height: 400px;
+  min-height: 550px;
   display: flex;
   flex-direction: column;
 }
@@ -40,7 +40,7 @@
 .chart-wrapper {
   flex: 1;
   width: 100%;
-  min-height: 300px;
+  min-height: 480px;
 }
 
 .custom-tooltip {
@@ -69,4 +69,43 @@
 .recharts-legend-item-text {
   color: var(--text-secondary) !important;
   font-size: 13px;
+}
+
+/* ═══ TABS NAV (Botões Superiores) ═══ */
+.tabs-nav {
+  display: flex;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 6px;
+  gap: 4px;
+  width: fit-content;
+  margin-bottom: 24px;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tab-btn.active {
+  background: var(--bg-color, #0d1117);
+  color: var(--accent-color, #7c6ef0);
+  border-color: var(--border-light, #2d3748);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }

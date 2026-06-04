@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UploadCloud, FileText, CheckCircle2, AlertCircle, History, Download, Edit3, LayoutTemplate } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle2, AlertCircle, History, Download, Edit3, LayoutTemplate, Save, X } from 'lucide-react';
 import './Autorizacoes.css';
 import RelatorioModerno from './RelatorioModerno';
 
@@ -61,6 +61,11 @@ export default function Autorizacoes() {
   
   const [showRelatorioModerno, setShowRelatorioModerno] = useState(false);
   const [saldos, setSaldos] = useState({ 'Itaú': '', 'Bradesco': '', 'Banco do Brasil': '' });
+
+  // Lote para o sistema
+  const [showLoteModal, setShowLoteModal] = useState(false);
+  const [loteEmpresa, setLoteEmpresa] = useState('LALUA');
+  const [loteFilial, setLoteFilial] = useState('LALUA MATRIZ');
 
   useEffect(() => {
     if (activeTab === 'historico') {
@@ -211,6 +216,46 @@ export default function Autorizacoes() {
 
   const valorTotal = pagamentos.reduce((acc, p) => acc + (p.valor || 0), 0);
 
+  const handleLancarLote = async () => {
+    setLoading(true);
+    try {
+      // 1. Treina a base primeiro para salvar aprendizado
+      await treinarCategorias();
+
+      // 2. Envia para a API de lote
+      const res = await fetch("http://localhost:8000/api/notas/importar_lote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          empresa: loteEmpresa,
+          filial: loteFilial,
+          pagamentos: pagamentos.map(p => ({
+            cnpj: p.cnpj || "00.000.000/0000-00",
+            nome: p.favorecido || p.nome || "",
+            responsavel: p.responsavel,
+            categoria: p.categoria,
+            descricao: p.descricao || "",
+            valor: p.valor || 0,
+            data: p.data // DD/MM/YYYY
+          }))
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setPagamentos([]);
+        setShowLoteModal(false);
+        alert("Lote lançado com sucesso na aba Pagamentos Pendentes!");
+      } else {
+        throw new Error(data.error || "Erro ao lançar lote");
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (showRelatorioModerno) {
     return <RelatorioModerno pagamentos={pagamentos} saldos={saldos} onClose={() => setShowRelatorioModerno(false)} />;
   }
@@ -306,6 +351,10 @@ export default function Autorizacoes() {
                   <button className="btn-limpar" onClick={() => setPagamentos([])}>
                     Nova Importação
                   </button>
+                  <button className="btn-gerar-moderno" onClick={() => setShowLoteModal(true)}>
+                    <Save size={20} />
+                    Lançar no Sistema
+                  </button>
                   <button className="btn-gerar-moderno" onClick={handleGerarModerno}>
                     <LayoutTemplate size={20} />
                     Relatório Moderno
@@ -316,6 +365,60 @@ export default function Autorizacoes() {
                   </button>
                 </div>
               </div>
+
+              {showLoteModal && (
+                <div className="modal-overlay">
+                  <div className="modal-content glass-panel" style={{ maxWidth: '400px' }}>
+                    <div className="modal-header">
+                      <h3>Lançar Lote no Sistema</h3>
+                      <button className="close-btn" onClick={() => setShowLoteModal(false)}>
+                        <X size={20} />
+                      </button>
+                    </div>
+                    <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      <p className="text-muted">Todos os {pagamentos.length} registros serão inseridos como "Pendentes" e ficarão disponíveis na aba de Baixas para edição ou conciliação.</p>
+                      
+                      <div className="form-group">
+                        <label>Empresa Padrão</label>
+                        <select className="input-field" value={loteEmpresa} onChange={e => {
+                          setLoteEmpresa(e.target.value);
+                          setLoteFilial(e.target.value === 'LALUA' ? 'LALUA MATRIZ' : 'SOLAR MATRIZ');
+                        }}>
+                          <option value="LALUA">LALUA</option>
+                          <option value="SOLAR">SOLAR</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Filial Padrão</label>
+                        <select className="input-field" value={loteFilial} onChange={e => setLoteFilial(e.target.value)}>
+                          {loteEmpresa === 'LALUA' ? (
+                            <>
+                              <option>LALUA MATRIZ</option>
+                              <option>BOAH BARRA</option>
+                              <option>PASEO</option>
+                              <option>VILAS</option>
+                              <option>SDB</option>
+                              <option>HORTO</option>
+                              <option>ONLINE</option>
+                            </>
+                          ) : (
+                            <>
+                              <option>SOLAR MATRIZ</option>
+                              <option>ALAMEDA</option>
+                            </>
+                          )}
+                        </select>
+                      </div>
+
+                      <button className="btn-gerar-pdf" onClick={handleLancarLote} style={{ width: '100%' }} disabled={loading}>
+                        {loading ? <span className="spinner"></span> : <CheckCircle2 size={18} />}
+                        {loading ? ' Lançando...' : ' Confirmar Lançamento'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="aut-table-container">
                 <table className="aut-table">

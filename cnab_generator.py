@@ -14,6 +14,10 @@ import os
 from datetime import datetime
 from typing import Optional
 
+from loguru import logger
+import config
+from services.database import listar_notas
+
 
 # ── CONSTANTES FEBRABAN / ITAÚ ────────────────────────────────────────────────
 BANCO_ITAU     = "341"
@@ -222,10 +226,6 @@ def _segmento_a(
     seu_numero  = _alfa(pagamento.get("seu_numero", ""), 20)
     valor       = pagamento.get("valor", 0.0)
 
-    # Tipo de serviço / forma de lançamento
-    tipo_servico  = _num(pagamento.get("tipo_servico", "98"), 3)    # 98 = pagamento diverso
-    forma_lancto  = _num(pagamento.get("forma_lancto", "03"), 2)    # 03 = TED | 45 = PIX
-
     linha = (
         BANCO_ITAU                      # [001-003]
         + _num(lote, 4)                 # [004-007]
@@ -314,40 +314,6 @@ def gerar_cnab240(
 ) -> str:
     """
     Gera o conteúdo de um arquivo remessa CNAB 240 padrão Itaú.
-
-    Args:
-        dados_banco: dict com configurações da conta pagadora:
-            {
-                "agencia": "0334",
-                "agencia_dv": " ",
-                "conta": "98775",
-                "conta_dv": "7",
-                "dac": " ",
-                "cnpj_empresa": "10436619000105",
-                "nome_empresa": "LALUA COMERCIO DE MODAS",
-                "convenio": "",
-            }
-
-        pagamentos: lista de dicts, cada um com:
-            {
-                "nome": "COELBA",
-                "banco_dest": "341",
-                "agencia_dest": "1234",
-                "conta_dest": "56789",
-                "conta_dest_dv": "0",
-                "cpf_cnpj": "13523563000189",
-                "valor": 1250.00,
-                "pix_chave": "",           # Se PIX, informa a chave
-                "finalidade_ted": "10",    # 10=TED normal
-                "info_complementar": "",
-            }
-
-        data_pagamento: data de pagamento (padrão = hoje)
-        caminho_saida: se informado, salva o arquivo no caminho
-
-    Returns:
-        Conteúdo do arquivo CNAB 240 como string.
-        Se caminho_saida informado, também salva em disco.
     """
     dt = data_pagamento or datetime.now()
     linhas = []
@@ -446,3 +412,117 @@ def validar_cnab240(conteudo: str) -> tuple[bool, list[str]]:
             erros.append(f"Linha {i}: código de banco inválido '{linha[:3]}' (esperado '{BANCO_ITAU}')")
 
     return len(erros) == 0, erros
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ── INTEGRAÇÃO: GERAR REMESSA DO BANCO DE DADOS ───────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+
+def gerar_remessa_notas(banco: str = "ITAÚ") -> dict:
+    """
+    Orquestra a busca de notas (APROVADA/PENDENTE) no banco de dados e gera
+    o arquivo .REM na pasta configurada (config.PASTA_SAIDA).
+
+    Retorna um dicionário com o relatório:
+    {
+        "notas_incluidas": int,
+        "valor_total": float,
+        "arquivo_gerado": str ou None,
+        "erro": str (opcional)
+    }
+    """
+    try:
+        logger.info(f"Iniciando geração de remessa CNAB 240 para o banco {banco}")
+        dados_banco_raw = config.CNAB_CONTAS.get(banco)
+        
+        if not dados_banco_raw:
+            msg = f"Configurações não encontradas em config.py para o banco {banco}."
+            logger.error(msg)
+            return {"notas_incluidas": 0, "valor_total": 0.0, "arquivo_gerado": None, "erro": msg}
+
+        # Separar conta e agência (tratamento para formato '12345-6')
+        ag_full = dados_banco_raw.get("agencia", "")
+        ag = ag_full.split("-")[0] if "-" in ag_full else ag_full
+        ag_dv = ag_full.split("-")[1] if "-" in ag_full else " "
+        
+        ct_full = dados_banco_raw.get("conta", "")
+        ct = ct_full.split("-")[0] if "-" in ct_full else ct_full
+        ct_dv = ct_full.split("-")[1] if "-" in ct_full else " "
+
+        dados_banco = {
+            "agencia": ag,
+            "agencia_dv": ag_dv,
+            "conta": ct,
+            "conta_dv": ct_dv,
+            "cnpj_empresa": "00000000000000",
+            "nome_empresa": "EMPRESA PADRAO",
+        }
+
+        # 1. Buscar notas no banco
+        notas_aprovadas = listar_notas(status="APROVADA")
+        notas_pendentes = listar_notas(status="PENDENTE")
+        todas_notas = notas_aprovadas + notas_pendentes
+
+        pagamentos = []
+        valor_total = 0.0
+
+        # 2. Formatar notas para o layout exigido pelo gerador
+        for nota in todas_notas:
+            valor = nota.get("valor_liquido") or nota.get("valor_bruto") or 0.0
+            if valor <= 0:
+                continue
+
+            conta_dest_full = str(nota.get("conta_dest") or "")
+            conta_dest = conta_dest_full.split("-")[0] if "-" in conta_dest_full else conta_dest_full
+            conta_dest_dv = conta_dest_full.split("-")[1] if "-" in conta_dest_full else "0"
+            
+            agencia_dest_full = str(nota.get("agencia_dest") or "")
+            agencia_dest = agencia_dest_full.split("-")[0] if "-" in agencia_dest_full else agencia_dest_full
+            agencia_dest_dv = agencia_dest_full.split("-")[1] if "-" in agencia_dest_full else "0"
+
+            pgto = {
+                "nome": str(nota.get("fornecedor", "")),
+                "banco_dest": str(nota.get("banco_dest", "")),
+                "agencia_dest": agencia_dest,
+                "agencia_dest_dv": agencia_dest_dv,
+                "conta_dest": conta_dest,
+                "conta_dest_dv": conta_dest_dv,
+                "cpf_cnpj": nota.get("cpf_cnpj_dest") or nota.get("cnpj") or "",
+                "valor": float(valor),
+                "pix_chave": nota.get("pix_chave", ""),
+                "finalidade_ted": "10",
+                "info_complementar": f"NF {nota.get('numero_nf', '')}",
+                "seu_numero": str(nota.get("numero_tx", ""))[:20]
+            }
+            pagamentos.append(pgto)
+            valor_total += float(valor)
+
+        if not pagamentos:
+            msg = "Nenhuma nota válida encontrada para geração de remessa."
+            logger.info(msg)
+            return {"notas_incluidas": 0, "valor_total": 0.0, "arquivo_gerado": None, "erro": msg}
+
+        # 3. Gerar o arquivo .REM na PASTA_SAIDA
+        agora = datetime.now()
+        nome_arquivo = f"CNAB_{agora.strftime('%Y%m%d_%H%M%S')}.REM"
+        caminho_saida = os.path.join(config.PASTA_SAIDA, nome_arquivo)
+        
+        gerar_cnab240(
+            dados_banco=dados_banco,
+            pagamentos=pagamentos,
+            data_pagamento=agora,
+            caminho_saida=caminho_saida
+        )
+        
+        logger.success(f"Arquivo de remessa {nome_arquivo} gerado com sucesso! Incluiu {len(pagamentos)} notas. Total: R$ {valor_total:.2f}")
+        
+        # 4. Retornar relatório
+        return {
+            "notas_incluidas": len(pagamentos),
+            "valor_total": valor_total,
+            "arquivo_gerado": nome_arquivo
+        }
+
+    except Exception as e:
+        logger.exception("Erro crítico ao gerar remessa CNAB.")
+        return {"notas_incluidas": 0, "valor_total": 0.0, "arquivo_gerado": None, "erro": str(e)}
