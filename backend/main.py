@@ -132,46 +132,97 @@ def api_salvar_nota(payload: NotaPayload):
         dados["valor_bruto"] = round(valor_original - total_retido, 2)
         
         # 3. Salva a nota principal (com os rateios e itens vinculados a ela)
-        dados["impostos"] = impostos  # Apenas para registro hist├│rico se o DB suportar
+        dados["impostos"] = impostos  # Apenas para registro histórico se o DB suportar
         dados["parcelas"] = payload.parcelas
         dados["rateio"] = payload.rateio
         dados["itens"] = payload.itens
         
-        numero_tx_principal = dados.get("numero_tx", "")
-        # A fun├º├úo salvar_nota retorna ou injeta o numero_tx
-        import time
-        if not numero_tx_principal:
-            numero_tx_principal = f"TX{int(time.time()*100)}"
-            dados["numero_tx"] = numero_tx_principal
-            
-        salvar_nota(dados)
+        # Remove campos do frontend que não existem na tabela
+        chave_acesso = dados.pop("chave_acesso", None)
+        if chave_acesso:
+            obs = dados.get("observacao") or ""
+            dados["observacao"] = f"[Sefaz: {chave_acesso}] {obs}".strip()
         
-        # 4. Gera as Guias (Notas) independentes para os impostos retidos
-        for imp in impostos:
-            valor_imp = float(imp.get("valor", 0))
-            if valor_imp <= 0:
-                continue
+        is_recorrente = dados.pop("recorrente", 0)
+        meses = dados.pop("meses_recorrencia", 1)
+        
+        numero_tx_principal = dados.get("numero_tx", "")
+        import time
+        import uuid
+        from datetime import datetime
+        from dateutil.relativedelta import relativedelta
+
+        # Função auxiliar interna para não repetir código
+        def processar_e_salvar(d_nota, idx_recorrencia=0):
+            d_atual = dict(d_nota) # copia para evitar mutações indesejadas
+            
+            def avancar_mes(data_str, meses):
+                if not data_str: return data_str
+                fmt1, fmt2 = "%Y-%m-%d", "%d/%m/%Y"
+                for fmt in (fmt1, fmt2):
+                    try:
+                        dt = datetime.strptime(data_str, fmt) + relativedelta(months=meses)
+                        return dt.strftime(fmt)
+                    except:
+                        pass
+                return data_str
+
+            # Se for parcela recorrente, avança a data
+            if idx_recorrencia > 0:
+                d_atual["dt_emissao"] = avancar_mes(d_atual.get("dt_emissao"), idx_recorrencia)
+                d_atual["dt_vencimento"] = avancar_mes(d_atual.get("dt_vencimento"), idx_recorrencia)
+            
+            # Garante um numero_tx único
+            if not d_atual.get("numero_tx"):
+                d_atual["numero_tx"] = f"TX{int(time.time()*1000) + idx_recorrencia}"
+            
+            tx_principal = d_atual["numero_tx"]
+            salvar_nota(d_atual)
+            
+            # Gera as Guias (Notas) independentes para os impostos retidos
+            for imp in impostos:
+                valor_imp = float(imp.get("valor", 0))
+                if valor_imp <= 0:
+                    continue
+                dt_venc_imp = imp.get("dt_venc_imp") or d_atual.get("dt_vencimento")
+                # Se for recorrente, precisa avançar o imposto também se ele tiver data fixa informada
+                if idx_recorrencia > 0 and imp.get("dt_venc_imp"):
+                    dt_venc_imp = avancar_mes(imp["dt_venc_imp"], idx_recorrencia)
+                tipo_imp = imp.get("tipo", "IMPOSTO")
                 
-            dt_venc_imp = imp.get("dt_venc_imp") or dados.get("dt_vencimento")
-            tipo_imp = imp.get("tipo", "IMPOSTO")
-            
-            dados_guia = {
-                "fornecedor": f"GUIA {tipo_imp} - {dados.get('fornecedor', '')}",
-                "numero_nf": f"{dados.get('numero_nf', '')}-{tipo_imp}",
-                "dt_emissao": dados.get("dt_emissao"),
-                "dt_vencimento": dt_venc_imp,
-                "valor_bruto": valor_imp,
-                "descricao": f"Reten├º├úo de {tipo_imp} referente NF {dados.get('numero_nf', '')} do fornecedor {dados.get('fornecedor', '')}",
-                "categoria": "Impostos, Taxas e Contribui├º├Áes",
-                "natureza": "Despesa Fixa",
-                "empresa": dados.get("empresa", ""),
-                "filial": dados.get("filial", ""),
-                "status": "PENDENTE",
-                "is_previsao": dados.get("is_previsao", 0),
-                "chave_ref": numero_tx_principal # Link com a nota m├úe
-            }
-            salvar_nota(dados_guia)
-            
+                dados_guia = {
+                    "fornecedor": f"GUIA {tipo_imp} - {d_atual.get('fornecedor', '')}",
+                    "numero_nf": f"{d_atual.get('numero_nf', '')}-{tipo_imp}",
+                    "dt_emissao": d_atual.get("dt_emissao"),
+                    "dt_vencimento": dt_venc_imp,
+                    "valor_bruto": valor_imp,
+                    "descricao": f"Retenção de {tipo_imp} referente NF {d_atual.get('numero_nf', '')} do fornecedor {d_atual.get('fornecedor', '')}",
+                    "categoria": "Impostos, Taxas e Contribuições",
+                    "natureza": "Despesa Fixa",
+                    "empresa": d_atual.get("empresa", ""),
+                    "filial": d_atual.get("filial", ""),
+                    "status": "PENDENTE",
+                    "is_previsao": d_atual.get("is_previsao", 0),
+                    "chave_ref": tx_principal # Link com a nota mãe
+                }
+                salvar_nota(dados_guia)
+
+        # Lógica de fluxo principal
+        if numero_tx_principal:
+            # Edição normal
+            processar_e_salvar(dados, 0)
+        else:
+            # Novo lançamento (pode ser único ou recorrente)
+            if is_recorrente and meses > 1:
+                id_recorrencia = str(uuid.uuid4())
+                dados["recorrente"] = 1
+                dados["id_recorrencia"] = id_recorrencia
+                for i in range(meses):
+                    dados["numero_tx"] = "" # Força gerar um novo por mês
+                    processar_e_salvar(dados, i)
+            else:
+                processar_e_salvar(dados, 0)
+                
         return {"success": True}
     except Exception as e:
         import traceback
@@ -425,11 +476,33 @@ async def api_importar_xml(files: list[UploadFile] = File(...)):
     return {"success": True, "importados": importados, "resultados": resultados}
 
 @app.get("/api/previsoes")
-def api_previsoes(empresa: Optional[str] = None):
+def api_previsoes(
+    empresa: Optional[str] = None,
+    dt_inicio: Optional[str] = None, 
+    dt_fim: Optional[str] = None
+):
     try:
-        # Busca todas as notas, filtra no Python as previs├Áes (ou altera listar_notas depois)
+        from datetime import datetime
         notas = listar_notas(empresa=empresa)
-        previsoes = [n for n in notas if n.get("is_previsao") == 1]
+        previsoes = []
+        for n in notas:
+            if n.get("is_previsao") != 1:
+                continue
+            
+            if dt_inicio and dt_fim:
+                data_campo = n.get("dt_vencimento")
+                if data_campo:
+                    try:
+                        d_obj = datetime.strptime(data_campo, "%d/%m/%Y")
+                        d_ini = datetime.strptime(dt_inicio, "%Y-%m-%d")
+                        d_fim = datetime.strptime(dt_fim, "%Y-%m-%d")
+                        if not (d_ini <= d_obj <= d_fim):
+                            continue
+                    except:
+                        pass
+            
+            previsoes.append(n)
+            
         return {"success": True, "previsoes": previsoes}
     except Exception as e:
         return {"success": False, "error": str(e)}
