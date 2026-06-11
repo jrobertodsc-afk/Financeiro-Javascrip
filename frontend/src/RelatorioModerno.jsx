@@ -2,13 +2,17 @@ import { Printer, ChevronLeft } from 'lucide-react';
 import './RelatorioModerno.css';
 
 export default function RelatorioModerno({ pagamentos, saldos, onClose }) {
-  const totalPagamentos = pagamentos.reduce((acc, p) => acc + (p.valor || 0), 0);
+  const despesas = pagamentos.filter(p => p.categoria !== 'TRANSFERENCIA');
+  const transferencias = pagamentos.filter(p => p.categoria === 'TRANSFERENCIA');
+
+  const totalPagamentos = despesas.reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
+  const totalTransferencias = Math.abs(transferencias.reduce((acc, p) => acc + (Number(p.valor) || 0), 0));
   
   // Calcula o saldo total das contas
   const saldoTotal = Object.values(saldos).reduce((acc, val) => acc + (Number(val) || 0), 0);
   
-  // Saldo projetado após pagamentos
-  const saldoProjetado = saldoTotal - totalPagamentos;
+  // Saldo projetado após pagamentos e transferências
+  const saldoProjetado = saldoTotal - totalPagamentos + totalTransferencias;
   
   const dataHoje = new Date().toLocaleDateString('pt-BR');
 
@@ -47,34 +51,43 @@ export default function RelatorioModerno({ pagamentos, saldos, onClose }) {
             </div>
             <div className="meta-item">
               <span className="meta-label">Registros</span>
-              <span className="meta-value">{pagamentos.length}</span>
+              <span className="meta-value">{despesas.length} (Saídas)</span>
             </div>
           </div>
         </header>
 
         <section className="dashboard-financeiro">
           <div className="dash-card">
-            <span className="dash-label">Saldo Atual Consolidado</span>
+            <span className="dash-label">Saldo Consolidado</span>
             <span className="dash-value positivo">{formatCurrency(saldoTotal)}</span>
             <div className="dash-sub">
-              {Object.entries(saldos).map(([banco, valor], idx) => (
-                <div key={idx} className="dash-sub-item">
-                  <span>{banco}</span>
-                  <span>{formatCurrency(Number(valor))}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="dash-card highlight-danger">
-            <span className="dash-label">Total a Pagar (Aprovado)</span>
-            <span className="dash-value negativo">- {formatCurrency(totalPagamentos)}</span>
-            <div className="dash-sub">
               <div className="dash-sub-item">
-                <span>Qtd. Lançamentos</span>
-                <span>{pagamentos.length}</span>
+                <span>Posição inicial</span>
               </div>
             </div>
           </div>
+          <div className="dash-card highlight-danger">
+            <span className="dash-label">Total a Pagar (Saídas)</span>
+            <span className="dash-value negativo">-{formatCurrency(totalPagamentos)}</span>
+            <div className="dash-sub">
+              <div className="dash-sub-item">
+                <span>Qtd. Lançamentos</span>
+                <span>{despesas.length}</span>
+              </div>
+            </div>
+          </div>
+          {transferencias.length > 0 && (
+            <div className="dash-card highlight-success">
+              <span className="dash-label">Entradas (Transf.)</span>
+              <span className="dash-value positivo">{formatCurrency(totalTransferencias)}</span>
+              <div className="dash-sub">
+                <div className="dash-sub-item">
+                  <span>Qtd. Entradas</span>
+                  <span>{transferencias.length}</span>
+                </div>
+              </div>
+            </div>
+          )}
           <div className={`dash-card ${saldoProjetado >= 0 ? 'highlight-success' : 'highlight-danger'}`}>
             <span className="dash-label">Saldo Projetado Final</span>
             <span className={`dash-value ${saldoProjetado >= 0 ? 'positivo' : 'negativo'}`}>
@@ -102,7 +115,7 @@ export default function RelatorioModerno({ pagamentos, saldos, onClose }) {
               </tr>
             </thead>
             <tbody>
-              {pagamentos.map((p, idx) => (
+              {despesas.map((p, idx) => (
                 <tr key={idx}>
                   <td>
                     <div className="fav-nome">{p.favorecido || p.nome}</div>
@@ -125,6 +138,46 @@ export default function RelatorioModerno({ pagamentos, saldos, onClose }) {
             </tfoot>
           </table>
         </section>
+
+        {transferencias.length > 0 && (
+          <section className="tabela-pagamentos-section" style={{ marginTop: '30px' }}>
+            <h2 style={{ color: 'var(--success-color)' }}>Transferências e Entradas</h2>
+            <table className="tabela-limpa">
+              <thead>
+                <tr>
+                  <th>Favorecido / Destino</th>
+                  <th>Origem / Descrição</th>
+                  <th>CNPJ/CPF</th>
+                  <th>Responsável</th>
+                  <th>Categoria</th>
+                  <th className="text-right">Valor (R$)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transferencias.map((p, idx) => (
+                  <tr key={idx}>
+                    <td>
+                      <div className="fav-nome">{p.favorecido || p.nome}</div>
+                    </td>
+                    <td>
+                      <div className="fav-desc">{p.descricao || ""}</div>
+                    </td>
+                    <td className="col-muted">{p.cnpj}</td>
+                    <td><span className="badge-resp">{p.responsavel}</span></td>
+                    <td className="col-muted">{p.categoria}</td>
+                    <td className="text-right font-bold positivo">{formatCurrency(Math.abs(p.valor))}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan="5" className="text-right font-bold">TOTAL ENTRADAS</td>
+                  <td className="text-right font-bold total-geral positivo">{formatCurrency(totalTransferencias)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </section>
+        )}
         
         <footer className="relatorio-footer">
           <div className="assinaturas">

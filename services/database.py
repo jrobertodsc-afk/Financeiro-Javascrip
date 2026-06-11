@@ -127,8 +127,22 @@ def salvar_nota(dados):
         cursor.execute("DELETE FROM nota_impostos WHERE nota_id=?", (nota_id,))
         for imp in impostos:
             cursor.execute("INSERT INTO nota_impostos (nota_id, tipo, aliquota, valor, dt_venc_imp) VALUES (?,?,?,?,?)",
-                           (nota_id, imp["tipo"], imp.get("aliquota",0), imp["valor"], imp.get("dt_venc_imp")))
-        # ... (simplificado para brevidade, idealmente migrar tudo)
+                           (nota_id, imp.get("tipo"), imp.get("aliquota",0), imp.get("valor"), imp.get("dt_venc_imp")))
+        
+        cursor.execute("DELETE FROM nota_parcelas WHERE nota_id=?", (nota_id,))
+        for p in parcelas:
+            cursor.execute("INSERT INTO nota_parcelas (nota_id, parcela, valor, dt_vencimento, status) VALUES (?,?,?,?,?)",
+                           (nota_id, p.get("parcela", 1), p.get("valor"), p.get("vencimento", ""), p.get("status", "PENDENTE")))
+                           
+        cursor.execute("DELETE FROM nota_rateio WHERE nota_id=?", (nota_id,))
+        for r in rateio:
+            cursor.execute("INSERT INTO nota_rateio (nota_id, filial, percentual, valor) VALUES (?,?,?,?)",
+                           (nota_id, r.get("centro_custo", ""), r.get("percentual", 100), r.get("valor", 0)))
+                           
+        cursor.execute("DELETE FROM nota_itens WHERE nota_id=?", (nota_id,))
+        for it in itens:
+            cursor.execute("INSERT INTO nota_itens (nota_id, descricao, valor_unitario, valor_total, quantidade) VALUES (?,?,?,?,?)",
+                           (nota_id, it.get("descricao", ""), it.get("valor_unit", it.get("valor_total", 0)), it.get("valor_total", 0), it.get("qtd", 1)))
     conn.commit()
     conn.close()
     return dados["numero_tx"]
@@ -139,7 +153,7 @@ def listar_notas(status=None, empresa=None, busca=None):
             query = supabase.table("notas").select("*")
             if status: query = query.eq("status", status)
             if empresa: query = query.eq("empresa", empresa)
-            if busca: query = query.or_(f"fornecedor.ilike.%{busca}%,numero_tx.ilike.%{busca}%,numero_nf.ilike.%{busca}%")
+            if busca: query = query.or_(f"fornecedor.ilike.%{busca}%,numero_tx.ilike.%{busca}%,numero_nf.ilike.%{busca}%,descricao.ilike.%{busca}%,categoria.ilike.%{busca}%,observacao.ilike.%{busca}%")
             res = query.order("dt_vencimento").execute()
             return res.data
         except Exception as e:
@@ -153,14 +167,66 @@ def listar_notas(status=None, empresa=None, busca=None):
     if status:  sql += " AND status=?";          args.append(status)
     if empresa: sql += " AND empresa=?";          args.append(empresa)
     if busca:
-        sql += " AND (fornecedor LIKE ? OR numero_tx LIKE ? OR COALESCE(numero_nf,'') LIKE ?)"
+        sql += " AND (fornecedor LIKE ? OR numero_tx LIKE ? OR COALESCE(numero_nf,'') LIKE ? OR COALESCE(descricao,'') LIKE ? OR COALESCE(categoria,'') LIKE ? OR COALESCE(observacao,'') LIKE ?)"
         like = f"%{busca}%"
-        args += [like, like, like]
+        args += [like, like, like, like, like, like]
     sql += " ORDER BY dt_vencimento ASC"
     cursor.execute(sql, args)
     rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+def listar_notas_com_parcelas(status=None, empresa=None, busca=None):
+    if USE_SUPABASE:
+        try:
+            # Em Supabase real teríamos que fazer query de foreign key. Por simplicidade, faremos duas queries ou select embutido.
+            query = supabase.table("notas").select("*, parcelas:nota_parcelas(*)")
+            if status: query = query.eq("status", status)
+            if empresa: query = query.eq("empresa", empresa)
+            if busca: query = query.or_(f"fornecedor.ilike.%{busca}%,numero_tx.ilike.%{busca}%,numero_nf.ilike.%{busca}%,descricao.ilike.%{busca}%,categoria.ilike.%{busca}%,observacao.ilike.%{busca}%")
+            res = query.order("dt_vencimento").execute()
+            return res.data
+        except Exception as e:
+            logger.error(f"Erro Supabase (listar_notas_com_parcelas): {e}")
+
+    # Fallback SQLite
+    conn = _get_local_conn()
+    cursor = conn.cursor()
+    sql  = "SELECT * FROM notas WHERE 1=1"
+    args = []
+    if status:  sql += " AND status=?";          args.append(status)
+    if empresa: sql += " AND empresa=?";          args.append(empresa)
+    if busca:
+        sql += " AND (fornecedor LIKE ? OR numero_tx LIKE ? OR COALESCE(numero_nf,'') LIKE ? OR COALESCE(descricao,'') LIKE ? OR COALESCE(categoria,'') LIKE ? OR COALESCE(observacao,'') LIKE ?)"
+        like = f"%{busca}%"
+        args += [like, like, like, like, like, like]
+    sql += " ORDER BY dt_vencimento ASC"
+    cursor.execute(sql, args)
+    notas = [dict(r) for r in cursor.fetchall()]
+    
+    # Busca parcelas para as notas
+    if notas:
+        nota_ids = [n['id'] for n in notas]
+        placeholders = ','.join(['?'] * len(nota_ids))
+        cursor.execute(f"SELECT * FROM nota_parcelas WHERE nota_id IN ({placeholders}) ORDER BY parcela ASC", nota_ids)
+        todas_parcelas = [dict(r) for r in cursor.fetchall()]
+        
+        # Agrupa
+        for n in notas:
+            n['parcelas'] = [p for p in todas_parcelas if p['nota_id'] == n['id']]
+            # Se não tem parcela, simula uma parcela única com o total para não quebrar a UI
+            if not n['parcelas']:
+                n['parcelas'] = [{
+                    'id': f"mock_{n['id']}",
+                    'nota_id': n['id'],
+                    'parcela': 1,
+                    'dt_vencimento': n['dt_vencimento'],
+                    'valor': n['valor_bruto'],
+                    'status': n['status']
+                }]
+    
+    conn.close()
+    return notas
 
 def get_nota_completa(nota_id):
     if USE_SUPABASE:
@@ -467,16 +533,73 @@ def atualizar_status_nota(nota_id, status, data_pagamento=None):
     if USE_SUPABASE:
         try:
             supabase.table("notas").update(update_data).eq("id", nota_id).execute()
-            return
         except Exception as e:
-            logger.error(f"Erro Supabase (atualizar_status): {e}")
+            logger.error(f"Erro Supabase (atualizar_status_nota): {e}")
+
     conn = _get_local_conn()
+    cursor = conn.cursor()
     if data_pagamento:
-        conn.execute("UPDATE notas SET status=?, dt_pagamento=? WHERE id=?", (status, data_pagamento, nota_id))
+        cursor.execute("UPDATE notas SET status=?, dt_pagamento=? WHERE id=?", (status, data_pagamento, nota_id))
     else:
-        conn.execute("UPDATE notas SET status=? WHERE id=?", (status, nota_id))
+        cursor.execute("UPDATE notas SET status=? WHERE id=?", (status, nota_id))
     conn.commit()
     conn.close()
+
+def baixar_parcela(parcela_id, valor_pago, data_pagamento):
+    """Realiza a baixa (integral ou parcial) de uma parcela e atualiza o status da nota pai se necessário."""
+    conn = _get_local_conn()
+    cursor = conn.cursor()
+    
+    # Busca a parcela atual
+    cursor.execute("SELECT * FROM nota_parcelas WHERE id=?", (parcela_id,))
+    parcela_row = cursor.fetchone()
+    if not parcela_row:
+        conn.close()
+        return False
+        
+    parcela = dict(parcela_row)
+    valor_total = float(parcela.get("valor", 0))
+    valor_pago = float(valor_pago)
+    
+    if valor_pago >= valor_total:
+        # Baixa Integral
+        cursor.execute("UPDATE nota_parcelas SET status='PAGO' WHERE id=?", (parcela_id,))
+    else:
+        # Baixa Parcial: Marca a atual como paga (com o valor pago) e cria uma nova para o saldo
+        cursor.execute("UPDATE nota_parcelas SET status='PAGO', valor=? WHERE id=?", (valor_pago, parcela_id))
+        saldo_remanescente = valor_total - valor_pago
+        # Cria a parcela residual
+        cursor.execute(
+            "INSERT INTO nota_parcelas (nota_id, parcela, valor, dt_vencimento, status) VALUES (?,?,?,?,?)",
+            (parcela["nota_id"], parcela["parcela"], saldo_remanescente, parcela["dt_vencimento"], "PENDENTE")
+        )
+        
+    conn.commit()
+    
+    # Verifica se todas as parcelas da nota pai estão pagas
+    nota_id = parcela["nota_id"]
+    cursor.execute("SELECT status FROM nota_parcelas WHERE nota_id=?", (nota_id,))
+    todas_parcelas = cursor.fetchall()
+    
+    todas_pagas = True
+    for p in todas_parcelas:
+        if p["status"] != "PAGO":
+            todas_pagas = False
+            break
+            
+    if todas_pagas:
+        # Atualiza a nota pai para PAGO
+        if data_pagamento:
+            cursor.execute("UPDATE notas SET status='PAGO', dt_pagamento=? WHERE id=?", (data_pagamento, nota_id))
+        else:
+            cursor.execute("UPDATE notas SET status='PAGO' WHERE id=?", (nota_id,))
+    
+    conn.commit()
+    conn.close()
+    
+    # Supabase (ignorado para simplificar, se fôssemos usar faríamos a mesma lógica via API Supabase)
+    return True
+
 
 def salvar_adiantamento(dados):
     if USE_SUPABASE:
@@ -554,3 +677,67 @@ def listar_fornecedores(busca=None, ativo_only=False):
     rows = conn.execute(query, params).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+# == AUDIT TRAIL ==============================================================
+
+def _garantir_tabela_auditoria():
+    try:
+        conn = _get_local_conn()
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS audit_log (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                usuario     TEXT DEFAULT '',
+                acao        TEXT DEFAULT '',
+                entidade    TEXT DEFAULT '',
+                entidade_id TEXT DEFAULT '',
+                descricao   TEXT DEFAULT '',
+                valor       REAL DEFAULT 0,
+                ip          TEXT DEFAULT '',
+                created_at  TEXT DEFAULT (datetime('now'))
+            )"""
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.error(f'Erro ao criar tabela audit_log: {e}')
+
+_garantir_tabela_auditoria()
+
+
+def registrar_auditoria(usuario, acao, entidade, entidade_id='', descricao='', valor=0, ip=''):
+    """Registra uma acao no audit trail do ERP."""
+    try:
+        conn = _get_local_conn()
+        conn.execute(
+            'INSERT INTO audit_log (usuario, acao, entidade, entidade_id, descricao, valor, ip) VALUES (?,?,?,?,?,?,?)',
+            (usuario, acao.upper(), entidade, str(entidade_id), descricao, float(valor), ip)
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.error(f'Erro ao registrar auditoria: {e}')
+
+
+def listar_auditoria(usuario=None, acao=None, entidade=None, limite=100):
+    """Retorna registros do audit trail com filtros opcionais."""
+    try:
+        conn = _get_local_conn()
+        sql = 'SELECT * FROM audit_log WHERE 1=1'
+        args = []
+        if usuario:
+            sql += ' AND usuario LIKE ?'
+            args.append(f'%{usuario}%')
+        if acao:
+            sql += ' AND acao = ?'
+            args.append(acao.upper())
+        if entidade:
+            sql += ' AND entidade = ?'
+            args.append(entidade)
+        sql += f' ORDER BY id DESC LIMIT {min(limite, 500)}'
+        rows = conn.execute(sql, args).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+    except Exception as e:
+        logger.error(f'Erro ao listar auditoria: {e}')
+        return []

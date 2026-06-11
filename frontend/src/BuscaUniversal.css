@@ -1,112 +1,152 @@
+/* BuscaUniversal.css - Glassmorphism Redesign */
+
 .busca-container {
   padding: 32px;
+  background-color: var(--surface-color);
+  min-height: 100vh;
+  color: var(--text-color);
+  animation: fadeIn 0.4s ease-out;
+}
+
+.busca-header {
+  margin-bottom: 24px;
 }
 
 .busca-header h2 {
-  font-size: 24px;
-  color: var(--accent-color);
-  margin-bottom: 4px;
+  font-size: 2rem;
+  margin: 0 0 8px 0;
+  background: linear-gradient(90deg, var(--accent-color), #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
 .busca-filtros {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   margin-top: 24px;
   align-items: center;
+  background: rgba(20, 20, 30, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 20px;
 }
 
 .busca-input {
   flex: 1;
-  padding: 12px 16px;
+  padding: 12px 20px;
   border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-color);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.2);
   color: var(--text-primary);
   font-size: 15px;
+  transition: all 0.2s;
 }
 
 .busca-input:focus {
   outline: none;
   border-color: var(--accent-color);
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 .busca-filtros select {
-  padding: 12px 14px;
+  padding: 12px 16px;
   border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-color);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.2);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 14px;
+  transition: all 0.2s;
 }
 
 .btn-buscar {
-  padding: 12px 24px;
-  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent-color), #4f46e5);
+  color: white;
   border: none;
-  background-color: var(--accent-color);
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+  transition: all 0.2s ease;
 }
 
 .btn-buscar:hover {
-  background-color: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
 }
 
 .busca-results-count {
-  margin-top: 16px;
-  font-size: 13px;
+  margin: 24px 0 16px 0;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-muted);
+}
+
+.table-responsive {
+  background: rgba(20, 20, 30, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .busca-table {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 16px;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .busca-table thead th {
-  padding: 12px 16px;
+  padding: 16px;
   text-align: left;
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.5px;
   color: var(--text-muted);
-  border-bottom: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .busca-table tbody tr {
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-  transition: background 0.15s;
+  transition: background 0.2s;
 }
 
 .busca-table tbody tr:hover {
-  background-color: rgba(99, 102, 241, 0.06);
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 .busca-table td {
-  padding: 12px 16px;
+  padding: 16px;
   font-size: 14px;
   color: var(--text-primary);
   vertical-align: middle;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
 
-.badge-success {
-  background-color: rgba(34, 197, 94, 0.15);
-  color: #22c55e;
+/* Badges */
+.badge {
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-block;
+  letter-spacing: 0.5px;
 }
 
-.badge-warning {
-  background-color: rgba(251, 191, 36, 0.15);
-  color: #fbbf24;
-}
+.badge-success { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+.badge-warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+.badge-cancel { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); text-decoration: line-through; }
+.badge-neutral { background: rgba(255, 255, 255, 0.1); color: #ccc; border: 1px solid rgba(255, 255, 255, 0.2); }
 
-.badge-cancel {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  text-decoration: line-through;
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  font-style: italic;
 }

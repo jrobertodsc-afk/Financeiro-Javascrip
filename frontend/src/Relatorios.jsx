@@ -83,9 +83,9 @@ export default function Relatorios() {
 
   const fetchTributos = async (query) => {
     try {
-      const res = await fetch(`${API_URL}/api/relatorios/tributos?${query}`);
+      const res = await fetch(`${API_URL}/api/relatorios/analise_fiscal?${query}`);
       const json = await res.json();
-      if (json.success) setTributosData(json.tributos);
+      if (json.success) setTributosData(json.relatorio);
     } catch (e) {
       console.error(e);
     }
@@ -146,14 +146,14 @@ export default function Relatorios() {
   const exportarExcelTributos = () => {
     if (tributosData.length === 0) return alert('Sem dados para exportar!');
     const exportData = tributosData.map(t => ({
-      "ID da Nota Original": t.nota_id,
-      "Fornecedor (NF)": t.fornecedor_origem,
-      "Nº NF": t.numero_nf,
+      "Guia / Imposto": t.fornecedor,
+      "Nº Referência": t.numero_nf,
       "Data Emissão NF": t.dt_emissao,
-      "Tipo Imposto": t.imposto_tipo,
-      "Valor Imposto": t.imposto_valor,
-      "Vencimento Guia": t.imposto_vencimento,
-      "Status Pagamento": t.status_pagamento
+      "Descrição": t.descricao,
+      "Valor Guia": t.valor_bruto,
+      "Vencimento Guia": t.dt_vencimento,
+      "Status Pagamento": t.status,
+      "Chave Mãe": t.chave_ref
     }));
     
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -248,11 +248,17 @@ export default function Relatorios() {
                     ) : (
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                          <Pie data={categoriaData} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={2} dataKey="value">
+                          <Pie data={categoriaData} cx="25%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2} dataKey="value">
                             {categoriaData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                           </Pie>
                           <Tooltip content={<CustomTooltip />} />
-                          <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: '20px' }} />
+                          <Legend 
+                            layout="vertical" 
+                            verticalAlign="middle" 
+                            align="right" 
+                            width="60%"
+                            wrapperStyle={{ maxHeight: '300px', overflowY: 'auto', fontSize: '12px', right: 0, paddingRight: '10px' }} 
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     )}
@@ -270,7 +276,7 @@ export default function Relatorios() {
                           <XAxis type="number" hide />
                           <YAxis dataKey="centro_custo" type="category" width={120} tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
                           <Tooltip content={<CustomTooltip />} cursor={{fill: 'rgba(255,255,255,0.05)'}} />
-                          <Bar dataKey="total" radius={[0, 4, 4, 0]}>
+                          <Bar dataKey="total" radius={[0, 4, 4, 0]} maxBarSize={50}>
                             {rateioData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                           </Bar>
                         </BarChart>
@@ -347,27 +353,25 @@ export default function Relatorios() {
                     <table className="modern-table">
                       <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                         <tr>
-                          <th>Fornecedor (NF Origem)</th>
-                          <th>Nº NF</th>
-                          <th>Imposto Retido</th>
+                          <th>Guia / Imposto</th>
+                          <th>Nº Ref</th>
+                          <th>Descrição</th>
                           <th>Valor Guia</th>
-                          <th>Vencimento Guia</th>
-                          <th>Status Guia/Nota</th>
+                          <th>Vencimento</th>
+                          <th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {tributosData.map((t, idx) => (
                           <tr key={idx}>
-                            <td style={{ fontWeight: 500 }}>{t.fornecedor_origem}</td>
+                            <td style={{ fontWeight: 500 }}>{t.fornecedor}</td>
                             <td className="text-muted">{t.numero_nf || 'S/N'}</td>
+                            <td>{t.descricao}</td>
+                            <td style={{ color: 'var(--danger-color)', fontWeight: 'bold' }}>{formatMoney(t.valor_bruto)}</td>
+                            <td>{t.dt_vencimento || 'N/A'}</td>
                             <td>
-                              <span className="badge badge-info">{t.imposto_tipo}</span>
-                            </td>
-                            <td style={{ color: 'var(--danger-color)', fontWeight: 'bold' }}>{formatMoney(t.imposto_valor)}</td>
-                            <td>{t.imposto_vencimento || 'N/A'}</td>
-                            <td>
-                              <span className={`badge badge-${t.status_pagamento === 'PAGO' ? 'success' : 'warning'}`}>
-                                {t.status_pagamento}
+                              <span className={`badge badge-${t.status === 'PAGO' ? 'success' : 'warning'}`}>
+                                {t.status}
                               </span>
                             </td>
                           </tr>

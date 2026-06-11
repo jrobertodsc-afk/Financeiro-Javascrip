@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import './ImportacaoSmart.css';
+import { Search, UploadCloud, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ImportacaoSmart() {
   const [arquivos, setArquivos] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [resultados, setResultados] = useState([]);
+  
+  const [chaveSefaz, setChaveSefaz] = useState('');
+  const [buscandoSefaz, setBuscandoSefaz] = useState(false);
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -13,7 +17,7 @@ export default function ImportacaoSmart() {
 
   const handleUpload = async () => {
     if (arquivos.length === 0) {
-      alert("Selecione ao menos um arquivo XML.");
+      alert("Selecione ao menos um arquivo (XML ou PDF).");
       return;
     }
 
@@ -22,89 +26,167 @@ export default function ImportacaoSmart() {
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const formData = new FormData();
-      arquivos.forEach(f => formData.append('files', f));
+      
+      // Separar PDFs de XMLs
+      const xmls = arquivos.filter(f => f.name.toLowerCase().endsWith('.xml'));
+      const pdfs = arquivos.filter(f => f.name.toLowerCase().endsWith('.pdf'));
 
-      const res = await fetch(`${API_URL}/api/importar/xml`, {
+      let todosResultados = [];
+
+      // Processar XMLs
+      if (xmls.length > 0) {
+        const formDataXml = new FormData();
+        xmls.forEach(f => formDataXml.append('files', f));
+        const res = await fetch(`${API_URL}/api/importar/xml`, { method: 'POST', body: formDataXml });
+        const json = await res.json();
+        if (json.resultados) todosResultados = [...todosResultados, ...json.resultados];
+      }
+
+      // Processar PDFs (Robô Inteligente)
+      if (pdfs.length > 0) {
+        const formDataPdf = new FormData();
+        pdfs.forEach(f => formDataPdf.append('files', f));
+        const res = await fetch(`${API_URL}/api/robo/importacao_inteligente`, { method: 'POST', body: formDataPdf });
+        const json = await res.json();
+        if (json.resultados) todosResultados = [...todosResultados, ...json.resultados];
+      }
+      
+      setResultados(todosResultados);
+      alert("Processamento em lote concluído!");
+    } catch (err) {
+      alert("Erro de conexão com o servidor ao importar arquivos.");
+    }
+    setUploading(false);
+  };
+
+  const handleSefazSearch = async () => {
+    const cleanChave = chaveSefaz.replace(/\D/g, '');
+    if (cleanChave.length !== 44) {
+      alert("A Chave de Acesso deve conter exatos 44 números.");
+      return;
+    }
+
+    setBuscandoSefaz(true);
+    setResultados([]);
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${API_URL}/api/sefaz/consultar_chave`, {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chave: cleanChave })
       });
       const json = await res.json();
       
       if (json.success) {
-        setResultados(json.resultados);
-        alert(`${json.importados} arquivo(s) importado(s) com sucesso!`);
+        setResultados([{ arquivo: `SEFAZ: ${cleanChave}`, ok: true, mensagem: json.mensagem }]);
+        alert("Sucesso! O Dossiê da Nota e Guias de Impostos foram provisionados.");
+        setChaveSefaz('');
       } else {
-        alert(`Erro: ${json.error}`);
+        setResultados([{ arquivo: `SEFAZ: ${cleanChave}`, ok: false, mensagem: json.error }]);
       }
     } catch (err) {
-      alert("Erro de conexão com o servidor.");
+      alert("Erro de conexão com a SEFAZ.");
     }
-    setUploading(false);
+    setBuscandoSefaz(false);
   };
 
   return (
     <div className="import-container glass-panel">
       <div className="import-header">
-        <h2>⚡ Importação Smart</h2>
-        <p className="text-muted">Arraste ou selecione arquivos XML de notas fiscais para importação automática em lote.</p>
+        <h2>⚡ Central de Lançamentos</h2>
+        <p className="text-muted">Motor autônomo para provisionamento. Importe notas ou baixe direto da SEFAZ Nacional via Certificado A1.</p>
       </div>
 
-      <div className="upload-area">
-        <div className="upload-box">
-          <div className="upload-icon">📂</div>
-          <p>Arraste arquivos XML aqui ou clique para selecionar</p>
-          <input 
-            type="file" 
-            accept=".xml" 
-            multiple 
-            onChange={handleFileChange} 
-            className="file-input"
-          />
+      <div className="launch-grid">
+        {/* MÓDULO SEFAZ */}
+        <div className="launch-card sefaz-card">
+          <div className="card-header">
+            <div className="icon-wrapper sefaz-icon"><Search size={24} /></div>
+            <h3>Importação Oficial SEFAZ</h3>
+          </div>
+          <p className="card-desc">Cole a chave de 44 dígitos. O Hub fará o manifesto, o download do XML e provisionará todos os impostos automaticamente.</p>
+          
+          <div className="sefaz-input-group">
+            <input 
+              type="text" 
+              placeholder="Digite os 44 números da Chave de Acesso" 
+              value={chaveSefaz}
+              onChange={(e) => setChaveSefaz(e.target.value)}
+              className="input-chave"
+              maxLength={54}
+            />
+            <button 
+              className="btn-sefaz"
+              onClick={handleSefazSearch}
+              disabled={buscandoSefaz || chaveSefaz.length < 44}
+            >
+              {buscandoSefaz ? 'Conectando...' : 'Baixar da Sefaz'}
+            </button>
+          </div>
         </div>
 
-        {arquivos.length > 0 && (
-          <div className="files-list">
-            <p className="files-count">{arquivos.length} arquivo(s) selecionado(s):</p>
-            <ul>
-              {arquivos.map((f, idx) => (
-                <li key={idx}>
-                  <span className="file-icon">📄</span>
-                  <span>{f.name}</span>
-                  <span className="file-size">{(f.size / 1024).toFixed(1)} KB</span>
-                </li>
-              ))}
-            </ul>
+        {/* MÓDULO DRAG & DROP */}
+        <div className="launch-card drop-card">
+          <div className="card-header">
+            <div className="icon-wrapper drop-icon"><UploadCloud size={24} /></div>
+            <h3>Lote Misto (XML / PDF)</h3>
           </div>
-        )}
+          <p className="card-desc">Arraste notas fiscais (XML) ou comprovantes de pagamento (PDF). O motor identificará o tipo de documento.</p>
+          
+          <div className="upload-box drop-zone" style={{ position: 'relative' }}>
+            <input 
+              type="file" 
+              accept=".xml,.pdf" 
+              multiple 
+              onChange={handleFileChange} 
+              className="file-input input-file-hidden"
+            />
+            <p>Arraste arquivos aqui ou <b>clique para buscar</b></p>
+          </div>
 
-        <button 
-          className="btn-importar" 
-          onClick={handleUpload} 
-          disabled={uploading || arquivos.length === 0}
-        >
-          {uploading ? 'Importando...' : `Importar ${arquivos.length} Arquivo(s)`}
-        </button>
+          {arquivos.length > 0 && (
+            <div className="files-list">
+              <p className="files-count">{arquivos.length} arquivo(s) na fila:</p>
+              <ul>
+                {arquivos.slice(0, 3).map((f, idx) => (
+                  <li key={idx}>
+                    <FileText size={16} /> <span>{f.name}</span>
+                  </li>
+                ))}
+                {arquivos.length > 3 && <li><span className="text-muted">... e mais {arquivos.length - 3} arquivo(s)</span></li>}
+              </ul>
+              <button 
+                className="btn-importar" 
+                onClick={handleUpload} 
+                disabled={uploading}
+              >
+                {uploading ? 'Processando Lote...' : `Importar ${arquivos.length} Arquivo(s)`}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {resultados.length > 0 && (
         <div className="resultados">
-          <h3>Resultados da Importação</h3>
+          <h3>Relatório de Execução</h3>
           <table>
             <thead>
               <tr>
-                <th>Arquivo</th>
+                <th>Alvo / Arquivo</th>
                 <th>Status</th>
-                <th>Mensagem</th>
+                <th>Detalhes do Motor</th>
               </tr>
             </thead>
             <tbody>
               {resultados.map((r, idx) => (
-                <tr key={idx}>
-                  <td>{r.arquivo}</td>
+                <tr key={idx} className={r.ok ? 'row-success' : 'row-error'}>
+                  <td className="file-name">{r.arquivo}</td>
                   <td>
                     <span className={`badge ${r.ok ? 'badge-success' : 'badge-danger'}`}>
-                      {r.ok ? '✅ OK' : '❌ ERRO'}
+                      {r.ok ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
+                      {r.ok ? ' PROVISIONADO' : ' FALHA'}
                     </span>
                   </td>
                   <td>{r.mensagem}</td>

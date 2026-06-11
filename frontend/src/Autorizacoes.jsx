@@ -48,7 +48,7 @@ const CATEGORIAS_PADRAO = [
 ];
 
 const RESPONSAVEIS_PADRAO = [
-  "ADM/FINANCEIRO", "COMPRAS", "GERENTE ONLINE", "LOGISTICA",
+  "ADM/FINANCEIRO", "COMPRAS", "DIRETORIA", "GERENTE ONLINE", "LOGISTICA",
   "MARKETING", "PRODUCAO", "RH", "SUPRIMENTOS", "GERÊNCIA LOJA"
 ];
 
@@ -256,6 +256,12 @@ export default function Autorizacoes() {
     }
   };
 
+  const handleDeleteRow = (index) => {
+    const novosPagamentos = [...pagamentos];
+    novosPagamentos.splice(index, 1);
+    setPagamentos(novosPagamentos);
+  };
+
   if (showRelatorioModerno) {
     return <RelatorioModerno pagamentos={pagamentos} saldos={saldos} onClose={() => setShowRelatorioModerno(false)} />;
   }
@@ -267,6 +273,14 @@ export default function Autorizacoes() {
       </datalist>
       <datalist id="datalist-responsaveis">
         {RESPONSAVEIS_PADRAO.map(r => <option key={r} value={r} />)}
+      </datalist>
+      <datalist id="datalist-filiais">
+        <option value="BOAH HORTO" />
+        <option value="BOAH BARRA" />
+        <option value="BOAH SDB" />
+        <option value="BOAH VILAS" />
+        <option value="BOAH PASEO" />
+        <option value="SOLAR ALAMEDA" />
       </datalist>
 
       <div className="aut-header">
@@ -307,7 +321,7 @@ export default function Autorizacoes() {
               <input 
                 type="file" 
                 id="file-upload" 
-                accept=".xls,.xlsx" 
+                accept=".xls,.xlsx,.csv" 
                 onChange={handleFileUpload} 
               />
               <label htmlFor="file-upload" className={loading ? "disabled" : ""}>
@@ -344,12 +358,26 @@ export default function Autorizacoes() {
                 <div className="summary-card highlight">
                   <span className="summary-title">Valor Total a Pagar</span>
                   <span className="summary-value">
-                    {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {pagamentos.reduce((acc, p) => acc + (Number(p.valor) || 0), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </span>
                 </div>
                 <div className="summary-actions">
                   <button className="btn-limpar" onClick={() => setPagamentos([])}>
                     Nova Importação
+                  </button>
+                  <button className="btn-gerar-moderno" onClick={() => {
+                    setPagamentos([...pagamentos, {
+                      favorecido: '',
+                      cnpj: '',
+                      data: new Date().toLocaleDateString('pt-BR'),
+                      categoria: 'TRANSFERENCIA',
+                      responsavel: 'ADM/FINANCEIRO',
+                      descricao: '',
+                      valor: 0,
+                      modificado: true
+                    }]);
+                  }}>
+                    + Adicionar Manual
                   </button>
                   <button className="btn-gerar-moderno" onClick={() => setShowLoteModal(true)}>
                     <Save size={20} />
@@ -376,7 +404,7 @@ export default function Autorizacoes() {
                       </button>
                     </div>
                     <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                      <p className="text-muted">Todos os {pagamentos.length} registros serão inseridos como "Pendentes" e ficarão disponíveis na aba de Baixas para edição ou conciliação.</p>
+                      <p className="text-muted">Todos os {pagamentos.length} registros serão inseridos como "Pendentes" e ficarão disponíveis na tela de <strong>Pagamentos Pendentes</strong> para edição, agrupamento ou baixa/pagamento final.</p>
                       
                       <div className="form-group">
                         <label>Empresa Padrão</label>
@@ -431,12 +459,24 @@ export default function Autorizacoes() {
                       <th>Responsável</th>
                       <th>Descrição</th>
                       <th className="col-valor">Valor</th>
+                      <th style={{width: '40px'}}></th>
                     </tr>
                   </thead>
                   <tbody>
                     {pagamentos.map((p, i) => (
                       <tr key={i} className={p.modificado ? "tr-modificado" : ""}>
-                        <td className="fw-500">{p.favorecido || p.nome}</td>
+                        <td>
+                          <div className="editable-cell">
+                            <input 
+                              type="text" 
+                              value={p.favorecido || p.nome || ""}
+                              placeholder="Nome do Favorecido"
+                              onChange={(e) => handleFieldChange(i, 'favorecido', e.target.value)}
+                              className="input-editable fw-500"
+                            />
+                            <Edit3 size={14} className="edit-icon" />
+                          </div>
+                        </td>
                         <td className="text-muted">{p.cnpj}</td>
                         <td>{p.data}</td>
                         <td>
@@ -467,8 +507,9 @@ export default function Autorizacoes() {
                           <div className="editable-cell">
                             <input 
                               type="text" 
+                              list="datalist-filiais"
                               value={p.descricao || ""}
-                              placeholder="Adicione notas..."
+                              placeholder="Adicione notas ou filial..."
                               onChange={(e) => handleFieldChange(i, 'descricao', e.target.value)}
                               className="input-editable"
                             />
@@ -476,7 +517,26 @@ export default function Autorizacoes() {
                           </div>
                         </td>
                         <td className="col-valor fw-600">
-                          {(p.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          <div className="editable-cell" style={{ justifyContent: 'flex-end' }}>
+                            <input 
+                              type="number" 
+                              step="0.01"
+                              value={p.valor !== undefined ? p.valor : ''}
+                              onChange={(e) => handleFieldChange(i, 'valor', e.target.value)}
+                              className="input-editable"
+                              style={{ textAlign: 'right', width: '100px' }}
+                            />
+                            <Edit3 size={14} className="edit-icon" />
+                          </div>
+                        </td>
+                        <td className="text-center">
+                          <button 
+                            onClick={() => handleDeleteRow(i)}
+                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                            title="Excluir Linha"
+                          >
+                            <X size={18} />
+                          </button>
                         </td>
                       </tr>
                     ))}

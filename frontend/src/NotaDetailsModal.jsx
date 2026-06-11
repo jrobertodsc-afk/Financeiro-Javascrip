@@ -1,27 +1,29 @@
 import { useState, useEffect } from 'react';
 import './NotaDetailsModal.css';
+import { FileText, ShieldAlert, Receipt, CheckCircle, Clock } from 'lucide-react';
 
 export default function NotaDetailsModal({ notaId, onClose, onEdit }) {
-  const [nota, setNota] = useState(null);
+  const [dossie, setDossie] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('dados');
 
   useEffect(() => {
     if (!notaId) return;
-    const fetchNota = async () => {
+    const fetchDossie = async () => {
       setLoading(true);
       try {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        const res = await fetch(`${API_URL}/api/nota/${notaId}`);
+        const res = await fetch(`${API_URL}/api/notas/dossie/${notaId}`);
         const json = await res.json();
         if (json.success) {
-          setNota(json.nota);
+          setDossie(json.dossie);
         }
       } catch (err) {
-        console.error("Erro ao buscar detalhes da nota:", err);
+        console.error("Erro ao buscar dossiê da nota:", err);
       }
       setLoading(false);
     };
-    fetchNota();
+    fetchDossie();
   }, [notaId]);
 
   if (!notaId) return null;
@@ -31,102 +33,161 @@ export default function NotaDetailsModal({ notaId, onClose, onEdit }) {
     return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
+  const nota = dossie?.nota_principal;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
+      <div className="modal-container glass-panel" onClick={e => e.stopPropagation()}>
+        
+        {/* Header Superior */}
         <div className="modal-header">
-          <h2>📄 Detalhes da Nota #{nota?.numero_nf || nota?.id}</h2>
-          <button className="btn-close" onClick={onClose}>X</button>
+          <div className="header-title">
+            <Receipt size={24} className="text-accent" />
+            <h2>Dossiê Interno: Nota {nota?.numero_nf || nota?.id}</h2>
+          </div>
+          <button className="btn-close" onClick={onClose}>✕</button>
         </div>
 
         {loading ? (
-          <div className="loading-state">Carregando detalhes...</div>
-        ) : nota ? (
-          <div className="modal-body">
+          <div className="loading-state">Carregando inteligência fiscal...</div>
+        ) : dossie && nota ? (
+          <div className="modal-content">
             
-            <div className="status-banner" style={{ backgroundColor: nota.status === 'PAGO' ? 'var(--success)' : nota.status === 'CANCELADO' ? 'var(--error)' : 'var(--warning)', color: '#fff', padding: '8px', textAlign: 'center', fontWeight: 'bold', borderRadius: '8px', marginBottom: '16px' }}>
-              STATUS: {nota.status}
+            {/* Abas Superiores */}
+            <div className="tabs-nav">
+              <button className={`tab-btn ${activeTab === 'dados' ? 'active' : ''}`} onClick={() => setActiveTab('dados')}>
+                🏢 Dados do Fornecedor
+              </button>
+              <button className={`tab-btn ${activeTab === 'itens' ? 'active' : ''}`} onClick={() => setActiveTab('itens')}>
+                📦 Itens da Nota
+              </button>
+              <button className={`tab-btn ${activeTab === 'guias' ? 'active' : ''}`} onClick={() => setActiveTab('guias')}>
+                🏛️ Guias de Impostos <span className="badge-count">{dossie.guias_geradas.length}</span>
+              </button>
             </div>
 
-            <div className="details-section">
-              <h3>🏢 Dados Básicos</h3>
-              <div className="details-grid">
-                <div><strong>Fornecedor:</strong> {nota.fornecedor}</div>
-                <div><strong>CNPJ/CPF:</strong> {nota.cnpj}</div>
-                <div><strong>Empresa/Filial:</strong> {nota.empresa} / {nota.filial}</div>
-                <div><strong>Categoria:</strong> {nota.categoria}</div>
-                <div><strong>Natureza:</strong> {nota.natureza}</div>
-                <div><strong>Responsável:</strong> {nota.responsavel}</div>
-                <div style={{gridColumn: 'span 2'}}><strong>Descrição:</strong> {nota.descricao}</div>
-              </div>
-            </div>
-
-            <div className="details-section">
-              <h3>💰 Valores e Datas</h3>
-              <div className="details-grid">
-                <div><strong>Emissão:</strong> {nota.dt_emissao}</div>
-                <div><strong>Vencimento:</strong> {nota.dt_vencimento}</div>
-                <div><strong>Valor Bruto:</strong> <span className="text-accent font-bold">{formatMoney(nota.valor_bruto)}</span></div>
-                <div><strong>DIFAL:</strong> {formatMoney(nota.valor_difal)}</div>
-              </div>
-            </div>
-
-            {nota.impostos && nota.impostos.length > 0 && (
-              <div className="details-section">
-                <h3>🏛️ Impostos Retidos</h3>
-                <ul className="details-list">
-                  {nota.impostos.map(imp => (
-                    <li key={imp.id}><strong>{imp.tipo}:</strong> {imp.aliquota}% - {formatMoney(imp.valor)} (Venc: {imp.dt_venc_imp})</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {nota.rateio && nota.rateio.length > 0 && (
-              <div className="details-section">
-                <h3>🛒 Rateio (Centro de Custo)</h3>
-                <ul className="details-list">
-                  {nota.rateio.map(rat => (
-                    <li key={rat.id}><strong>{rat.centro_custo}:</strong> {formatMoney(rat.valor)}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            
-            {nota.itens && nota.itens.length > 0 && (
-              <div className="details-section">
-                <h3>📦 Itens / Serviços</h3>
-                <ul className="details-list">
-                  {nota.itens.map(item => (
-                    <li key={item.id}>{item.descricao} - {formatMoney(item.valor_total)}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="details-section">
-              <h3>💳 Pagamento</h3>
-              <div className="details-grid">
-                <div><strong>Forma Pgto:</strong> {nota.forma_pgto}</div>
-                {nota.forma_pgto === 'PIX' && <div><strong>Chave PIX:</strong> {nota.pix_chave}</div>}
-                {nota.forma_pgto === 'TED' && (
-                  <div style={{gridColumn: 'span 2'}}>
-                    <strong>Banco:</strong> {nota.banco_dest} | <strong>Ag:</strong> {nota.agencia_dest} | <strong>Conta:</strong> {nota.conta_dest} | <strong>CPF/CNPJ:</strong> {nota.cpf_cnpj_dest}
+            {/* Conteúdo das Abas */}
+            <div className="tab-body">
+              
+              {/* ABA: DADOS */}
+              {activeTab === 'dados' && (
+                <div className="dossie-section">
+                  <div className="status-hero">
+                    <div className="hero-valor">
+                      <span className="label">Valor Total</span>
+                      <h3>{formatMoney(nota.valor_bruto)}</h3>
+                    </div>
+                    <div className={`hero-status status-${nota.status.toLowerCase()}`}>
+                      {nota.status === 'PAGO' ? <CheckCircle size={20}/> : <Clock size={20}/>}
+                      {nota.status}
+                    </div>
                   </div>
-                )}
-                <div style={{gridColumn: 'span 2'}}><strong>Cód. Barras:</strong> {nota.cod_barras || '-'}</div>
-                <div style={{gridColumn: 'span 2'}}><strong>Chave Ref:</strong> {nota.chave_ref || '-'}</div>
-                <div style={{gridColumn: 'span 2'}}><strong>Observação:</strong> {nota.observacao || '-'}</div>
-              </div>
-            </div>
 
+                  <div className="info-grid">
+                    <div className="info-card">
+                      <span className="label">Fornecedor</span>
+                      <strong>{nota.fornecedor}</strong>
+                    </div>
+                    <div className="info-card">
+                      <span className="label">CNPJ/CPF</span>
+                      <strong>{nota.cnpj}</strong>
+                    </div>
+                    <div className="info-card">
+                      <span className="label">Data de Emissão</span>
+                      <strong>{nota.dt_emissao}</strong>
+                    </div>
+                    <div className="info-card">
+                      <span className="label">Vencimento Original</span>
+                      <strong>{nota.dt_vencimento}</strong>
+                    </div>
+                    <div className="info-card full-width">
+                      <span className="label">Descrição do Sistema</span>
+                      <strong>{nota.descricao}</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ABA: ITENS */}
+              {activeTab === 'itens' && (
+                <div className="dossie-section">
+                  {dossie.itens && dossie.itens.length > 0 ? (
+                    <div className="table-responsive">
+                      <table className="dossie-table">
+                        <thead>
+                          <tr>
+                            <th>Descrição do Item</th>
+                            <th>Valor Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dossie.itens.map(item => (
+                            <tr key={item.id}>
+                              <td>{item.descricao}</td>
+                              <td className="text-right font-bold">{formatMoney(item.valor_total)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="empty-state">Nenhum item discriminado na nota.</div>
+                  )}
+                </div>
+              )}
+
+              {/* ABA: GUIAS */}
+              {activeTab === 'guias' && (
+                <div className="dossie-section">
+                  <div className="guias-summary">
+                    <ShieldAlert size={28} className="text-warning" />
+                    <div>
+                      <h4>Provisões Fiscais Automáticas</h4>
+                      <p>O Motor Fiscal identificou e gerou automaticamente as guias de pagamento abaixo vinculadas a esta nota.</p>
+                    </div>
+                    <div className="guias-total">
+                      <span className="label">Total Impostos</span>
+                      <strong className="text-danger">{formatMoney(dossie.valor_total_impostos)}</strong>
+                    </div>
+                  </div>
+
+                  {dossie.guias_geradas && dossie.guias_geradas.length > 0 ? (
+                    <div className="guias-cards">
+                      {dossie.guias_geradas.map(guia => (
+                        <div key={guia.id} className="guia-card">
+                          <div className="guia-header">
+                            <span className="guia-badge">{guia.fornecedor}</span>
+                            <span className={`status-badge status-${guia.status.toLowerCase()}`}>{guia.status}</span>
+                          </div>
+                          <div className="guia-body">
+                            <div className="guia-info">
+                              <span className="label">Vencimento</span>
+                              <strong>{guia.dt_vencimento}</strong>
+                            </div>
+                            <div className="guia-info text-right">
+                              <span className="label">Valor a Pagar</span>
+                              <strong className="text-danger">{formatMoney(guia.valor_bruto)}</strong>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="empty-state">Nenhum imposto retido ou provisionado para esta nota.</div>
+                  )}
+                </div>
+              )}
+
+            </div>
+            
             <div className="modal-footer">
-              <button className="btn-editar" onClick={() => { onClose(); onEdit(nota.id); }}>✏️ Editar Nota</button>
+              <button className="btn-secondary" onClick={onClose}>Fechar</button>
+              <button className="btn-primary" onClick={() => { onClose(); onEdit(nota.id); }}>✏️ Editar Nota Original</button>
             </div>
 
           </div>
         ) : (
-          <div className="error-state">Nota não encontrada.</div>
+          <div className="error-state">Falha ao carregar dossiê da nota.</div>
         )}
       </div>
     </div>

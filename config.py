@@ -43,6 +43,7 @@ PASTA_SERVIDOR = r"Y:\01-Administrativo\02-Financeiro\04-Comprovantes"
 PASTA_BACKUP_PDF = os.path.join(PASTA_ATUAL, "BACKUP_COMPROVANTES")
 PASTA_INPUT_SMART = os.path.join(PASTA_ATUAL, "IMPORTACAO_AUTOMATICA")
 PASTA_DOSSIES     = os.path.join(PASTA_RESTITUICOES, "DOSSIES_FINAIS")
+PASTA_COMPROVANTES = os.path.join(PASTA_ATUAL, "COMPROVANTES")
 
 LOG_RETENCAO_DIAS = 30
 DB_PATH = os.path.join(BASE_DIR, "robo_boah.db")
@@ -53,7 +54,7 @@ def ensure_directories():
                PASTA_LOGS, PASTA_BACKUP_PDF,
                PASTA_RESTITUICOES, PASTA_RESTITUICOES_XML, 
                PASTA_RESTITUICOES_PDF, PASTA_BIBLIOTECA_GNRE,
-               PASTA_MODELOS_GNRE, PASTA_INPUT_SMART, PASTA_DOSSIES):
+               PASTA_MODELOS_GNRE, PASTA_INPUT_SMART, PASTA_DOSSIES, PASTA_COMPROVANTES):
         try:
             os.makedirs(_p, exist_ok=True)
         except Exception as e:

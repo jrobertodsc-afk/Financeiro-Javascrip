@@ -134,6 +134,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+.summary-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .btn-limpar {
   background: none;
   border: 1px solid var(--border-color);
@@ -142,7 +151,6 @@
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  margin-left: auto;
 }
 
 .btn-limpar:hover {

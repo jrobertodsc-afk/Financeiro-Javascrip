@@ -12,7 +12,8 @@ import {
   CalendarDays,
   ShieldAlert,
   Menu,
-  PieChart
+  PieChart,
+  ArrowLeft
 } from 'lucide-react'
 import Semaforo from './Semaforo'
 import LancarNota from './LancarNota'
@@ -29,7 +30,14 @@ import NotaDetailsModal from './NotaDetailsModal'
 import './App.css'
 
 function App() {
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') || 'Dashboard';
+  });
+  const [isIframe] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('iframe') === 'true';
+  });
   const [editNotaId, setEditNotaId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [viewNotaId, setViewNotaId] = useState(null);
@@ -54,7 +62,7 @@ function App() {
     { id: 'Relatórios', icon: PieChart, label: 'Relatórios' },
     { id: 'Extrato Contábil', icon: BookOpen, label: 'Extrato' },
     { id: 'Previsões', icon: CalendarDays, label: 'Previsões' },
-    { id: 'Importação Smart', icon: Zap, label: 'Importação' },
+    { id: 'Central de Lançamentos', icon: Zap, label: 'Central de Lançamentos' },
     { id: 'Restituições', icon: ShieldCheck, label: 'Restituições' }
   ];
 
@@ -69,17 +77,18 @@ function App() {
       case 'Relatórios': return <Relatorios />;
       case 'Extrato Contábil': return <ExtratoContabil />;
       case 'Previsões': return <Previsoes />;
-      case 'Importação Smart': return <ImportacaoSmart />;
+      case 'Central de Lançamentos': return <ImportacaoSmart />;
       case 'Restituições': return <Restituicoes />;
       default: return null;
     }
   };
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${isIframe ? 'iframe-mode' : ''}`} style={isIframe ? { backgroundColor: 'transparent' } : {}}>
       {/* SIDEBAR */}
-      <nav className={`sidebar ${!isSidebarOpen ? 'collapsed' : ''}`}>
-        <div className="sidebar-header">
+      {!isIframe && (
+        <nav className={`sidebar ${!isSidebarOpen ? 'collapsed' : ''}`}>
+          <div className="sidebar-header">
           <div className="logo-box">
             <div className="logo-mark">C</div>
             {isSidebarOpen && (
@@ -89,6 +98,26 @@ function App() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Botão de Voltar ao Hub */}
+        <div style={{ padding: '0 16px', marginBottom: '16px' }}>
+          <button 
+            onClick={() => window.parent.postMessage('back_to_hub', '*')}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+              padding: '10px 12px', background: 'rgba(255, 255, 255, 0.08)',
+              border: 'none', borderRadius: '10px', color: 'white', cursor: 'pointer',
+              fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s',
+              justifyContent: isSidebarOpen ? 'flex-start' : 'center'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+            title="Voltar ao Hub Principal"
+          >
+            <ArrowLeft size={16} />
+            {isSidebarOpen && <span>Voltar ao Hub</span>}
+          </button>
         </div>
 
         {isSidebarOpen && <div className="nav-section-label">Menu Principal</div>}
@@ -131,11 +160,13 @@ function App() {
           )}
         </div>
       </nav>
+      )}
 
       {/* MAIN CONTENT AREA */}
-      <main className="main-content">
-        <header className="topbar">
-          <div className="topbar-left" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <main className="main-content" style={isIframe ? { padding: 0, margin: 0, width: '100%', height: '100vh', backgroundColor: 'transparent' } : {}}>
+        {!isIframe && (
+          <header className="topbar">
+            <div className="topbar-left" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button 
               className="btn-toggle-sidebar" 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -155,8 +186,9 @@ function App() {
             </div>
           </div>
         </header>
+        )}
 
-        <div className="tab-content" key={activeTab}>
+        <div className="tab-content" key={activeTab} style={isIframe ? { padding: '20px', height: '100vh', overflowY: 'auto' } : {}}>
           {renderTab()}
         </div>
       </main>

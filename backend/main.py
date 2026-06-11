@@ -1,24 +1,62 @@
 import os
 import sys
-from fastapi import FastAPI
+import shutil
+import time
+from typing import Optional, List, Dict, Any
+from fastapi import FastAPI, Form, File, UploadFile, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from datetime import datetime, timedelta
+from dotenv import load_dotenv
 
 # Permite importar do projeto raiz
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
 from services.database import listar_notas
-import config
+from services.auth_service import (
+    authenticate_user, create_access_token, decode_token, get_role_info
+)
+try:
+    from routers import relatorios as relatorios_router
+except ImportError:
+    import sys, os
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from routers import relatorios as relatorios_router
 
-app = FastAPI(title="Boah ERP API")
+app = FastAPI(
+    title="Boah ERP API",
+    description="API segura do ERP Boah/Solar com autenticação JWT",
+    version="2.0.0"
+)
 
-# Habilitar CORS para o Frontend React
+# Registra routers modulares
+app.include_router(relatorios_router.router)
+
+# ── CORS Seguro — origens via variável de ambiente ──────────────────────────
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:5174")
+ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Na produ├º├úo, usar a URL do Vercel
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Path do DB do FabricOS via variável de ambiente ─────────────────────────
+FABRICOS_DB_PATH = os.getenv(
+    "FABRICOS_DB_PATH",
+    os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "..", "Controle de retirada de peças", "fabricos.db"
+    )
+)
+
+# ── Segurança JWT ─────────────────────────────────────────────
+bearer_scheme = HTTPBearer(auto_error=False)
 
 @app.get("/")
 def home():
@@ -507,40 +545,6 @@ def api_previsoes(
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.get("/api/relatorios/rateio")
-def api_relatorios_rateio(empresa: Optional[str] = None):
-    try:
-        # Pega todas as notas PAGAS ou PENDENTES para o relatorio
-        notas = listar_notas(empresa=empresa)
-        # Fallback para sqlite usando a configuração correta
-        from services.database import _get_local_conn
-        conn = _get_local_conn()
-        conn.row_factory = __import__('sqlite3').Row
-        cursor = conn.cursor()
-        
-        sql = """
-            SELECT r.categoria, SUM(r.valor) as total
-            FROM nota_rateio r
-            JOIN notas n ON r.nota_id = n.id
-            WHERE 1=1
-        """
-        args = []
-        if empresa:
-            sql += " AND n.empresa = ?"
-            args.append(empresa)
-            
-        sql += " GROUP BY r.categoria ORDER BY total DESC"
-        cursor.execute(sql, args)
-        rows = cursor.fetchall()
-        
-        resultado = [{"centro_custo": r["categoria"] or "Geral", "total": r["total"]} for r in rows]
-        conn.close()
-        
-        return {"success": True, "rateio": resultado}
-    except Exception as e:
-        # Se falhar (ex: usando supabase e sem sqlite local), retorna vazio
-        return {"success": False, "error": str(e), "rateio": []}
-
 from fastapi import UploadFile, File
 from fastapi.responses import FileResponse
 from utils.extratos_processor import ler_itau_pagamentos
@@ -840,116 +844,172 @@ async def api_conciliacao_ofx(file: UploadFile = File(...)):
         traceback.print_exc()
         return {"success": False, "error": str(e)}
 
-@app.get("/api/relatorios/avancado")
-def api_relatorios_avancado(
-    dt_inicio: Optional[str] = None, 
-    dt_fim: Optional[str] = None, 
-    tipo_data: Optional[str] = "vencimento", 
-    status: Optional[str] = None, 
-    empresa: Optional[str] = None,
-    fornecedor: Optional[str] = None,
-    categoria: Optional[str] = None
-):
+# ==========================================
+# ROTAS DO ERP HUB (SSO & DASHBOARD HÍBRIDO)
+# ==========================================
+
+@app.post("/api/auth/login")
+async def hub_login(username: str = Form(...), password: str = Form(...)):
+    """
+    Autenticação segura com JWT real.
+    - Verifica credenciais via SSO (FabricOS DB) ou usuário admin do .env
+    - Retorna JWT com expiração de 8h (configurável via JWT_EXPIRE_MINUTES)
+    - ELIMINA o bypass anterior que permitia qualquer e-mail + senha de 3 chars
+    """
+    user = authenticate_user(username, password, fabricos_db_path=FABRICOS_DB_PATH)
+    
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="E-mail ou senha incorretos.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    token = create_access_token(data={
+        "sub": user["email"],
+        "name": user["name"],
+        "role": user.get("role", "operator"),
+        "nivel": user.get("nivel", 2),
+    })
+    
+    role_info = get_role_info(user.get("role", "operator"))
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "email": user["email"],
+            "name": user["name"],
+            "role": user.get("role", "operator"),
+            "role_label": role_info["label"],
+            "nivel": user.get("nivel", 2),
+            "limite_aprovacao": role_info["limite_aprovacao"],
+        }
+    }
+
+@app.get("/api/hub/kpis")
+def get_hub_kpis():
+    """KPIs unificados: dados reais do Financeiro + dados reais da Produção (FabricOS)."""
+    # ── KPIs Financeiros (dados reais) ────────────────────────────────────────
     try:
-        from services.database import _get_local_conn, USE_SUPABASE
-        import config
-        from datetime import datetime
-        
-        # 1. Obter base de notas
-        notas = listar_notas(status=status, empresa=empresa)
-        
-        # 2. Filtrar localmente no python para suportar ambos os bancos e filtros complexos
-        filtradas = []
-        for n in notas:
-            # Filtro fornecedor
-            if fornecedor and fornecedor.lower() not in (n.get("fornecedor") or "").lower():
-                continue
-                
-            # Filtro categoria
-            if categoria and categoria.lower() not in (n.get("categoria") or "").lower():
-                continue
-                
-            # Filtro data
-            if dt_inicio and dt_fim:
-                data_campo = n.get("dt_vencimento") if tipo_data == "vencimento" else n.get("dt_emissao")
-                if data_campo:
-                    try:
-                        d_obj = datetime.strptime(data_campo, "%d/%m/%Y")
-                        d_ini = datetime.strptime(dt_inicio, "%Y-%m-%d")
-                        d_fim = datetime.strptime(dt_fim, "%Y-%m-%d")
-                        if not (d_ini <= d_obj <= d_fim):
-                            continue
-                    except:
-                        pass
-                        
-            filtradas.append(n)
+        cockpit = get_cockpit()
+        total_pagar = cockpit["cards"]["hoje"]["valor"] + cockpit["cards"]["proximos"]["valor"]
+        total_atraso = cockpit["cards"]["atrasados"]["valor"]
+        notas_pendentes_qtd = cockpit["cards"]["hoje"]["qtd"] + cockpit["cards"]["proximos"]["qtd"]
+    except:
+        total_pagar = 0
+        total_atraso = 0
+        notas_pendentes_qtd = 0
+
+    # ── KPIs de Produção (dados reais do FabricOS) ────────────────────────────
+    pecas_pendentes = 0
+    ordens_abertas = 0
+    try:
+        if os.path.exists(FABRICOS_DB_PATH):
+            import sqlite3 as _sqlite3
+            conn_fab = _sqlite3.connect(FABRICOS_DB_PATH)
+            conn_fab.row_factory = _sqlite3.Row
+            # Conta ordens de produção abertas/em andamento
+            row_ordens = conn_fab.execute(
+                "SELECT COUNT(*) as total FROM production_orders WHERE status NOT IN ('CONCLUIDO', 'CANCELADO', 'completed', 'cancelled', 'finalizado')"
+            ).fetchone()
+            if row_ordens:
+                ordens_abertas = row_ordens["total"]
+            # Conta peças/itens pendentes
+            row_pecas = conn_fab.execute(
+                "SELECT COALESCE(SUM(total_quantity), 0) as total FROM production_orders WHERE status NOT IN ('CONCLUIDO', 'CANCELADO', 'completed', 'cancelled', 'finalizado')"
+            ).fetchone()
+            if row_pecas:
+                pecas_pendentes = int(row_pecas["total"] or 0)
+            conn_fab.close()
+    except Exception as e:
+        print(f"[hub/kpis] Aviso: não foi possível ler KPIs do FabricOS: {e}")
+
+    def format_brl(value):
+        return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    return {
+        "totalPagar": format_brl(total_pagar),
+        "totalAtraso": format_brl(total_atraso),
+        "notasPendentes": str(notas_pendentes_qtd),
+        "pecasPendentes": str(pecas_pendentes),
+        "ordensAbertas": str(ordens_abertas),
+    }
+
+class PagamentoLotePayload(BaseModel):
+    cnpj: str = ""
+    nome: str = ""
+    responsavel: str = ""
+    categoria: str = ""
+    descricao: str = ""
+    valor: float = 0.0
+    data: str = ""
+
+class ImportarLotePayload(BaseModel):
+    empresa: str
+    filial: str
+    pagamentos: List[PagamentoLotePayload]
+
+@app.post("/api/notas/importar_lote")
+def api_importar_lote(payload: ImportarLotePayload):
+    import time
+    from services.database import salvar_nota
+    try:
+        for idx, pag in enumerate(payload.pagamentos):
+            dados = {
+                "fornecedor": pag.nome,
+                "cnpj": pag.cnpj,
+                "numero_nf": "LOTE",
+                "descricao": pag.descricao,
+                "categoria": pag.categoria,
+                "valor_bruto": pag.valor,
+                "valor_liquido": pag.valor,
+                "status": "PENDENTE",
+                "dt_emissao": pag.data,
+                "dt_vencimento": pag.data,
+                "responsavel": pag.responsavel,
+                "empresa": payload.empresa,
+                "filial": payload.filial,
+                "numero_tx": f"LOTE-{int(time.time()*1000)}-{idx}",
+                "parcelas": [{"numero_parcela": 1, "valor": pag.valor, "dt_vencimento": pag.data, "status": "PENDENTE"}],
+                "itens": [],
+                "rateio": []
+            }
+            salvar_nota(dados)
             
-        return {"success": True, "notas": filtradas}
+        return {"success": True}
     except Exception as e:
+        print("Erro ao importar lote:", e)
         return {"success": False, "error": str(e)}
 
-@app.get("/api/relatorios/tributos")
-def api_relatorios_tributos(
-    dt_inicio: Optional[str] = None, 
-    dt_fim: Optional[str] = None
+# == AUDIT TRAIL ==============================================================
+
+@app.get('/api/audit')
+def api_listar_auditoria(
+    usuario: Optional[str] = None,
+    acao: Optional[str] = None,
+    entidade: Optional[str] = None,
+    limite: int = 100
 ):
     try:
-        from services.database import _get_local_conn, USE_SUPABASE, get_nota_completa
-        import config
-        from datetime import datetime
-        
-        notas = listar_notas()
-        
-        # Puxar todos os impostos de uma vez para não ter timeout dentro do loop
-        impostos_map = {}
-        if not USE_SUPABASE:
-            conn = _get_local_conn()
-            todos_impostos = [dict(r) for r in conn.execute("SELECT * FROM nota_impostos").fetchall()]
-            conn.close()
-        else:
-            try:
-                from supabase import create_client
-                supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
-                todos_impostos = supabase.table("nota_impostos").select("*").execute().data
-            except:
-                conn = _get_local_conn()
-                todos_impostos = [dict(r) for r in conn.execute("SELECT * FROM nota_impostos").fetchall()]
-                conn.close()
-                
-        for imp in todos_impostos:
-            impostos_map.setdefault(imp["nota_id"], []).append(imp)
-        
-        tributos_retorno = []
-        for n in notas:
-            # Filtrar data
-            if dt_inicio and dt_fim:
-                data_campo = n.get("dt_vencimento")
-                if data_campo:
-                    try:
-                        d_obj = datetime.strptime(data_campo, "%d/%m/%Y")
-                        d_ini = datetime.strptime(dt_inicio, "%Y-%m-%d")
-                        d_fim = datetime.strptime(dt_fim, "%Y-%m-%d")
-                        if not (d_ini <= d_obj <= d_fim):
-                            continue
-                    except:
-                        pass
-                        
-            impostos = impostos_map.get(n["id"], [])
-
-            for imp in impostos:
-                tributos_retorno.append({
-                    "nota_id": n["id"],
-                    "fornecedor_origem": n.get("fornecedor"),
-                    "numero_nf": n.get("numero_nf"),
-                    "dt_emissao": n.get("dt_emissao"),
-                    "dt_vencimento": n.get("dt_vencimento"),
-                    "imposto_tipo": imp.get("tipo"),
-                    "imposto_valor": imp.get("valor"),
-                    "imposto_vencimento": imp.get("dt_venc_imp") or n.get("dt_vencimento"),
-                    "status_pagamento": imp.get("status") or n.get("status")
-                })
-                
-        return {"success": True, "tributos": tributos_retorno}
+        from services.database import listar_auditoria
+        registros = listar_auditoria(usuario=usuario, acao=acao, entidade=entidade, limite=limite)
+        return {'success': True, 'registros': registros, 'total': len(registros)}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {'success': False, 'error': str(e)}
 
+@app.post('/api/audit/registrar')
+def api_registrar_auditoria(
+    usuario: str = Form(...),
+    acao: str = Form(...),
+    entidade: str = Form(...),
+    entidade_id: str = Form(''),
+    descricao: str = Form(''),
+    valor: float = Form(0)
+):
+    try:
+        from services.database import registrar_auditoria
+        registrar_auditoria(usuario, acao, entidade, entidade_id, descricao, valor)
+        return {'success': True}
+    except Exception as e:
+        return {'success': False, 'error': str(e)}

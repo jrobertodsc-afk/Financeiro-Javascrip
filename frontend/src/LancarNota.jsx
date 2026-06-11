@@ -107,6 +107,7 @@ export default function LancarNota({ editNotaId, onClearEdit }) {
 
   const [saving, setSaving] = useState(false);
   const [numeroTx, setNumeroTx] = useState('');
+  const [step, setStep] = useState(1);
 
   // Carregar dados se editNotaId estiver presente
   useEffect(() => {
@@ -217,10 +218,10 @@ export default function LancarNota({ editNotaId, onClearEdit }) {
       
       if (json.success) {
         setIsSuccessSefaz(true);
-        setSefazMessage(`Chave válida — NF ${json.info.num_nf} | CNPJ ${json.info.cnpj}`);
+        setSefazMessage(`Chave válida — NF ${json.info.numero} | CNPJ ${json.info.cnpj}`);
         setCnpj(json.info.cnpj);
-        setDescricao(`NF ${json.info.num_nf}`);
-        setNumeroNf(json.info.num_nf);
+        setDescricao(`NF ${json.info.numero}`);
+        setNumeroNf(json.info.numero);
         
         if (json.info.razao_social) setFornecedor(json.info.razao_social);
         if (json.info.categoria) setCategoria(json.info.categoria);
@@ -382,34 +383,33 @@ export default function LancarNota({ editNotaId, onClearEdit }) {
     setSaving(false);
   };
 
+  const nextStep = () => setStep(s => Math.min(s + 1, 3));
+  const prevStep = () => setStep(s => Math.max(s - 1, 1));
+
   return (
     <div className="lancar-container glass-panel">
-      <div className="lancar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="lancar-header">
         <div>
-          <h2>{editNotaId ? '✏️ Editar Nota / Despesa' : '✨ Nova Nota / Despesa Completa'}</h2>
-          <p className="text-muted">{editNotaId ? `Editando registro #${editNotaId}` : 'Preencha as informações para registro contábil e financeiro.'}</p>
+          <h2>{editNotaId ? '✏️ Editar Nota / Despesa' : '✨ Nova Nota / Despesa'}</h2>
+          <p className="text-muted">{editNotaId ? `Editando registro #${editNotaId}` : 'Siga os passos para o registro contábil.'}</p>
         </div>
         {editNotaId && (
-          <button type="button" onClick={onClearEdit} className="btn-cancel" style={{ padding: '8px 16px', background: 'var(--surface-raised)', border: '1px solid var(--border-color)', borderRadius: '4px', color: '#fff', cursor: 'pointer' }}>
+          <button type="button" onClick={onClearEdit} className="btn-cancel">
             Cancelar Edição
           </button>
         )}
       </div>
 
-      <div className="sefaz-box">
-        <label>Chave de Acesso Sefaz (Opcional):</label>
-        <div className="sefaz-input-row">
-          <input type="text" placeholder="Cole a Chave de 44 dígitos..." value={chave} onChange={(e) => setChave(e.target.value.replace(/\D/g, ''))} maxLength={44} />
-          <button type="button" className="btn-sefaz" onClick={consultarSefaz} disabled={loadingSefaz}>
-            {loadingSefaz ? 'Consultando...' : 'Consultar SEFAZ'}
-          </button>
-        </div>
-        {sefazMessage && <p className={`sefaz-message ${isSuccessSefaz ? 'success' : 'error'}`}>{sefazMessage}</p>}
+      <div className="wizard-stepper">
+        <div className={`wizard-step ${step >= 1 ? 'active' : ''}`}>1. Dados Básicos</div>
+        <div className="wizard-line"></div>
+        <div className={`wizard-step ${step >= 2 ? 'active' : ''}`}>2. Valores e Datas</div>
+        <div className="wizard-line"></div>
+        <div className={`wizard-step ${step >= 3 ? 'active' : ''}`}>3. Pagamento e Rateio</div>
       </div>
 
       <form className="nota-form" onSubmit={salvarNota}>
         
-        {/* Adicionado Datalist para reaproveitamento e facilidade de digitação */}
         <datalist id="list-categorias">
           {CATEGORIAS_PADRAO.map(c => <option key={c} value={c} />)}
         </datalist>
@@ -417,235 +417,250 @@ export default function LancarNota({ editNotaId, onClearEdit }) {
           {RESPONSAVEIS_PADRAO.map(r => <option key={r} value={r} />)}
         </datalist>
 
-        <h3 className="section-title">🏢 Dados Básicos</h3>
-        <div className="form-grid">
-          <div className="form-group span-2">
-            <label>Fornecedor</label>
-            <input type="text" required value={fornecedor} onChange={e => setFornecedor(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label>CNPJ / CPF</label>
-            <input type="text" required value={cnpj} onChange={e => setCnpj(e.target.value)} />
-          </div>
-
-          <div className="form-group">
-            <label>Empresa</label>
-            <select value={empresa} onChange={e => {
-              setEmpresa(e.target.value);
-              setFilial(e.target.value === 'LALUA' ? 'LALUA MATRIZ' : 'SOLAR MATRIZ');
-            }}>
-              <option value="LALUA">LALUA</option>
-              <option value="SOLAR">SOLAR</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Filial</label>
-            <select value={filial} onChange={e => setFilial(e.target.value)}>
-              {empresa === 'LALUA' ? (
-                <>
-                  <option>LALUA MATRIZ</option>
-                  <option>BOAH BARRA</option>
-                  <option>PASEO</option>
-                  <option>VILAS</option>
-                  <option>SDB</option>
-                  <option>HORTO</option>
-                  <option>ONLINE</option>
-                </>
-              ) : (
-                <option>SOLAR MATRIZ</option>
-              )}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Categoria</label>
-            <input type="text" list="list-categorias" value={categoria} onChange={e => setCategoria(e.target.value)} />
-          </div>
-
-          <div className="form-group">
-            <label>Natureza / Tipo</label>
-            <select value={natureza} onChange={e => setNatureza(e.target.value)}>
-              <option value="COMPRA DE MERCADORIA">COMPRA DE MERCADORIA</option>
-              <option value="SERVIÇO">SERVIÇO</option>
-              <option value="DESPESA FIXA">DESPESA FIXA</option>
-              <option value="IMPOSTO">IMPOSTO</option>
-              <option value="FOLHA DE PAGAMENTO">FOLHA DE PAGAMENTO</option>
-              <option value="INVESTIMENTO">INVESTIMENTO</option>
-            </select>
-          </div>
-          <div className="form-group span-2">
-            <label>Responsável / Setor</label>
-            <input type="text" list="list-responsaveis" value={responsavel} onChange={e => setResponsavel(e.target.value)} />
-          </div>
-
-          <div className="form-group span-2">
-            <label>Descrição / Referência</label>
-            <input type="text" required value={descricao} onChange={e => setDescricao(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label>Nº NF / Documento</label>
-            <input type="text" value={numeroNf} onChange={e => setNumeroNf(e.target.value)} />
-          </div>
-        </div>
-
-        <div className="valores-dashboard">
-          <div className="valor-card bruto">
-            <span>Valor Bruto (Original)</span>
-            <h3>{formatMoneyDisplay(vBrutoNum)}</h3>
-          </div>
-          <div className="valor-card retido">
-            <span>Impostos Retidos</span>
-            <h3>- {formatMoneyDisplay(totalRetido)}</h3>
-          </div>
-          <div className="valor-card liquido">
-            <span>Valor Líquido (A Pagar)</span>
-            <h3>{formatMoneyDisplay(valorLiquido)}</h3>
-          </div>
-        </div>
-
-        <h3 className="section-title" style={{ marginTop: '32px' }}>💰 Valores e Datas</h3>
-        <div className="form-grid">
-          <div className="form-group">
-            <label>Emissão</label>
-            <input type="date" required value={dtEmissao} onChange={e => setDtEmissao(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label>Vencimento</label>
-            <input type="date" required value={dtVencimento} onChange={e => setDtVencimento(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label>Valor Bruto (R$)</label>
-            <input type="text" required value={valorBruto} onChange={e => setValorBruto(applyMoneyMask(e.target.value))} className="font-bold text-accent text-right" />
-          </div>
-        </div>
-
-        {/* COMPONENTE DE ITENS (RATEIO) */}
-        <div className="rateio-section">
-          <div className="rateio-header">
-            <label>🛒 Itens da Nota / Serviço (Rateio por Centro de Custo)</label>
-            {diffRateio > 0.01 && (
-              <span className="rateio-warning">⚠️ Diferença de {formatMoneyDisplay(diffRateio)} entre rateio e valor bruto.</span>
-            )}
-            {diffRateio <= 0.01 && vBrutoNum > 0 && (
-              <span className="rateio-success">✅ Rateio bate com valor bruto.</span>
-            )}
-          </div>
-          {itens.map((item, idx) => (
-            <div className="rateio-row" key={item.id}>
-              <input type="text" placeholder="Centro de Custo (Ex: TI, Marketing)" value={item.centroCusto} onChange={e => updateItem(item.id, 'centroCusto', e.target.value)} />
-              <input type="text" placeholder="Descrição do Item / Despesa" value={item.descricao} onChange={e => updateItem(item.id, 'descricao', e.target.value)} />
-              <input type="text" className="money-input" placeholder="0,00" value={item.valor} onChange={e => updateItem(item.id, 'valor', e.target.value)} />
-              <button type="button" className="btn-remove" onClick={() => removeItem(item.id)}>X</button>
-            </div>
-          ))}
-          <button type="button" onClick={addItem} className="btn-add-item">+ Adicionar Centro de Custo</button>
-        </div>
-
-        {/* COMPONENTE DE IMPOSTOS RETIDOS */}
-        <div className="impostos-section">
-          <label className="impostos-title">🏛️ Impostos Retidos (Cálculo Automático)</label>
-          <div className="impostos-grid">
-            {impostos.map((imp, idx) => (
-              <div key={imp.tipo} className="imposto-row">
-                <input type="checkbox" checked={imp.retido} onChange={e => updateImposto(idx, 'retido', e.target.checked)} />
-                <span className="imposto-label">{imp.tipo}</span>
-                <input type="text" placeholder="Aliq %" value={imp.aliquota} onChange={e => updateImposto(idx, 'aliquota', e.target.value)} disabled={!imp.retido} className="imposto-input-sm" />
-                <input type="text" placeholder="R$ Valor" value={imp.valor} onChange={e => updateImposto(idx, 'valor', e.target.value)} disabled={!imp.retido} className="imposto-input-md" />
-                <input type="date" placeholder="Vencimento" value={imp.vencimento} onChange={e => updateImposto(idx, 'vencimento', e.target.value)} disabled={!imp.retido} className="imposto-input-lg" />
+        {step === 1 && (
+          <div className="wizard-panel fade-in">
+            <div className="sefaz-box glass-panel-inner">
+              <label>Chave de Acesso Sefaz (Opcional):</label>
+              <div className="sefaz-input-row">
+                <input type="text" placeholder="Cole a Chave de 44 dígitos..." value={chave} onChange={(e) => setChave(e.target.value.replace(/\D/g, ''))} maxLength={44} />
+                <button type="button" className="btn-sefaz" onClick={consultarSefaz} disabled={loadingSefaz}>
+                  {loadingSefaz ? 'Consultando...' : 'Consultar SEFAZ'}
+                </button>
               </div>
-            ))}
-          </div>
-        </div>
+              {sefazMessage && <p className={`sefaz-message ${isSuccessSefaz ? 'success' : 'error'}`}>{sefazMessage}</p>}
+            </div>
 
-        <h3 className="section-title" style={{ marginTop: '32px' }}>💳 Pagamento e Opções Adicionais</h3>
-        <div className="form-grid">
-          <div className="form-group">
-            <label>Forma de Pagamento</label>
-            <select value={formaPgto} onChange={e => setFormaPgto(e.target.value)}>
-              <option value="BOLETO">BOLETO</option>
-              <option value="PIX">PIX</option>
-              <option value="TED">TED</option>
-              <option value="DARF">DARF</option>
-              <option value="GPS">GPS</option>
-            </select>
-          </div>
-          <div className="form-group span-2">
-            <label>Cód. Barras (Bipe com pistola)</label>
-            <input type="text" value={codBarras} onChange={e => setCodBarras(e.target.value)} style={{ fontFamily: 'monospace', color: 'var(--accent-color)' }} />
-          </div>
-
-          {formaPgto === 'PIX' && (
-            <>
+            <div className="form-grid">
+              <div className="form-group span-2">
+                <label>Fornecedor</label>
+                <input type="text" required value={fornecedor} onChange={e => setFornecedor(e.target.value)} />
+              </div>
               <div className="form-group">
-                <label>Tipo Chave PIX</label>
-                <select value={pixTipo} onChange={e => setPixTipo(e.target.value)}>
-                  <option value="CNPJ">CNPJ / CPF</option>
-                  <option value="TELEFONE">TELEFONE</option>
-                  <option value="EMAIL">EMAIL</option>
-                  <option value="ALEATÓRIA">ALEATÓRIA</option>
+                <label>CNPJ / CPF</label>
+                <input type="text" required value={cnpj} onChange={e => setCnpj(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Empresa</label>
+                <select value={empresa} onChange={e => {
+                  setEmpresa(e.target.value);
+                  setFilial(e.target.value === 'LALUA' ? 'LALUA MATRIZ' : 'SOLAR MATRIZ');
+                }}>
+                  <option value="LALUA">LALUA</option>
+                  <option value="SOLAR">SOLAR</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Filial</label>
+                <select value={filial} onChange={e => setFilial(e.target.value)}>
+                  {empresa === 'LALUA' ? (
+                    <>
+                      <option>LALUA MATRIZ</option>
+                      <option>BOAH BARRA</option>
+                      <option>PASEO</option>
+                      <option>VILAS</option>
+                      <option>SDB</option>
+                      <option>HORTO</option>
+                      <option>ONLINE</option>
+                    </>
+                  ) : (
+                    <option>SOLAR MATRIZ</option>
+                  )}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Categoria</label>
+                <input type="text" list="list-categorias" value={categoria} onChange={e => setCategoria(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Natureza / Tipo</label>
+                <select value={natureza} onChange={e => setNatureza(e.target.value)}>
+                  <option value="COMPRA DE MERCADORIA">COMPRA DE MERCADORIA</option>
+                  <option value="SERVIÇO">SERVIÇO</option>
+                  <option value="DESPESA FIXA">DESPESA FIXA</option>
+                  <option value="IMPOSTO">IMPOSTO</option>
+                  <option value="FOLHA DE PAGAMENTO">FOLHA DE PAGAMENTO</option>
+                  <option value="INVESTIMENTO">INVESTIMENTO</option>
                 </select>
               </div>
               <div className="form-group span-2">
-                <label>Chave PIX</label>
-                <input type="text" value={pixChave} onChange={e => setPixChave(e.target.value)} />
+                <label>Responsável / Setor</label>
+                <input type="text" list="list-responsaveis" value={responsavel} onChange={e => setResponsavel(e.target.value)} />
               </div>
-            </>
-          )}
-
-          {formaPgto === 'TED' && (
-            <>
-              <div className="form-group span-3" style={{ display: 'flex', gap: '16px' }}>
-                <div style={{ flex: 1 }}><label style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Banco</label><input style={{ width: '100%', padding: '8px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: '#fff', borderRadius: '4px' }} type="text" value={bancoDest} onChange={e => setBancoDest(e.target.value)} /></div>
-                <div style={{ flex: 1 }}><label style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Agência</label><input style={{ width: '100%', padding: '8px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: '#fff', borderRadius: '4px' }} type="text" value={agDest} onChange={e => setAgDest(e.target.value)} /></div>
-                <div style={{ flex: 1 }}><label style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Conta</label><input style={{ width: '100%', padding: '8px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: '#fff', borderRadius: '4px' }} type="text" value={contaDest} onChange={e => setContaDest(e.target.value)} /></div>
-                <div style={{ flex: 1 }}><label style={{ fontSize: '13px', color: 'var(--text-muted)' }}>CPF/CNPJ Dest</label><input style={{ width: '100%', padding: '8px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: '#fff', borderRadius: '4px' }} type="text" value={cpfCnpjDest} onChange={e => setCpfCnpjDest(e.target.value)} /></div>
+              <div className="form-group span-2">
+                <label>Descrição / Referência</label>
+                <input type="text" required value={descricao} onChange={e => setDescricao(e.target.value)} />
               </div>
-            </>
-          )}
-          
-          <div className="form-group">
-             <label>DIFAL (Opcional)</label>
-             <input type="text" value={difal} onChange={e => setDifal(applyMoneyMask(e.target.value))} className="text-right" />
+              <div className="form-group">
+                <label>Nº NF / Documento</label>
+                <input type="text" value={numeroNf} onChange={e => setNumeroNf(e.target.value)} />
+              </div>
+              <div className="form-group span-3">
+                <label>Observação</label>
+                <input type="text" value={observacao} onChange={e => setObservacao(e.target.value)} />
+              </div>
+            </div>
+            <div className="wizard-footer">
+              <button type="button" className="btn-next" onClick={nextStep}>Próximo Passo 👉</button>
+            </div>
           </div>
-          <div className="form-group">
-             <label>FCP (Opcional)</label>
-             <input type="text" value={fcp} onChange={e => setFcp(applyMoneyMask(e.target.value))} className="text-right" />
-          </div>
-          <div className="form-group">
-             <label>Chave Ref / Transação</label>
-             <input type="text" value={chaveRef} onChange={e => setChaveRef(e.target.value)} />
-          </div>
+        )}
 
-          <div className="form-group span-3">
-            <label>Observação</label>
-            <input type="text" value={observacao} onChange={e => setObservacao(e.target.value)} />
-          </div>
-          
-          <div className="form-group span-3" style={{ display: 'flex', alignItems: 'center', marginTop: '16px', padding: '16px', border: '1px dashed var(--warning)', borderRadius: '8px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', margin: 0 }}>
-              <input type="checkbox" checked={isPrevisao} onChange={e => setIsPrevisao(e.target.checked)} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
-              <span style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--warning)' }}>🔮 Lançar como Previsão Financeira (Sem Nota / Provisão)</span>
-            </label>
-          </div>
+        {step === 2 && (
+          <div className="wizard-panel fade-in">
+            <div className="valores-dashboard glass-panel-inner">
+              <div className="valor-card bruto">
+                <span>Valor Bruto (Original)</span>
+                <h3>{formatMoneyDisplay(vBrutoNum)}</h3>
+              </div>
+              <div className="valor-card retido">
+                <span>Impostos Retidos</span>
+                <h3>- {formatMoneyDisplay(totalRetido)}</h3>
+              </div>
+              <div className="valor-card liquido">
+                <span>Valor Líquido (A Pagar)</span>
+                <h3>{formatMoneyDisplay(valorLiquido)}</h3>
+              </div>
+            </div>
 
-          <div className="form-group span-3" style={{ display: 'flex', alignItems: 'center', marginTop: '8px', padding: '16px', border: '1px dashed var(--accent-color)', borderRadius: '8px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', margin: 0 }}>
-              <input type="checkbox" checked={isRecorrente} onChange={e => setIsRecorrente(e.target.checked)} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
-              <span style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--accent-color)' }}>🔄 Lançar Recorrente (Criar cópias futuras automaticamente)</span>
-            </label>
-            {isRecorrente && (
-               <div style={{marginLeft: '24px', display: 'flex', alignItems: 'center', gap: '12px'}}>
-                 <label style={{margin:0, color:'var(--text-primary)', fontSize: '14px', fontWeight: '500'}}>Por quantos meses?</label>
-                 <input type="number" min="2" max="120" value={mesesRecorrencia} onChange={e => setMesesRecorrencia(e.target.value)} style={{width: '90px', padding: '8px'}}/>
-               </div>
-            )}
-          </div>
-        </div>
+            <div className="form-grid" style={{ marginTop: '24px' }}>
+              <div className="form-group">
+                <label>Emissão</label>
+                <input type="date" required value={dtEmissao} onChange={e => setDtEmissao(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Vencimento Único/1ª Parcela</label>
+                <input type="date" required value={dtVencimento} onChange={e => setDtVencimento(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Valor Bruto (R$)</label>
+                <input type="text" required value={valorBruto} onChange={e => setValorBruto(applyMoneyMask(e.target.value))} className="font-bold text-accent text-right" />
+              </div>
+              <div className="form-group">
+                 <label>DIFAL (Opcional)</label>
+                 <input type="text" value={difal} onChange={e => setDifal(applyMoneyMask(e.target.value))} className="text-right" />
+              </div>
+              <div className="form-group">
+                 <label>FCP (Opcional)</label>
+                 <input type="text" value={fcp} onChange={e => setFcp(applyMoneyMask(e.target.value))} className="text-right" />
+              </div>
+              <div className="form-group">
+                 <label>Chave Ref / Transação</label>
+                 <input type="text" value={chaveRef} onChange={e => setChaveRef(e.target.value)} />
+              </div>
 
-        <div className="form-footer">
-          <button type="submit" className="btn-salvar" disabled={saving}>
-            {saving ? 'Salvando...' : 'Salvar Nota / Despesa'}
-          </button>
-        </div>
+              <div className="form-group span-3 glass-panel-inner toggle-row warning-toggle">
+                <label className="toggle-label">
+                  <input type="checkbox" checked={isPrevisao} onChange={e => setIsPrevisao(e.target.checked)} />
+                  <span>🔮 Lançar como Previsão Financeira (Provisão)</span>
+                </label>
+              </div>
+
+              <div className="form-group span-3 glass-panel-inner toggle-row accent-toggle">
+                <label className="toggle-label">
+                  <input type="checkbox" checked={isRecorrente} onChange={e => setIsRecorrente(e.target.checked)} />
+                  <span>🔄 Lançar Recorrente (Criar cópias automáticas)</span>
+                </label>
+                {isRecorrente && (
+                   <div className="recorrencia-box">
+                     <label>Por quantos meses?</label>
+                     <input type="number" min="2" max="120" value={mesesRecorrencia} onChange={e => setMesesRecorrencia(e.target.value)} />
+                   </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="wizard-footer">
+              <button type="button" className="btn-prev" onClick={prevStep}>👈 Voltar</button>
+              <button type="button" className="btn-next" onClick={nextStep}>Próximo Passo 👉</button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="wizard-panel fade-in">
+            <div className="rateio-section glass-panel-inner">
+              <div className="rateio-header">
+                <label>🛒 Itens da Nota / Rateio</label>
+                {diffRateio > 0.01 && <span className="rateio-warning">⚠️ Dif de {formatMoneyDisplay(diffRateio)}</span>}
+                {diffRateio <= 0.01 && vBrutoNum > 0 && <span className="rateio-success">✅ Rateio Bate</span>}
+              </div>
+              {itens.map((item) => (
+                <div className="rateio-row" key={item.id}>
+                  <input type="text" placeholder="Centro de Custo" value={item.centroCusto} onChange={e => updateItem(item.id, 'centroCusto', e.target.value)} />
+                  <input type="text" placeholder="Descrição" value={item.descricao} onChange={e => updateItem(item.id, 'descricao', e.target.value)} />
+                  <input type="text" className="money-input" value={item.valor} onChange={e => updateItem(item.id, 'valor', e.target.value)} />
+                  <button type="button" className="btn-remove" onClick={() => removeItem(item.id)}>X</button>
+                </div>
+              ))}
+              <button type="button" onClick={addItem} className="btn-add-item">+ Adicionar Centro de Custo</button>
+            </div>
+
+            <div className="impostos-section glass-panel-inner">
+              <label className="impostos-title">🏛️ Impostos Retidos</label>
+              <div className="impostos-grid">
+                {impostos.map((imp, idx) => (
+                  <div key={imp.tipo} className="imposto-row">
+                    <input type="checkbox" checked={imp.retido} onChange={e => updateImposto(idx, 'retido', e.target.checked)} />
+                    <span className="imposto-label">{imp.tipo}</span>
+                    <input type="text" placeholder="%" value={imp.aliquota} onChange={e => updateImposto(idx, 'aliquota', e.target.value)} disabled={!imp.retido} className="imposto-input-sm" />
+                    <input type="text" placeholder="R$" value={imp.valor} onChange={e => updateImposto(idx, 'valor', e.target.value)} disabled={!imp.retido} className="imposto-input-md" />
+                    <input type="date" value={imp.vencimento} onChange={e => updateImposto(idx, 'vencimento', e.target.value)} disabled={!imp.retido} className="imposto-input-lg" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="form-grid" style={{ marginTop: '24px' }}>
+              <div className="form-group">
+                <label>Forma de Pagamento</label>
+                <select value={formaPgto} onChange={e => setFormaPgto(e.target.value)}>
+                  <option value="BOLETO">BOLETO</option>
+                  <option value="PIX">PIX</option>
+                  <option value="TED">TED</option>
+                </select>
+              </div>
+              <div className="form-group span-2">
+                <label>Cód. Barras (Bipe)</label>
+                <input type="text" value={codBarras} onChange={e => setCodBarras(e.target.value)} className="cod-barras-input" />
+              </div>
+
+              {formaPgto === 'PIX' && (
+                <>
+                  <div className="form-group">
+                    <label>Tipo Chave PIX</label>
+                    <select value={pixTipo} onChange={e => setPixTipo(e.target.value)}>
+                      <option value="CNPJ">CNPJ / CPF</option>
+                      <option value="TELEFONE">TELEFONE</option>
+                      <option value="EMAIL">EMAIL</option>
+                      <option value="ALEATÓRIA">ALEATÓRIA</option>
+                    </select>
+                  </div>
+                  <div className="form-group span-2">
+                    <label>Chave PIX</label>
+                    <input type="text" value={pixChave} onChange={e => setPixChave(e.target.value)} />
+                  </div>
+                </>
+              )}
+
+              {formaPgto === 'TED' && (
+                <div className="form-group span-3 ted-grid">
+                  <div><label>Banco</label><input type="text" value={bancoDest} onChange={e => setBancoDest(e.target.value)} /></div>
+                  <div><label>Agência</label><input type="text" value={agDest} onChange={e => setAgDest(e.target.value)} /></div>
+                  <div><label>Conta</label><input type="text" value={contaDest} onChange={e => setContaDest(e.target.value)} /></div>
+                  <div><label>CPF/CNPJ Dest</label><input type="text" value={cpfCnpjDest} onChange={e => setCpfCnpjDest(e.target.value)} /></div>
+                </div>
+              )}
+            </div>
+
+            <div className="wizard-footer">
+              <button type="button" className="btn-prev" onClick={prevStep}>👈 Voltar</button>
+              <button type="submit" className="btn-salvar" disabled={saving}>
+                {saving ? 'Salvando...' : 'Salvar Lançamento ✅'}
+              </button>
+            </div>
+          </div>
+        )}
+
       </form>
     </div>
   );

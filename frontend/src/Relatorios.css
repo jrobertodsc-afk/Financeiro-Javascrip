@@ -1,111 +1,177 @@
+/* Relatorios.css - Premium Glassmorphism Redesign */
+
 .relatorios-container {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  padding: 32px;
+  background-color: var(--surface-color);
+  min-height: 100vh;
+  color: var(--text-color);
+  animation: fadeIn 0.4s ease-out;
 }
 
 .relatorios-header {
+  margin-bottom: 24px;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
+  align-items: flex-end;
 }
 
 .relatorios-header h2 {
-  font-size: 24px;
-  color: var(--text-primary);
-  margin-bottom: 4px;
+  font-size: 2rem;
+  margin: 0 0 8px 0;
+  background: linear-gradient(90deg, var(--accent-color), #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
-.charts-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-}
-
-.chart-card {
-  padding: 24px;
-  min-height: 550px;
-  display: flex;
-  flex-direction: column;
-}
-
-.chart-title {
-  font-size: 16px;
-  color: var(--text-primary);
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.chart-wrapper {
-  flex: 1;
-  width: 100%;
-  min-height: 480px;
-}
-
-.custom-tooltip {
-  background: var(--surface-color);
-  border: 1px solid var(--border-light);
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
-
-.custom-tooltip .label {
-  color: var(--text-muted);
-  font-size: 12px;
-  margin-bottom: 4px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.custom-tooltip .value {
-  color: var(--accent-color);
-  font-size: 16px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.recharts-legend-item-text {
-  color: var(--text-secondary) !important;
-  font-size: 13px;
-}
-
-/* ═══ TABS NAV (Botões Superiores) ═══ */
+/* Tabs */
 .tabs-nav {
   display: flex;
-  background: var(--surface-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   padding: 6px;
   gap: 4px;
   width: fit-content;
   margin-bottom: 24px;
+  backdrop-filter: blur(10px);
 }
 
 .tab-btn {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 12px 24px;
   background: transparent;
-  border: 1px solid transparent;
-  color: var(--text-muted);
-  font-size: 14px;
-  font-weight: 600;
-  padding: 10px 20px;
-  border-radius: var(--radius-md);
+  border: none;
+  color: var(--text-secondary) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .tab-btn:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.03);
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .tab-btn.active {
-  background: var(--bg-color, #0d1117);
-  color: var(--accent-color, #7c6ef0);
-  border-color: var(--border-light, #2d3748);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  background: linear-gradient(135deg, var(--accent-color), #4f46e5);
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+/* Charts Grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.chart-card {
+  background: rgba(20, 20, 30, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+}
+
+.chart-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.chart-title {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.chart-wrapper {
+  flex: 1;
+  width: 100%;
+  min-height: 350px;
+}
+
+/* Custom Tooltip */
+.custom-tooltip {
+  background: rgba(15, 23, 42, 0.9) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 16px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+}
+
+/* Filtros */
+.relatorios-filtros-card {
+  background: rgba(20, 20, 30, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+/* Table Style similar to BuscaUniversal */
+.relatorios-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: rgba(20, 20, 30, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.relatorios-table th {
+  padding: 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.relatorios-table td {
+  padding: 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.relatorios-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.btn-export {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.btn-export:hover {
+  background: #10b981;
+  color: white;
 }

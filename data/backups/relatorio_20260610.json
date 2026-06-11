@@ -1,0 +1,10 @@
+{
+  "data_hora": "2026-06-10T16:39:43.422510",
+  "resultados": {
+    "robo_boah": true,
+    "fabricOS": true,
+    "fabricOS_app": true
+  },
+  "total_ok": 3,
+  "total_erro": 0
+}
