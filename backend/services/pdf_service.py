@@ -169,3 +169,111 @@ def gerar_pdf_autorizacao(pagamentos: list) -> str:
             
     doc.build(elements)
     return caminho_pdf
+
+
+def gerar_pdf_gnre(guia: dict) -> str:
+    """Gera o PDF de uma Guia GNRE emitida no estilo oficial de duas vias."""
+    
+    # Pasta de guias
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    guias_dir = os.path.join(base_dir, "data", "guias_gnre")
+    os.makedirs(guias_dir, exist_ok=True)
+    
+    nome_arq = f"GUIA_GNRE_{guia.get('numero_tx', 'TESTE')}.pdf"
+    caminho_pdf = os.path.join(guias_dir, nome_arq)
+
+    doc = SimpleDocTemplate(
+        caminho_pdf,
+        pagesize=A4,
+        leftMargin=1*cm, rightMargin=1*cm,
+        topMargin=1*cm, bottomMargin=1*cm
+    )
+
+    styles = getSampleStyleSheet()
+    
+    styleTitle = ParagraphStyle('TitleGNRE', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=10, alignment=TA_CENTER)
+    styleLabel = ParagraphStyle('LabelGNRE', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=7, textColor=colors.HexColor("#444444"))
+    styleValue = ParagraphStyle('ValueGNRE', parent=styles['Normal'], fontName='Helvetica', fontSize=8)
+    styleValueBold = ParagraphStyle('ValueBoldGNRE', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8)
+    styleBarcode = ParagraphStyle('BarcodeGNRE', parent=styles['Normal'], fontName='Courier', fontSize=9, alignment=TA_CENTER)
+
+    elements = []
+
+    # Criaremos duas vias na mesma página (Via Contribuinte e Via Banco)
+    def criar_via(nome_via):
+        uf = guia.get("uf_favorecida", "PE")
+        cnpj = guia.get("cnpj_emitente", "")
+        receita = guia.get("codigo_receita", "100102")
+        valor = float(guia.get("valor", 0))
+        valor_formatado = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        vencimento = guia.get("data_vencimento", "")
+        if "-" in vencimento:
+            try:
+                vencimento = datetime.strptime(vencimento, "%Y-%m-%d").strftime("%d/%m/%Y")
+            except:
+                pass
+        
+        doc_origem = guia.get("documento_origem", "")
+        chave_nfe = guia.get("chave_acesso_nfe", "")
+        linha_dig = guia.get("linha_digitavel", guia.get("codigo_barras", ""))
+        
+        tabela_dados = [
+            [
+                Paragraph("<b>GUIA NACIONAL DE RECOLHIMENTO DE TRIBUTOS ESTADUAIS - GNRE</b>", styleTitle), 
+                ""
+            ],
+            [
+                Paragraph("<b>UF FAVORECIDA:</b> " + uf, styleValueBold), 
+                Paragraph("<b>CÓDIGO DA RECEITA:</b> " + receita, styleValueBold)
+            ],
+            [
+                Paragraph("<b>CONTRIBUINTE EMITENTE:</b> CNPJ: " + cnpj + "<br/>BOAH COMERCIO VAREJISTA LTDA", styleValue), 
+                Paragraph("<b>DATA DE VENCIMENTO:</b><br/>" + vencimento, styleValueBold)
+            ],
+            [
+                Paragraph("<b>DOCUMENTO DE ORIGEM:</b> Nº NF: " + str(doc_origem) + " (Tipo 10)", styleValue), 
+                Paragraph("<b>VALOR PRINCIPAL:</b><br/>" + valor_formatado, styleValueBold)
+            ],
+            [
+                Paragraph("<b>CHAVE DE ACESSO NF-E:</b><br/>" + (chave_nfe or "N/A"), styleValue), 
+                Paragraph("<b>VALOR TOTAL:</b><br/>" + valor_formatado, styleValueBold)
+            ],
+            [
+                Paragraph("<b>CÓDIGO DE BARRAS / LINHA DIGITÁVEL:</b><br/>" + (linha_dig or "N/A"), styleBarcode), 
+                ""
+            ],
+            [
+                Paragraph("<b>INSTRUÇÕES / AUTENTICAÇÃO MECÂNICA:</b><br/>Guia emitida via WebService SEFAZ. Recolhimento por lote bancário SISPAG.", styleValue), 
+                Paragraph(f"<b>VIA {nome_via.upper()}</b>", styleValueBold)
+            ]
+        ]
+
+        t = Table(tabela_dados, colWidths=[12.5*cm, 6.5*cm])
+        t.setStyle(TableStyle([
+            ('SPAN', (0,0), (1,0)),
+            ('SPAN', (0,5), (1,5)),
+            ('BOX', (0,0), (-1,-1), 1.2, colors.black),
+            ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor("#777777")),
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#e4e4e7")),
+            ('TOPPADDING', (0,0), (-1,-1), 5),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+            ('LEFTPADDING', (0,0), (-1,-1), 8),
+            ('RIGHTPADDING', (0,0), (-1,-1), 8),
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ]))
+        return t
+
+    # Adiciona a primeira via (Contribuinte)
+    elements.append(criar_via("Contribuinte"))
+    elements.append(Spacer(1, 0.6*cm))
+    
+    # Linha divisória tracejada
+    styleDashed = ParagraphStyle('Dashed', parent=styles['Normal'], alignment=TA_CENTER, fontSize=8, textColor=colors.HexColor("#999999"))
+    elements.append(Paragraph("- - - - - - - - - - - - - - - - - - - - - - - - - - - Destaque Aqui (Tesoura) - - - - - - - - - - - - - - - - - - - - - - - - - - -", styleDashed))
+    elements.append(Spacer(1, 0.6*cm))
+    
+    # Adiciona a segunda via (Banco)
+    elements.append(criar_via("Banco"))
+
+    doc.build(elements)
+    return caminho_pdf

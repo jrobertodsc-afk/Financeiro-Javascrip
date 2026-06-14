@@ -285,3 +285,28 @@ def api_listar_notas_difal():
     except Exception as e:
         logger.error(f"Erro ao listar notas com DIFAL: {e}")
         return {"success": False, "error": str(e)}
+
+
+@router.get("/pdf/{numero_tx}")
+def api_baixar_pdf_guia(numero_tx: str):
+    try:
+        # Busca a guia no banco
+        todas_guias = listar_gnre_guias()
+        guia = next((g for g in todas_guias if g["numero_tx"] == numero_tx), None)
+        
+        if not guia:
+            raise HTTPException(status_code=404, detail="Guia GNRE não encontrada.")
+            
+        from backend.services.pdf_service import gerar_pdf_gnre
+        from fastapi.responses import FileResponse
+        caminho_pdf = gerar_pdf_gnre(guia)
+        
+        return FileResponse(
+            caminho_pdf,
+            media_type="application/pdf",
+            filename=os.path.basename(caminho_pdf),
+            headers={"Access-Control-Expose-Headers": "Content-Disposition"}
+        )
+    except Exception as e:
+        logger.error(f"Erro ao gerar PDF da guia GNRE: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

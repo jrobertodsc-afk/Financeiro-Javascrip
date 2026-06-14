@@ -513,15 +513,33 @@ export default function GnreSispag() {
                             Consultar
                           </button>
                         )}
-                        {guia.status === 'SUCESSO' && (
-                          <span className="checked-indicator" title="Pronta para pagamento">
-                            <CheckCircle2 size={16} />
-                          </span>
-                        )}
-                        {guia.status === 'PAGO' && (
-                          <span className="paid-indicator" title="Remessa CNAB gerada">
-                            CNAB Ok
-                          </span>
+                        {(guia.status === 'SUCESSO' || guia.status === 'PAGO') && (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                            {guia.status === 'SUCESSO' ? (
+                              <span className="checked-indicator" title="Pronta para pagamento">
+                                <CheckCircle2 size={16} />
+                              </span>
+                            ) : (
+                              <span className="paid-indicator" title="Remessa CNAB gerada">
+                                CNAB Ok
+                              </span>
+                            )}
+                            <button 
+                              className="btn-row-action" 
+                              title="Download da Guia em PDF"
+                              onClick={() => {
+                                window.open(`${API_URL}/api/gnre/pdf/${guia.numero_tx}`, '_blank');
+                              }}
+                              style={{ 
+                                background: 'rgba(239, 68, 68, 0.1)', 
+                                border: '1px solid rgba(239, 68, 68, 0.3)', 
+                                color: '#f87171' 
+                              }}
+                            >
+                              <FileText size={14} />
+                              PDF
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
