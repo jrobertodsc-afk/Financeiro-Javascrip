@@ -20,10 +20,12 @@ from services.auth_service import (
 )
 try:
     from routers import relatorios as relatorios_router
+    from routers import gnre as gnre_router
 except ImportError:
     import sys, os
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from routers import relatorios as relatorios_router
+    from routers import gnre as gnre_router
 
 app = FastAPI(
     title="Boah ERP API",
@@ -33,6 +35,7 @@ app = FastAPI(
 
 # Registra routers modulares
 app.include_router(relatorios_router.router)
+app.include_router(gnre_router.router)
 
 # ── CORS Seguro — origens via variável de ambiente ──────────────────────────
 _raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:5174")

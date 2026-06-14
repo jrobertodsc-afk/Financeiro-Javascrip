@@ -13,7 +13,8 @@ import {
   ShieldAlert,
   Menu,
   PieChart,
-  ArrowLeft
+  ArrowLeft,
+  FileCheck
 } from 'lucide-react'
 import Semaforo from './Semaforo'
 import LancarNota from './LancarNota'
@@ -27,6 +28,7 @@ import Relatorios from './Relatorios'
 import Previsoes from './Previsoes'
 import Autorizacoes from './Autorizacoes'
 import NotaDetailsModal from './NotaDetailsModal'
+import GnreSispag from './GnreSispag'
 import './App.css'
 
 function App() {
@@ -56,6 +58,7 @@ function App() {
     { id: 'Dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'Lançar Nota', icon: FilePlus2, label: 'Lançar Nota' },
     { id: 'Pagamentos Pendentes', icon: CreditCard, label: 'Pagamentos' },
+    { id: 'GNRE & SISPAG', icon: FileCheck, label: 'GNRE & SISPAG' },
     { id: 'Autorizações', icon: ShieldAlert, label: 'Autorizações' },
     { id: 'Busca Universal', icon: Search, label: 'Busca' },
     { id: 'Boletim de Caixa', icon: TrendingUp, label: 'Boletim' },
@@ -71,6 +74,7 @@ function App() {
       case 'Dashboard': return <Semaforo />;
       case 'Lançar Nota': return <LancarNota editNotaId={editNotaId} onClearEdit={() => setEditNotaId(null)} />;
       case 'Pagamentos Pendentes': return <Pagamentos onEditNota={handleEditNota} onViewNota={handleViewNota} />;
+      case 'GNRE & SISPAG': return <GnreSispag />;
       case 'Autorizações': return <Autorizacoes />;
       case 'Busca Universal': return <BuscaUniversal onEditNota={handleEditNota} onViewNota={handleViewNota} />;
       case 'Boletim de Caixa': return <BoletimCaixa />;

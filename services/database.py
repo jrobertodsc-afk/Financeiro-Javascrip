@@ -479,6 +479,30 @@ def db_init():
         )
     """)
 
+    # ── Guias GNRE ────────────────────────────────────────────────────────────────
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS gnre_guias (
+            id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+            numero_tx             TEXT UNIQUE,
+            nota_ref_tx           TEXT DEFAULT '',
+            uf_favorecida         TEXT DEFAULT 'PE',
+            cnpj_emitente         TEXT DEFAULT '',
+            codigo_receita        TEXT DEFAULT '100102',
+            valor                 REAL DEFAULT 0,
+            data_vencimento       TEXT DEFAULT '',
+            documento_origem      TEXT DEFAULT '',
+            tipo_documento_origem TEXT DEFAULT '10',
+            chave_acesso_nfe      TEXT DEFAULT '',
+            linha_digitavel       TEXT DEFAULT '',
+            codigo_barras         TEXT DEFAULT '',
+            numero_recibo         TEXT DEFAULT '',
+            status                TEXT DEFAULT 'PENDENTE',
+            motivo_rejeicao       TEXT DEFAULT '',
+            xml_retorno           TEXT DEFAULT '',
+            created_at            TEXT DEFAULT (datetime('now'))
+        )
+    """)
+
     conn.commit()
 
     # ── Migrations: adiciona colunas novas sem quebrar banco existente ─────────
@@ -741,3 +765,79 @@ def listar_auditoria(usuario=None, acao=None, entidade=None, limite=100):
     except Exception as e:
         logger.error(f'Erro ao listar auditoria: {e}')
         return []
+
+
+# ── MÓDULO GNRE ───────────────────────────────────────────────────────────────
+
+def listar_gnre_guias(status=None, busca=None):
+    if USE_SUPABASE:
+        try:
+            query = supabase.table("gnre_guias").select("*")
+            if status: query = query.eq("status", status)
+            if busca: query = query.or_(f"numero_tx.ilike.%{busca}%,documento_origem.ilike.%{busca}%,cnpj_emitente.ilike.%{busca}%")
+            res = query.order("created_at", desc=True).execute()
+            return res.data
+        except Exception as e:
+            logger.error(f"Erro Supabase (listar_gnre_guias): {e}")
+
+    # Fallback SQLite
+    conn = _get_local_conn()
+    cursor = conn.cursor()
+    sql = "SELECT * FROM gnre_guias WHERE 1=1"
+    args = []
+    if status:
+        sql += " AND status=?"
+        args.append(status)
+    if busca:
+        sql += " AND (numero_tx LIKE ? OR documento_origem LIKE ? OR cnpj_emitente LIKE ?)"
+        like = f"%{busca}%"
+        args += [like, like, like]
+    sql += " ORDER BY created_at DESC"
+    cursor.execute(sql, args)
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def salvar_gnre_guia(dados):
+    if not dados.get("numero_tx"):
+        import time
+        dados["numero_tx"] = f"GNRE{int(time.time()*1000)}"
+
+    if USE_SUPABASE:
+        try:
+            res = supabase.table("gnre_guias").upsert(dados, on_conflict="numero_tx").execute()
+            if res.data:
+                return res.data[0]["numero_tx"]
+        except Exception as e:
+            logger.error(f"Erro Supabase (salvar_gnre_guia): {e}")
+
+    # Fallback SQLite
+    conn = _get_local_conn()
+    cursor = conn.cursor()
+    keys = dados.keys()
+    vals = [dados[k] for k in keys]
+    query = f"INSERT OR REPLACE INTO gnre_guias ({','.join(keys)}) VALUES ({','.join(['?']*len(keys))})"
+    cursor.execute(query, vals)
+    conn.commit()
+    conn.close()
+    return dados["numero_tx"]
+
+def atualizar_status_gnre_guia(numero_tx, status, extras=None):
+    update_data = {"status": status}
+    if extras:
+        update_data.update(extras)
+
+    if USE_SUPABASE:
+        try:
+            supabase.table("gnre_guias").update(update_data).eq("numero_tx", numero_tx).execute()
+        except Exception as e:
+            logger.error(f"Erro Supabase (atualizar_status_gnre_guia): {e}")
+
+    conn = _get_local_conn()
+    cursor = conn.cursor()
+    # Constrói o SET dinamicamente para SQLite
+    set_clause = ", ".join([f"{k}=?" for k in update_data.keys()])
+    vals = list(update_data.values()) + [numero_tx]
+    cursor.execute(f"UPDATE gnre_guias SET {set_clause} WHERE numero_tx=?", vals)
+    conn.commit()
+    conn.close()
