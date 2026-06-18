@@ -99,6 +99,11 @@ export default function Autorizacoes() {
       });
       if (!response.ok) throw new Error("Falha ao processar arquivo");
       const data = await response.json();
+      if (data.error) {
+        setError(data.error);
+        setPagamentos([]);
+        return;
+      }
       setPagamentos(data.pagamentos || []);
     } catch (err) {
       setError(err.message);

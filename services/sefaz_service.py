@@ -4,7 +4,7 @@ from services.logger_service import logger
 
 load_dotenv()
 CERT_PASSWORD = os.getenv("SEFAZ_CERT_PASSWORD", "dmf1977")
-CERT_DIR = r"C:\Users\Roberto\Desktop\ERP COMPLETO\CERTIFICADOS"
+CERT_DIR = os.getenv("CERT_DIR", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "CERTIFICADOS"))
 
 def get_certificate_path(chave_acesso: str) -> str:
     """Retorna o caminho do certificado apropriado baseado no CNPJ embutido na chave."""
@@ -60,7 +60,8 @@ def manifestar_e_baixar_xml(chave_acesso: str) -> dict:
         import time
         # Procura se já existe o PDF da nota na pasta local para fazer a leitura REAL
         import re
-        pdf_path = f"C:\\Users\\Roberto\\Desktop\\ERP COMPLETO\\NF\\{chave_acesso}.pdf"
+        nf_dir = os.getenv("NF_DIR", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "NF"))
+        pdf_path = os.path.join(nf_dir, f"{chave_acesso}.pdf")
         
         if os.path.exists(pdf_path):
             from pypdf import PdfReader

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, 
   Download, 
@@ -12,27 +12,48 @@ import {
   Trash, 
   FileText,
   FileCheck,
-  Building
+  Building,
+  Upload,
+  Terminal as TerminalIcon,
+  FileArchive,
+  FileDown,
+  Calendar,
+  X,
+  Trash2,
+  CheckCircle
 } from 'lucide-react';
 import './GnreSispag.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export default function GnreSispag() {
-  const [activeSubTab, setActiveSubTab] = useState('guias'); // 'guias' | 'difal'
+  const [activeSubTab, setActiveSubTab] = useState('processamento'); // 'processamento' | 'guias' | 'difal'
   const [guias, setGuias] = useState([]);
   const [notasDifal, setNotasDifal] = useState([]);
   const [loadingGuias, setLoadingGuias] = useState(false);
   const [loadingNotas, setLoadingNotas] = useState(false);
-  const [simulado, setSimulado] = useState(true); // Modo simulado ligado por padrão
+  const [simulado, setSimulado] = useState(true);
   const [ambiente, setAmbiente] = useState(2); // 2 = Homologação, 1 = Produção
   const [empresa, setEmpresa] = useState('LALUA');
   const [busca, setBusca] = useState('');
   
-  // Seleção múltipla de guias
+  // Seleção múltipla para a aba de Fila de Guias
   const [selectedGuiaIds, setSelectedGuiaIds] = useState([]);
+
+  // Estados do Novo Painel de Processamento
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [paymentDate, setPaymentDate] = useState('');
+  const [logs, setLogs] = useState([]);
+  const [progress, setProgress] = useState(0);
+  const [processing, setProcessing] = useState(false);
   
-  // Modal de Nova Guia Manual
+  // Histórico de Lotes
+  const [lotes, setLotes] = useState([]);
+  const [selectedLote, setSelectedLote] = useState(null);
+  const [loadingLotes, setLoadingLotes] = useState(false);
+  const [buscaLotes, setBuscaLotes] = useState('');
+
+  // Modais de suporte
   const [modalNovaGuia, setModalNovaGuia] = useState(false);
   const [novaGuia, setNovaGuia] = useState({
     uf_favorecida: 'PE',
@@ -45,17 +66,34 @@ export default function GnreSispag() {
     chave_acesso_nfe: ''
   });
 
-  // Modal de Download CNAB
   const [modalCnab, setModalCnab] = useState(false);
   const [cnabContent, setCnabContent] = useState('');
   const [cnabFilename, setCnabFilename] = useState('');
 
-  // Status de operações em andamento
   const [transmitindo, setTransmitindo] = useState(false);
   const [consultando, setConsultando] = useState(false);
   const [gerandoCnab, setGerandoCnab] = useState(false);
 
-  // Carrega Guias GNRE
+  const terminalEndRef = useRef(null);
+
+  // Auto-scroll do terminal de logs
+  useEffect(() => {
+    if (terminalEndRef.current) {
+      terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [logs]);
+
+  // Carrega os dados iniciais
+  useEffect(() => {
+    fetchLotes();
+    fetchGuias();
+    fetchNotasDifal();
+  }, []);
+
+  useEffect(() => {
+    fetchGuias();
+  }, [busca]);
+
   const fetchGuias = async () => {
     setLoadingGuias(true);
     try {
@@ -70,7 +108,6 @@ export default function GnreSispag() {
     setLoadingGuias(false);
   };
 
-  // Carrega Notas com DIFAL Pendente
   const fetchNotasDifal = async () => {
     setLoadingNotas(true);
     try {
@@ -85,17 +122,145 @@ export default function GnreSispag() {
     setLoadingNotas(false);
   };
 
-  useEffect(() => {
-    fetchGuias();
-  }, [busca]);
-
-  useEffect(() => {
-    if (activeSubTab === 'difal') {
-      fetchNotasDifal();
+  const fetchLotes = async () => {
+    setLoadingLotes(true);
+    try {
+      const res = await fetch(`${API_URL}/api/gnre/lotes`);
+      const data = await res.json();
+      if (data.success) {
+        setLotes(data.lotes);
+      }
+    } catch (err) {
+      console.error("Erro ao buscar lotes GNRE:", err);
     }
-  }, [activeSubTab]);
+    setLoadingLotes(false);
+  };
 
-  // Transmitir guias selecionadas
+  const fetchLoteDetails = async (loteId) => {
+    try {
+      const res = await fetch(`${API_URL}/api/gnre/lotes/${loteId}`);
+      const data = await res.json();
+      if (data.success) {
+        setSelectedLote(data.lote);
+      }
+    } catch (err) {
+      console.error("Erro ao buscar detalhes do lote:", err);
+    }
+  };
+
+  // Drag and Drop Handlers
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files) {
+      const filesArray = Array.from(e.dataTransfer.files).filter(f => f.name.toLowerCase().endsWith('.xml'));
+      setSelectedFiles(prev => [...prev, ...filesArray]);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files).filter(f => f.name.toLowerCase().endsWith('.xml'));
+      setSelectedFiles(prev => [...prev, ...filesArray]);
+    }
+  };
+
+  const handleRemoveFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Processamento do Lote de XMLs (Streaming SSE)
+  const handleProcessarLote = async (localOnly = false) => {
+    if (!localOnly && selectedFiles.length === 0) {
+      alert("Por favor, adicione pelo menos um arquivo XML.");
+      return;
+    }
+
+    setProcessing(true);
+    setLogs([]);
+    setProgress(0);
+
+    const formData = new FormData();
+    if (!localOnly) {
+      selectedFiles.forEach((file) => {
+        formData.append("files", file);
+      });
+    }
+    formData.append("payment_date", paymentDate);
+    formData.append("simulado", simulado ? "true" : "false");
+    formData.append("ambiente", String(ambiente));
+    formData.append("empresa", empresa);
+    formData.append("processar_pasta_local", localOnly ? "true" : "false");
+
+    try {
+      setLogs(prev => [...prev, "[SISTEMA] Iniciando fluxo de comunicação..."]);
+      const response = await fetch(`${API_URL}/api/gnre/processar_lote_xmls`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro na API (${response.status})`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const dataStr = line.slice(6).trim();
+            if (!dataStr) continue;
+
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.status === "done") {
+                setProcessing(false);
+                fetchLotes();
+                fetchGuias();
+                if (data.success && data.lote_id) {
+                  fetchLoteDetails(data.lote_id);
+                }
+              } else {
+                if (data.progress !== undefined) {
+                  setProgress(data.progress);
+                }
+                setLogs(prev => [...prev, data.message]);
+              }
+            } catch (err) {
+              console.error("Erro ao fazer parse da linha do stream", err);
+            }
+          }
+        }
+      }
+      setSelectedFiles([]);
+    } catch (err) {
+      setLogs(prev => [...prev, `[ERRO CRÍTICO] Falha no processamento: ${err.message}`]);
+      setProcessing(false);
+    }
+  };
+
+  // Downloads de arquivos do lote selecionado
+  const handleDownloadZipLote = (loteId) => {
+    window.open(`${API_URL}/api/gnre/lotes/${loteId}/zip`, '_blank');
+  };
+
+  const handleDownloadCnabLote = (loteId) => {
+    window.open(`${API_URL}/api/gnre/lotes/${loteId}/cnab`, '_blank');
+  };
+
+  // Funções da Aba Fila de Guias (Originais)
   const handleTransmitir = async () => {
     if (selectedGuiaIds.length === 0) return;
     setTransmitindo(true);
@@ -124,7 +289,6 @@ export default function GnreSispag() {
     setTransmitindo(false);
   };
 
-  // Consultar lote de guias pelo recibo
   const handleConsultarRecibo = async (recibo) => {
     if (!recibo) return;
     setConsultando(true);
@@ -152,11 +316,9 @@ export default function GnreSispag() {
     setConsultando(false);
   };
 
-  // Gerar remessa SISPAG (CNAB 240)
   const handleGerarSispag = async () => {
     if (selectedGuiaIds.length === 0) return;
     
-    // Filtra para garantir que apenas guias com SUCESSO são incluídas
     const guiasSucesso = guias.filter(g => selectedGuiaIds.includes(g.numero_tx) && g.status === 'SUCESSO');
     if (guiasSucesso.length === 0) {
       alert("Nenhuma guia com status 'SUCESSO' selecionada. Apenas guias validadas podem ser enviadas ao banco.");
@@ -171,7 +333,7 @@ export default function GnreSispag() {
         body: JSON.stringify({
           numero_tx_list: guiasSucesso.map(g => g.numero_tx),
           dados_empresa: {
-            cnpj: empresa === 'LALUA' ? '10436619000105' : '12345678000199', // CNPJ fictício se Solar
+            cnpj: empresa === 'LALUA' ? '10436619000105' : '12345678000199',
             razao_social: empresa === 'LALUA' ? 'BOAH COMERCIO VAREJISTA' : 'SOLAR DISTRIBUIDORA LTDA',
             agencia: '01234',
             conta: '0012345',
@@ -195,14 +357,12 @@ export default function GnreSispag() {
     setGerandoCnab(false);
   };
 
-  // Criar guia a partir da nota DIFAL
   const handleImportarNotaDifal = async (nota) => {
     try {
       const valor_difal = Number(nota.valor_difal || 0);
       if (valor_difal <= 0) return;
 
       const formatarData = (dataStr) => {
-        // dataStr vém como DD/MM/YYYY -> converter para YYYY-MM-DD
         if (dataStr && dataStr.includes('/')) {
           const [dia, mes, ano] = dataStr.split('/');
           return `${ano}-${mes}-${dia}`;
@@ -215,9 +375,9 @@ export default function GnreSispag() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nota_ref_tx: nota.numero_tx,
-          uf_favorecida: nota.uf || 'PE',
-          cnpj_emitente: '10436619000105', // Seu CNPJ
-          codigo_receita: '100102', // DIFAL Consumidor Final
+          uf_favorecida: nota.filial?.includes("PE") || nota.observacao?.includes("PE") ? "PE" : "PE",
+          cnpj_emitente: '10436619000105',
+          codigo_receita: '100102',
           valor: valor_difal,
           data_vencimento: formatarData(nota.dt_vencimento),
           documento_origem: nota.numero_nf || nota.numero_tx,
@@ -238,7 +398,6 @@ export default function GnreSispag() {
     }
   };
 
-  // Salvar Guia Manual
   const handleSalvarManual = async (e) => {
     e.preventDefault();
     try {
@@ -252,7 +411,6 @@ export default function GnreSispag() {
         alert("Guia manual criada com sucesso!");
         setModalNovaGuia(false);
         fetchGuias();
-        // Limpa
         setNovaGuia({
           uf_favorecida: 'PE',
           cnpj_emitente: '10436619000105',
@@ -271,7 +429,6 @@ export default function GnreSispag() {
     }
   };
 
-  // Baixa de arquivo CNAB
   const downloadCnabFile = () => {
     const element = document.createElement("a");
     const file = new Blob([cnabContent], {type: 'text/plain'});
@@ -282,7 +439,7 @@ export default function GnreSispag() {
     document.body.removeChild(element);
   };
 
-  // Helpers de Métricas
+  // Métricas Globais
   const totalGuias = guias.length;
   const guiasSucesso = guias.filter(g => g.status === 'SUCESSO').length;
   const guiasPendentes = guias.filter(g => g.status === 'PENDENTE').length;
@@ -306,21 +463,28 @@ export default function GnreSispag() {
     }
   };
 
+  // Filtragem de Lotes
+  const lotesFiltrados = lotes.filter(l => 
+    l.lote_id.toLowerCase().includes(buscaLotes.toLowerCase()) ||
+    l.ambiente.toLowerCase().includes(buscaLotes.toLowerCase()) ||
+    l.status.toLowerCase().includes(buscaLotes.toLowerCase())
+  );
+
   return (
     <div className="gnre-container">
       
       {/* SUMMARY DASHBOARD METRICS */}
       <div className="gnre-metrics">
         <div className="metric-card">
-          <span className="metric-label">Total de Guias</span>
-          <span className="metric-value">{totalGuias}</span>
+          <span className="metric-label">Lotes Processados</span>
+          <span className="metric-value">{lotes.length}</span>
         </div>
         <div className="metric-card success">
-          <span className="metric-label">Validadas com Sucesso</span>
+          <span className="metric-label">Guias Validadas</span>
           <span className="metric-value">{guiasSucesso}</span>
         </div>
         <div className="metric-card warning">
-          <span className="metric-label">Aguardando Transmissão</span>
+          <span className="metric-label">Pendentes de Envio</span>
           <span className="metric-value">{guiasPendentes}</span>
         </div>
         <div className="metric-card value">
@@ -331,13 +495,13 @@ export default function GnreSispag() {
         </div>
       </div>
 
-      {/* SETTINGS AND ACTIONS BAR */}
+      {/* TOP ACTIONS BAR */}
       <div className="gnre-actions-bar">
         <div className="search-box">
           <Search size={18} />
           <input 
             type="text" 
-            placeholder="Buscar por doc. origem, CNPJ ou TX..." 
+            placeholder="Buscar guias, CNPJ ou TX..." 
             value={busca} 
             onChange={e => setBusca(e.target.value)} 
           />
@@ -374,7 +538,7 @@ export default function GnreSispag() {
 
           <button className="btn-primary" onClick={() => setModalNovaGuia(true)}>
             <Plus size={16} />
-            Nova Guia
+            Nova Guia Manual
           </button>
         </div>
       </div>
@@ -382,6 +546,13 @@ export default function GnreSispag() {
       {/* TABS CONTAINER */}
       <div className="gnre-tabs-container">
         <div className="tab-buttons">
+          <button 
+            className={`tab-btn ${activeSubTab === 'processamento' ? 'active' : ''}`}
+            onClick={() => setActiveSubTab('processamento')}
+          >
+            <TerminalIcon size={16} />
+            Painel de Lotes (Lote XML)
+          </button>
           <button 
             className={`tab-btn ${activeSubTab === 'guias' ? 'active' : ''}`}
             onClick={() => setActiveSubTab('guias')}
@@ -394,11 +565,286 @@ export default function GnreSispag() {
             onClick={() => setActiveSubTab('difal')}
           >
             <FileCheck size={16} />
-            Lançamentos DIFAL Pendentes
+            DIFAL Pendente
           </button>
         </div>
 
-        {/* TAB 1: FILA DE GUIAS */}
+        {/* TAB 1: PAINEL DE PROCESSAMENTO EM LOTE */}
+        {activeSubTab === 'processamento' && (
+          <div className="tab-pane">
+            <div className="batch-layout">
+              {/* LEFT COLUMN: CONTROL & LOGGER */}
+              <div className="batch-control-panel">
+                <div className="panel-title">
+                  <h4>Configuração e Execução de Lote</h4>
+                </div>
+
+                {/* Drag and Drop Zone */}
+                <div 
+                  className="drag-drop-zone"
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                >
+                  <Upload size={36} className="upload-icon" />
+                  <p className="primary-text">Arraste e solte seus XMLs de NFe aqui</p>
+                  <p className="secondary-text">ou clique para selecionar arquivos do seu computador</p>
+                  <input 
+                    type="file" 
+                    multiple 
+                    accept=".xml" 
+                    onChange={handleFileChange} 
+                    id="file-upload-input"
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="file-upload-input" className="btn-browse">Selecionar Arquivos</label>
+                </div>
+
+                {/* Selected Files List */}
+                {selectedFiles.length > 0 && (
+                  <div className="selected-files-container">
+                    <h5>Arquivos Selecionados ({selectedFiles.length})</h5>
+                    <div className="file-chips-grid">
+                      {selectedFiles.map((file, idx) => (
+                        <div key={idx} className="file-chip">
+                          <span className="file-name" title={file.name}>{file.name}</span>
+                          <button onClick={() => handleRemoveFile(idx)} className="btn-remove-chip">
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={() => setSelectedFiles([])} className="btn-clear-files">
+                      <Trash2 size={12} /> Limpar Todos
+                    </button>
+                  </div>
+                )}
+
+                {/* Datepicker and Action Buttons */}
+                <div className="execution-settings-row">
+                  <div className="form-group inline">
+                    <label><Calendar size={14} /> Data de Pagamento</label>
+                    <input 
+                      type="date" 
+                      value={paymentDate} 
+                      onChange={e => setPaymentDate(e.target.value)} 
+                    />
+                  </div>
+
+                  <div className="action-buttons-group">
+                    <button 
+                      className="btn-execute-batch" 
+                      onClick={() => handleProcessarLote(false)}
+                      disabled={selectedFiles.length === 0 || processing}
+                    >
+                      {processing ? <Loader2 className="spinner" size={16} /> : <Send size={16} />}
+                      Processar XMLs Selecionados
+                    </button>
+                    <button 
+                      className="btn-execute-local"
+                      onClick={() => handleProcessarLote(true)}
+                      disabled={processing}
+                    >
+                      {processing ? <Loader2 className="spinner" size={16} /> : <FolderIcon />}
+                      Processar Pasta Local (xml_nfe)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Logging Terminal */}
+                <div className="terminal-container">
+                  <div className="terminal-header">
+                    <div className="terminal-buttons">
+                      <span className="dot red"></span>
+                      <span className="dot yellow"></span>
+                      <span className="dot green"></span>
+                    </div>
+                    <span className="terminal-title">console_gnre_sefaz.sh</span>
+                    <button onClick={() => setLogs([])} className="btn-clear-terminal">Limpar Console</button>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  {processing && (
+                    <div className="progress-bar-wrapper">
+                      <div className="progress-bar-fill" style={{ width: `${progress}%` }}></div>
+                      <span className="progress-percentage">{progress}%</span>
+                    </div>
+                  )}
+
+                  <div className="terminal-body">
+                    {logs.length === 0 ? (
+                      <span className="terminal-empty-text">Aguardando execução de lote...</span>
+                    ) : (
+                      logs.map((log, i) => {
+                        let colorClass = "";
+                        if (log.includes("[ERRO]") || log.includes("REJEITADA") || log.includes("critico")) colorClass = "log-error";
+                        else if (log.includes("[AVISO]")) colorClass = "log-warning";
+                        else if (log.includes("SUCESSO") || log.includes("sucesso")) colorClass = "log-success";
+                        return (
+                          <div key={i} className={`terminal-line ${colorClass}`}>
+                            {log}
+                          </div>
+                        );
+                      })
+                    )}
+                    <div ref={terminalEndRef} />
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN: HISTORY & DETAILS */}
+              <div className="batch-history-panel">
+                <div className="panel-title flex-between">
+                  <h4>Histórico de Lotes Enviados</h4>
+                  <div className="search-box-small">
+                    <Search size={14} />
+                    <input 
+                      type="text" 
+                      placeholder="Buscar lote..." 
+                      value={buscaLotes}
+                      onChange={e => setBuscaLotes(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {loadingLotes ? (
+                  <div className="loading-state-small">
+                    <Loader2 className="spinner" size={20} />
+                    <span>Carregando histórico...</span>
+                  </div>
+                ) : lotesFiltrados.length === 0 ? (
+                  <div className="empty-state-small">
+                    <span>Nenhum lote enviado encontrado.</span>
+                  </div>
+                ) : (
+                  <div className="lotes-list-container">
+                    <table className="lotes-table">
+                      <thead>
+                        <tr>
+                          <th>Lote ID</th>
+                          <th>Data/Hora</th>
+                          <th>Ambiente</th>
+                          <th>Status</th>
+                          <th style={{ textAlign: 'center' }}>Ação</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {lotesFiltrados.map((l) => (
+                          <tr 
+                            key={l.lote_id} 
+                            onClick={() => fetchLoteDetails(l.lote_id)}
+                            className={`lote-row ${selectedLote?.lote_id === l.lote_id ? 'active' : ''}`}
+                          >
+                            <td><strong>{l.lote_id}</strong></td>
+                            <td>{l.data_hora}</td>
+                            <td>
+                              <span className={`env-badge ${l.ambiente}`}>
+                                {l.ambiente}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={`status-badge ${l.status.toLowerCase()}`}>
+                                {l.status}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <button className="btn-ver-lote">Ver Detalhes</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Selected Lote Details */}
+                {selectedLote && (
+                  <div className="lote-details-card animate-slide-up">
+                    <div className="details-header">
+                      <h5>Detalhes do Lote: <span>{selectedLote.lote_id}</span></h5>
+                      <span className="details-time">{selectedLote.data_hora}</span>
+                    </div>
+
+                    <div className="details-meta-grid">
+                      <div>
+                        <strong>Ambiente:</strong> {selectedLote.ambiente}
+                      </div>
+                      <div>
+                        <strong>Status:</strong> {selectedLote.status}
+                      </div>
+                      <div>
+                        <strong>Recibo Geral:</strong> {selectedLote.recibos || 'Não gerado'}
+                      </div>
+                    </div>
+
+                    {/* Download buttons */}
+                    {selectedLote.status === 'Sucesso' && (
+                      <div className="details-action-buttons">
+                        <button 
+                          className="btn-details-download zip"
+                          onClick={() => handleDownloadZipLote(selectedLote.lote_id)}
+                        >
+                          <FileArchive size={14} /> Download ZIP das Guias
+                        </button>
+                        <button 
+                          className="btn-details-download cnab"
+                          onClick={() => handleDownloadCnabLote(selectedLote.lote_id)}
+                        >
+                          <FileDown size={14} /> Download Remessa SISPAG
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Guides in Lote List */}
+                    <div className="lote-guias-list">
+                      <h6>Guias Geradas no Lote</h6>
+                      <table className="lote-guias-table">
+                        <thead>
+                          <tr>
+                            <th>NF</th>
+                            <th>Emitente</th>
+                            <th>UF</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th>Guia PDF</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {JSON.parse(selectedLote.xml_guias || "[]").map((g, idx) => (
+                            <tr key={idx}>
+                              <td>NF {g.documento_origem}</td>
+                              <td>{g.cnpj_emitente}</td>
+                              <td><span className="uf-badge">{g.uf_favorecida}</span></td>
+                              <td>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(g.valor)}</td>
+                              <td>
+                                <span className={`status-badge-small ${g.status.toLowerCase()}`}>
+                                  {g.status}
+                                </span>
+                              </td>
+                              <td>
+                                {g.status === 'SUCESSO' && (
+                                  <button 
+                                    className="btn-row-pdf"
+                                    onClick={() => {
+                                      window.open(`${API_URL}/api/gnre/pdf/${g.nota_ref_tx}`, '_blank');
+                                    }}
+                                  >
+                                    PDF
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: FILA DE GUIAS (MANUAIS / INDIVIDUAIS) */}
         {activeSubTab === 'guias' && (
           <div className="tab-pane">
             <div className="pane-header-actions">
@@ -525,18 +971,12 @@ export default function GnreSispag() {
                               </span>
                             )}
                             <button 
-                              className="btn-row-action" 
+                              className="btn-row-action pdf" 
                               title="Download da Guia em PDF"
                               onClick={() => {
                                 window.open(`${API_URL}/api/gnre/pdf/${guia.numero_tx}`, '_blank');
                               }}
-                              style={{ 
-                                background: 'rgba(239, 68, 68, 0.1)', 
-                                border: '1px solid rgba(239, 68, 68, 0.3)', 
-                                color: '#f87171' 
-                              }}
                             >
-                              <FileText size={14} />
                               PDF
                             </button>
                           </div>
@@ -550,11 +990,11 @@ export default function GnreSispag() {
           </div>
         )}
 
-        {/* TAB 2: LANÇAMENTOS DIFAL PENDENTES */}
+        {/* TAB 3: LANÇAMENTOS DIFAL PENDENTES */}
         {activeSubTab === 'difal' && (
           <div className="tab-pane">
             <div className="pane-header-actions">
-              <span>Importe notas fiscais lançadas no ERP que possuem ICMS DIFAL calculado.</span>
+              <span>Importe notas fiscais lançadas no ERP que possuem ICMS DIFAL calculated.</span>
               <button className="btn-action refresh" onClick={fetchNotasDifal}>
                 <RefreshCw size={16} />
               </button>
@@ -742,5 +1182,13 @@ export default function GnreSispag() {
       )}
 
     </div>
+  );
+}
+
+function FolderIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"></path>
+    </svg>
   );
 }

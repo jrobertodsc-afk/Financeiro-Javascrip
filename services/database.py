@@ -505,6 +505,24 @@ def db_init():
 
     conn.commit()
 
+    # Tabela de lotes processados GNRE
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS gnre_lotes (
+            id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+            lote_id               TEXT UNIQUE,
+            data_hora             TEXT DEFAULT '',
+            ambiente              TEXT DEFAULT 'homologacao',
+            status                TEXT DEFAULT 'Pendente',
+            recibos               TEXT DEFAULT '',
+            xml_guias             TEXT DEFAULT '[]',
+            cnab_filename         TEXT DEFAULT '',
+            cnab_content          TEXT DEFAULT '',
+            log_terminal          TEXT DEFAULT '',
+            created_at            TEXT DEFAULT (datetime('now'))
+        )
+    """)
+    conn.commit()
+
     # ── Migrations: adiciona colunas novas sem quebrar banco existente ─────────
     try:
         cursor.execute("ALTER TABLE notas ADD COLUMN pin TEXT DEFAULT ''")
@@ -841,3 +859,60 @@ def atualizar_status_gnre_guia(numero_tx, status, extras=None):
     cursor.execute(f"UPDATE gnre_guias SET {set_clause} WHERE numero_tx=?", vals)
     conn.commit()
     conn.close()
+
+def listar_gnre_lotes():
+    if USE_SUPABASE:
+        try:
+            res = supabase.table("gnre_lotes").select("*").order("created_at", desc=True).execute()
+            return res.data
+        except Exception as e:
+            logger.error(f"Erro Supabase (listar_gnre_lotes): {e}")
+
+    # Fallback SQLite
+    conn = _get_local_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM gnre_lotes ORDER BY created_at DESC")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def salvar_gnre_lote(dados):
+    if not dados.get("lote_id"):
+        import time
+        dados["lote_id"] = f"LOTE{int(time.time()*1000)}"
+
+    if USE_SUPABASE:
+        try:
+            res = supabase.table("gnre_lotes").upsert(dados, on_conflict="lote_id").execute()
+            if res.data:
+                return res.data[0]["lote_id"]
+        except Exception as e:
+            logger.error(f"Erro Supabase (salvar_gnre_lote): {e}")
+
+    # Fallback SQLite
+    conn = _get_local_conn()
+    cursor = conn.cursor()
+    keys = dados.keys()
+    vals = [dados[k] for k in keys]
+    query = f"INSERT OR REPLACE INTO gnre_lotes ({','.join(keys)}) VALUES ({','.join(['?']*len(keys))})"
+    cursor.execute(query, vals)
+    conn.commit()
+    conn.close()
+    return dados["lote_id"]
+
+def get_gnre_lote(lote_id):
+    if USE_SUPABASE:
+        try:
+            res = supabase.table("gnre_lotes").select("*").eq("lote_id", lote_id).execute()
+            if res.data:
+                return res.data[0]
+        except Exception as e:
+            logger.error(f"Erro Supabase (get_gnre_lote): {e}")
+
+    # Fallback SQLite
+    conn = _get_local_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM gnre_lotes WHERE lote_id=?", (lote_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None

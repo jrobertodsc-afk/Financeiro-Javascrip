@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
+import config
 from services.database import listar_notas
 from services.auth_service import (
     authenticate_user, create_access_token, decode_token, get_role_info
@@ -48,6 +49,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+from fastapi.exceptions import RequestValidationError
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    from loguru import logger
+    logger.error(f"Erro de validacao: {exc.errors()}")
+    logger.error(f"Body enviado: {exc.body}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "body": str(exc.body)},
+    )
+
 
 # ── Path do DB do FabricOS via variável de ambiente ─────────────────────────
 FABRICOS_DB_PATH = os.getenv(
@@ -561,11 +574,12 @@ class PagamentosPayload(BaseModel):
 
 @app.post("/api/importar_itau")
 async def importar_itau(file: UploadFile = File(...)):
-    if not file.filename.endswith(('.xls', '.xlsx')):
+    if not file.filename.lower().endswith(('.xls', '.xlsx')):
         return {"error": "Formato inv├ílido"}
     
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".xls") as tmp:
+        ext = os.path.splitext(file.filename)[1]
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
             shutil.copyfileobj(file.file, tmp)
             tmp_path = tmp.name
             

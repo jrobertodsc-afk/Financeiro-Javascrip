@@ -9,6 +9,9 @@ import xml.etree.ElementTree as ET
 import requests
 from cryptography.hazmat.primitives.serialization import pkcs12, Encoding, PrivateFormat, NoEncryption
 from loguru import logger
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Endpoints SOAP 1.2
 URL_RECEPCAO_TESTE = "https://www.testegnre.pe.gov.br/gnreWS/services/GnreLoteRecepcao"
@@ -20,9 +23,9 @@ URL_CONSULTA_PROD = "https://www.gnre.pe.gov.br/gnreWS/services/GnreResultadoLot
 # Senha padrão do certificado digital PFX
 PFX_PASSPHRASE = "dmf1977"
 
-# Pasta padrão de certificados
-CERT_DIR = r"C:\Users\Roberto\Desktop\ERP COMPLETO\CERTIFICADOS"
-PASTA_LOGS = r"C:\Users\Roberto\Desktop\ERP COMPLETO\WEBSERVICE\xml_logs"
+# Pasta padrão de certificados carregada do .env com fallbacks relativos
+CERT_DIR = os.getenv("CERT_DIR", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "CERTIFICADOS"))
+PASTA_LOGS = os.getenv("PASTA_LOGS", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "WEBSERVICE", "xml_logs"))
 
 # ==========================================
 # EXTRAÇÃO DE CERTIFICADOS A1 (PFX -> PEM)
@@ -402,7 +405,7 @@ def formatar_data_cnab(data_str: str) -> str:
 # GERADOR REMESSA ITAÚ SISPAG (CNAB 240)
 # ==========================================
 
-def gerar_remessa_sispag_tributos(dados_empresa: dict, guias: list[dict]) -> str:
+def gerar_remessa_sispag_tributos(dados_empresa: dict, guias: list[dict], data_pagamento: str = None) -> str:
     """
     Gera as linhas de texto formatadas no padrão CNAB 240 v086 do Banco Itaú (SISPAG)
     específico para pagamento de Tributos com Código de Barras (Segmento O).
@@ -410,6 +413,12 @@ def gerar_remessa_sispag_tributos(dados_empresa: dict, guias: list[dict]) -> str
     linhas = []
     data_hoje = datetime.now().strftime("%d%m%Y")
     hora_hoje = datetime.now().strftime("%H%M%S")
+
+    # Formata a data de pagamento
+    if data_pagamento:
+        data_pagamento_cnab = formatar_data_cnab(data_pagamento)
+    else:
+        data_pagamento_cnab = data_hoje
 
     # 1. REGISTRO 0: HEADER DE ARQUIVO
     header_arquivo = (
@@ -487,7 +496,7 @@ def gerar_remessa_sispag_tributos(dados_empresa: dict, guias: list[dict]) -> str
             + 'REA'                                             # 104-106: Moeda (REA)
             + pad_zero(0, 15)                                    # 107-121: Qtd Moeda
             + pad_zero(int(round(valor_guia * 100)), 15)         # 122-136: Valor da Guia (em centavos)
-            + pad_zero(data_hoje, 8)                              # 137-144: Data de Pagamento
+            + pad_zero(data_pagamento_cnab, 8)                   # 137-144: Data de Pagamento
             + pad_zero(0, 15)                                    # 145-159: Valor Pago (preencher com zeros na remessa)
             + pad_space('', 3)                                   # 160-162: Brancos
             + pad_zero(0, 9)                                     # 163-171: Nota Fiscal / Complemento

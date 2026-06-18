@@ -2,8 +2,8 @@ import { Printer, ChevronLeft } from 'lucide-react';
 import './RelatorioModerno.css';
 
 export default function RelatorioModerno({ pagamentos, saldos, onClose }) {
-  const despesas = pagamentos.filter(p => p.categoria !== 'TRANSFERENCIA');
-  const transferencias = pagamentos.filter(p => p.categoria === 'TRANSFERENCIA');
+  const despesas = pagamentos.filter(p => p.categoria !== 'TRANSFERENCIA' || Number(p.valor) >= 0);
+  const transferencias = pagamentos.filter(p => p.categoria === 'TRANSFERENCIA' && Number(p.valor) < 0);
 
   const totalPagamentos = despesas.reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
   const totalTransferencias = Math.abs(transferencias.reduce((acc, p) => acc + (Number(p.valor) || 0), 0));

@@ -134,9 +134,9 @@
         },
         "079.988.065-59": {
             "responsavel": "GERENTE ONLINE",
-            "categoria": "12208 - Domingos e Feriados Trabalhados",
+            "categoria": "21410 - Rescisão",
             "empresa": "LALUA",
-            "observacao": "DOMINGO TRABALHADO 24/05/2026"
+            "observacao": "RESCISÃO"
         },
         "103.343.075-70": {
             "responsavel": "GERÊNCIA LOJA",
@@ -464,9 +464,9 @@
         },
         "-": {
             "responsavel": "ADM/FINANCEIRO",
-            "categoria": "21114 - Telefonia Fixa/Internet",
+            "categoria": "21407 - INSS",
             "empresa": "LALUA",
-            "observacao": "GNRE"
+            "observacao": "INSS / IRRF"
         },
         "***.927.725-**": {
             "responsavel": "ADM/FINANCEIRO",
@@ -568,7 +568,7 @@
             "responsavel": "ADM/FINANCEIRO",
             "categoria": "12202 - Salários - Meis/PJ",
             "empresa": "LALUA",
-            "observacao": "SALARIO"
+            "observacao": "PRODUTIVIDADE"
         },
         "860.822.745-20": {
             "responsavel": "GERÊNCIA LOJA",
@@ -578,9 +578,9 @@
         },
         "00.360.305/0001-04": {
             "responsavel": "ADM/FINANCEIRO",
-            "categoria": "12207 - Rescisão / FGTS",
+            "categoria": "21406 - FGTS",
             "empresa": "LALUA",
-            "observacao": "FGTS RESCISORIO  CAMILLA LESSA"
+            "observacao": "FGTS "
         },
         "***.573.925-**": {
             "responsavel": "PRODUCAO",
@@ -671,6 +671,144 @@
             "categoria": "21102 - Condominio",
             "empresa": "LALUA",
             "observacao": "CONDOMINIO"
+        },
+        "14.406.482/0001-99": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21112 - Servicos Contabeis",
+            "empresa": "LALUA",
+            "observacao": "SERVIÇOS CONTABEIS"
+        },
+        "22.014.850/0001-81": {
+            "responsavel": "COMPRAS",
+            "categoria": "31102 - Aviamentos",
+            "empresa": "LALUA",
+            "observacao": "AVIAMENTOS"
+        },
+        "33.583.036/0001-02": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21116 - Sindicato E Associcoes",
+            "empresa": "LALUA",
+            "observacao": "ABIV - ASSOCIACAO BRASILEIRA DA INDUSTRIA E DO VESTUARIO"
+        },
+        "***.330.765-**": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21501 - Manutenção - Predial",
+            "empresa": "LALUA",
+            "observacao": "LIMPEZA VITRINES LOJAS"
+        },
+        "12.803.527/0001-33": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "21120 - Sistemas e Softwares",
+            "empresa": "LALUA",
+            "observacao": "SISTEMA VENDAS ONLINE"
+        },
+        "43.182.349/0001-02": {
+            "responsavel": "MARKETING",
+            "categoria": "21801 - Endomarketing",
+            "empresa": "LALUA",
+            "observacao": "DECORAÇÃO FLORAL EVENTO SDB"
+        },
+        "59.841.568/0001-88": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21304 - Manutenção - Moto/Carro",
+            "empresa": "LALUA",
+            "observacao": "MANUTENÇÃO MOTO "
+        },
+        "29.221.576/0001-60": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "12203 - Transportes",
+            "empresa": "LALUA",
+            "observacao": "GESTÃO CRDITOS VALE TRANSPORTE"
+        },
+        "21.933.166/0001-30": {
+            "responsavel": "MARKETING",
+            "categoria": "21120 - Sistemas e Softwares",
+            "empresa": "LALUA",
+            "observacao": "SISTEMA GURU"
+        },
+        "***.025.565-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12104 - Produtos Para Revenda",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "26.482.987/0001-11": {
+            "responsavel": "COMPRAS",
+            "categoria": "31101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDO"
+        },
+        "03.165.536/0001-55": {
+            "responsavel": "COMPRAS",
+            "categoria": "21707 - Material Gráfico",
+            "empresa": "LALUA",
+            "observacao": "BORDERO COMANDA"
+        },
+        "80.446.990/0001-25": {
+            "responsavel": "COMPRAS",
+            "categoria": "12102 - Aviamentos",
+            "empresa": "LALUA",
+            "observacao": "AVIAMENTOS"
+        },
+        "15.239.478/0001-46": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "21117 - Sindicato E Associcoes",
+            "empresa": "LALUA",
+            "observacao": "TAXA SINDICAL BARRA"
+        },
+        "38.050.023/0001-83": {
+            "responsavel": "COMPRAS",
+            "categoria": "31112 - Frete/Transporte - Produção",
+            "empresa": "LALUA",
+            "observacao": "MERCADORIA DO ESTILO"
+        },
+        "***.631.585-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "31111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "***.705.725-**": {
+            "responsavel": "GERENTE ONLINE",
+            "categoria": "12104 - Produtos Para Revenda",
+            "empresa": "LALUA",
+            "observacao": "APRENDIDO PELO USUARIO"
+        },
+        "***.980.135-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "31111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "***.905.060-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "31111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "47.292.795/0001-12": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "12209 - Exames Clínicos (Dem/Adm/Per)",
+            "empresa": "LALUA",
+            "observacao": "EXAMES OCUPACIONAIS"
+        },
+        "19.526.748/0001-50": {
+            "responsavel": "COMPRAS",
+            "categoria": "31101 - Tecidos",
+            "empresa": "LALUA",
+            "observacao": "TECIDOS"
+        },
+        "23.904.297/0001-15": {
+            "responsavel": "PRODUCAO",
+            "categoria": "12111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
+        },
+        "***.115.095-**": {
+            "responsavel": "PRODUCAO",
+            "categoria": "31111 - Faccionista - Mão de Obra",
+            "empresa": "LALUA",
+            "observacao": "FACCIONISTA"
         }
     },
     "nome_mappings": {
@@ -955,6 +1093,12 @@
             "categoria": "TRANSFERENCIA",
             "empresa": "LALUA",
             "observacao": "BOAH BARRA"
+        },
+        "ITAU MATRIZ": {
+            "responsavel": "ADM/FINANCEIRO",
+            "categoria": "TRANSFERENCIA",
+            "empresa": "LALUA",
+            "observacao": "TRANSFERENCIA BARRA"
         }
     }
 }
